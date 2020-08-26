@@ -1,5 +1,6 @@
 secrets.py
 *.db
+*.db-journal
 .vscode
 
 # Byte-compiled / optimized / DLL files
