@@ -59,7 +59,6 @@ async def _orig_message_id(db, curr, message_id):
 
     rows = curr.execute(get_message, (message_id,)).fetchall()
     if len(rows) == 0:
-        print("is orig")
         return message_id, None
     sql_message = rows[0]
     if sql_message['is_orig'] == True:
@@ -67,7 +66,6 @@ async def _orig_message_id(db, curr, message_id):
     orig_messsage_id = sql_message['orig_message_id']
     rows = curr.execute(get_message, [orig_messsage_id]).fetchall()
     sql_orig_message = rows[0]
-    print(orig_messsage_id)
     return orig_messsage_id, sql_orig_message['channel_id']
 
 
@@ -127,8 +125,6 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
 
     deleted = message is None
     on_starboard = starboard_message is not None
-    if not on_starboard:
-        print("Not on starboard")
 
     link_deletes = sql_starboard['link_deletes']
     link_edits = sql_starboard['link_edits']
