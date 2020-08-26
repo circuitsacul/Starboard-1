@@ -61,6 +61,16 @@ async def on_raw_reaction_remove(payload):
 
 
 @bot.event
+async def on_message(message):
+    if message.author.bot:
+        return
+    elif message.content.replace('!', '') == bot.user.mention:
+        await message.channel.send("My prefix is `sb!`. You can call `sb!help` or `sb!links` for help.")
+    else:
+        await bot.process_commands(message)
+
+
+@bot.event
 async def on_command_error(ctx, error):
     if type(error) is discord.ext.commands.errors.CommandNotFound:
         return
