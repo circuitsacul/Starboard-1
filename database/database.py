@@ -81,7 +81,8 @@ class Database:
         users_table = \
             """CREATE TABLE IF NOT EXISTS users (
                 id integer PRIMARY KEY,
-                is_bot bool NOT NULL
+                is_bot bool NOT NULL,
+                patron_level int NOT NULL DEFAULT 0
             )"""
 
         members_table = \
