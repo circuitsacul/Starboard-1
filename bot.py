@@ -111,4 +111,5 @@ if __name__ == '__main__':
             pass
         else:
             print(f"An error occured: {type(e)}: {e}")
+    finally:
         print("Logging Out")
