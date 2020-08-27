@@ -1,5 +1,5 @@
-import sqlite3
-from sqlite3 import Error
+import aiosqlite
+from aiosqlite import Error
 from asyncio import Lock
 
 
@@ -36,23 +36,23 @@ class CommonSql:
 
 class Database:
     def __init__(self, db_path):
-        self.conn = None
         self.lock = Lock()
         self.q = CommonSql()
         self._db_path = db_path
-        self._open()
-        self._create_tables()
 
-    def cursor(self):
-        return self.conn.cursor()
+    async def open(self):
+        await self._create_tables()
 
-    def close(self):
-        if self.conn is not None:
-            print("Closing Database")
-            self.conn.commit()
-            self.conn.close()
-        else:
-            print("Database already closed (or never opened)")
+    async def connect(self):
+        conn = None
+        try:
+            conn = await aiosqlite.connect(self._db_path)
+            conn.row_factory = self._dict_factory
+        except Error as e:
+            print(f"Couldn't connect to database: {e}")
+            if conn:
+                await conn.close()
+        return conn
 
     def _dict_factory(self, cursor, row):
         d = {}
@@ -60,21 +60,15 @@ class Database:
             d[col[0]] = row[idx]
         return d
 
-    def _open(self):
-        try:
-            self.conn = sqlite3.connect(self._db_path)
-            self.conn.row_factory = self._dict_factory
-        except Error as e:
-            print(f"Couldn't connect to database: {e}")
-            self.close()
+    async def _create_table(self, sql):
+        #cursor = self.cursor()
+        conn = await self.connect()
+        c = await conn.cursor()
+        await c.execute(sql)
+        await conn.commit()
+        await conn.close()
 
-    def _create_table(self, sql):
-        cursor = self.cursor()
-        with self.conn:
-            cursor.execute(sql)
-            cursor.close()
-
-    def _create_tables(self):
+    async def _create_tables(self):
         guilds_table = \
             """CREATE TABLE IF NOT EXISTS guilds (
                 id integer PRIMARY KEY,
@@ -174,10 +168,12 @@ class Database:
                 FOREIGN KEY (message_id) REFERENCES messages (id)
             )"""
 
-        self._create_table(guilds_table)
-        self._create_table(users_table)
-        self._create_table(members_table)
-        self._create_table(starboards_table)
-        self._create_table(sbemoijs_table)
-        self._create_table(messages_table)
-        self._create_table(reactions_table)
+        await self.lock.acquire()
+        await self._create_table(guilds_table)
+        await self._create_table(users_table)
+        await self._create_table(members_table)
+        await self._create_table(starboards_table)
+        await self._create_table(sbemoijs_table)
+        await self._create_table(messages_table)
+        await self._create_table(reactions_table)
+        self.lock.release()

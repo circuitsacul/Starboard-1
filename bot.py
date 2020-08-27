@@ -96,7 +96,8 @@ async def on_command_error(ctx, error):
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=discord.Game("Mention Me For Help"))
+    await db.open()
+    await bot.change_presence(activity=discord.Game("Mention me for help"))
     print(f"Logged in as {bot.user.name} in {len(bot.guilds)} guilds!")
 
 
@@ -111,5 +112,3 @@ if __name__ == '__main__':
         else:
             print(f"An error occured: {type(e)}: {e}")
         print("Logging Out")
-    finally:
-        db.close()
