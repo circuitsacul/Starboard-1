@@ -51,8 +51,8 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
         if exists and not is_add:
             await c.execute(remove_reaction, (message_id, user_id, emoji_name))
 
-        conn.commit()
-        conn.close()
+        await conn.commit()
+        await conn.close()
     await handle_starboards(db, bot, message_id, message)
 
 
