@@ -86,7 +86,8 @@ async def handle_starboards(db, bot, message_id, message):
     c = await conn.cursor()
     async with db.lock:
         await c.execute(get_message, [message_id])
-        sql_message = await c.fetchall()[0]
+        rows = await c.fetchall()
+        sql_message = rows[0]
         channel_id = sql_message['channel_id']
         message_id = sql_message['id']
         channel = bot.get_channel(channel_id)
@@ -133,6 +134,8 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
                 starboard_message = None
                 await c.execute(delete_starboard_message, [sql_message['id'], sql_starboard['id']])
         points, emojis = await calculate_points(c, sql_message, sql_starboard)
+        await conn.commit()
+        await conn.close()
 
     deleted = message is None
     on_starboard = starboard_message is not None
@@ -162,12 +165,12 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
             add = True
 
     if not frozen:
-        await update_message(c, db, message, sql_message['channel_id'], starboard_message, starboard, points, forced, add, remove, link_edits, emojis)
-    await conn.commit()
-    await conn.close()
+        await update_message(db, message, sql_message['channel_id'], starboard_message, starboard, points, forced, add, remove, link_edits, emojis)
 
 
-async def update_message(c, db, orig_message, orig_channel_id, sb_message, starboard, points, forced, add, remove, link_edits, emojis):
+async def update_message(db, orig_message, orig_channel_id, sb_message, starboard, points, forced, add, remove, link_edits, emojis):
+    conn = await db.connect()
+    c = await conn.cursor()
     update = orig_message is not None
     async with db.lock:
         if remove:
@@ -191,6 +194,8 @@ async def update_message(c, db, orig_message, orig_channel_id, sb_message, starb
                 await sb_message.edit(
                     content=plain_text
                 )
+        await conn.commit()
+        await conn.close()
     if sb_message is not None:
         for _emoji in emojis:
             if _emoji['d_id'] is not None:

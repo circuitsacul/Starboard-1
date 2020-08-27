@@ -158,7 +158,7 @@ class Starboard(commands.Cog):
             if not exists['se']:
                 await ctx.send("That is not a starboard!")
             else:
-                await c.execute(check_sbemoji, [emoji_name, starboard.i])
+                await c.execute(check_sbemoji, [emoji_name, starboard.id])
                 exists = len(await c.fetchall()) > 0
                 if exists:
                     await ctx.send("That emoji is already on that starboard!")
@@ -166,8 +166,8 @@ class Starboard(commands.Cog):
                     await c.execute(self.db.q.create_sbemoji, [emoji_id, starboard.id, emoji_name, False])
                     added = True
 
-        await conn.commit()
-        await conn.close()
+            await conn.commit()
+            await conn.close()
         if added:
             await ctx.send(f"Added {emoji} to {starboard.mention}")
 
@@ -209,8 +209,8 @@ class Starboard(commands.Cog):
                 return
             sbemoji_id = rows[0]['id']
             await c.execute(del_sbemoji, [sbemoji_id])
-        await conn.commit()
-        await conn.close()
+            await conn.commit()
+            await conn.close()
         await ctx.send(f"Removed {emoji} from {starboard.mention}")
 
     @commands.command(
