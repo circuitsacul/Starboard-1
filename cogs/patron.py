@@ -123,7 +123,7 @@ class FlaskWebHook():
             return Response(response="Caught :)", status=200)
 
         self.app_thread = Thread(
-            target=self.app.run, kwargs={'port': 8080, 'use_reloader': False, 'debug': False},
+            target=self.app.run, kwargs={'port': 8080, 'host': '0.0.0.0', 'use_reloader': False, 'debug': False},
             daemon=True
         )
     

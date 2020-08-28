@@ -59,6 +59,17 @@ async def show_links(ctx):
     await ctx.send(embed=embed)
 
 
+@bot.command(
+    name='privacy', aliases=['policy'],
+    description='View the bot/owners privacy policy',
+    brief="View privacy policy"
+)
+async def show_privacy_policy(ctx):
+    embed = discord.Embed(title='Privacy Policy', color=bot_config.COLOR)
+    embed.description = bot_config.PRIVACY_POLICY
+    await ctx.send(embed=embed)
+
+
 # Events
 @bot.event
 async def on_raw_reaction_add(payload):
