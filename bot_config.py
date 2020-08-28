@@ -1,16 +1,16 @@
-DB_PATH = "database/sql/database.db"
-BETA_DB_PATH = "database/sql/beta_database.db"
+DB_PATH = "database/sql/database.db" # str
+BETA_DB_PATH = "database/sql/beta_database.db" # str
 
-INVITE = "https://discord.com/api/oauth2/authorize?client_id=745642023964639333&permissions=379968&scope=bot"
-SUPPORT_SERVER = "https://discord.gg/3gK8mSA"
-SOURCE_CODE = "https://github.com/CircuitSacul/Starboard"
-DONATE = "https://donatebot.io/checkout/725336160112738385"
+INVITE = "https://discord.com/api/oauth2/authorize?client_id=745642023964639333&permissions=379968&scope=bot" # str
+SUPPORT_SERVER = "https://discord.gg/3gK8mSA" # str
+SOURCE_CODE = "https://github.com/CircuitSacul/Starboard" # str or None
+DONATE = "https://donatebot.io/checkout/725336160112738385" # str or None
 
-SUPPORT_SERVER_ID = 725336160112738385
+SUPPORT_SERVER_ID = 725336160112738385 # int
 
-COLOR = 0xfffb00
-MISTAKE_COLOR = 0xffaa00
-ERROR_COLOR = 0xff0000
+COLOR = 0xfffb00 # hex
+MISTAKE_COLOR = 0xffaa00 # hex
+ERROR_COLOR = 0xff0000 # hex
 
 PATRON_LEVELS = {
     "1diL2G7PbA": {
@@ -21,7 +21,7 @@ PATRON_LEVELS = {
                 \n**- Up to 3 emojis per starboard**"""
         },
         'gives_role': 748250027264180294,
-        'num': 1
+        'num': 1 # The level... Essentially means that level 2 will have all the features level 1 has. Can all be set to 0 if needed
     },
     "bJZn0tdzNl": {
         'display': {

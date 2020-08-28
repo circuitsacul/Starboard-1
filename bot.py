@@ -12,7 +12,7 @@ from cogs.owner import Owner
 from cogs.patron import PatronCommands, FlaskWebHook
 
 BETA = True if len(sys.argv) > 1 and sys.argv[1] == 'beta' else False
-TOKEN = secrets.BETA_TOKEN if BETA else secrets.TOKEN
+TOKEN = secrets.BETA_TOKEN if BETA and secrets.BETA_TOKEN is not None else secrets.TOKEN
 DB_PATH = bot_config.BETA_DB_PATH if BETA else bot_config.DB_PATH
 PREFIX = commands.when_mentioned_or('sb!', 'Sb!')
 
