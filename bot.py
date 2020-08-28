@@ -1,5 +1,6 @@
-import discord, sys, asyncio
-from discord.ext import commands
+import discord, sys, asyncio, sys, os
+from discord.ext import commands, tasks
+from flask.app import Flask
 from pretty_help import PrettyHelp
 
 import bot_config, secrets
@@ -8,6 +9,7 @@ from events import starboard_events
 from database.database import Database
 from cogs.starboard import Starboard
 from cogs.owner import Owner
+from cogs.patron import PatronCommands, FlaskWebHook
 
 BETA = True if len(sys.argv) > 1 and sys.argv[1] == 'beta' else False
 TOKEN = secrets.BETA_TOKEN if BETA else secrets.TOKEN
@@ -18,6 +20,25 @@ db = Database(DB_PATH)
 bot = commands.Bot(PREFIX, help_command=PrettyHelp(
     color=bot_config.COLOR, no_category="Info", active=30
 ))
+web_server = FlaskWebHook(bot, db)
+
+running = True
+
+
+# Handle Donations
+@tasks.loop(seconds=30)
+async def _handle_donation():
+    if not running:
+        return
+    handle_donations()
+
+
+def handle_donations():
+    print("Running Donation Handler")
+    cp_queue = web_server.queue.copy()
+    for item in cp_queue:
+        print("New Donation Event")
+        print(item)
 
 
 # Info Commands
@@ -31,7 +52,8 @@ async def show_links(ctx):
     description = \
         f"""**[Support Server]({bot_config.SUPPORT_SERVER})
         [Invite Me]({bot_config.INVITE})
-        [Source Code]({bot_config.SOURCE_CODE})**
+        [Source Code]({bot_config.SOURCE_CODE})
+        [Donate/Become a Patron]({bot_config.DONATE})**
         """
     embed.description = description
     await ctx.send(embed=embed)
@@ -82,34 +104,57 @@ async def on_command_error(ctx, error):
         pass
     elif type(error) is discord.ext.commands.errors.MissingPermissions:
         pass
+    elif type(error) is discord.ext.commands.errors.NotOwner:
+        pass
     elif type(error) is discord.http.Forbidden:
         error = "I don't have the permissions to do that"
     else:
-        embed = discord.Embed(title='Error!', description='An unexpected error ocurred. Please report this to the dev.', color=bot_config.ERROR_COLOR)
-        embed.add_field(name='Error Message:', value=f"```{type(error)}:\n{error}```")
+        embed = discord.Embed(
+            title='Error!',
+            description='An unexpected error ocurred.\
+                Please report this to the dev.',
+            color=bot_config.ERROR_COLOR
+        )
+        embed.add_field(
+            name='Error Message:',
+            value=f"```{type(error)}:\n{error}```"
+        )
         print(f"Error: {error}")
         await ctx.send(embed=embed)
         return
-    embed = discord.Embed(title='Oops!', description=f"```{error}```", color=bot_config.MISTAKE_COLOR)
+    embed = discord.Embed(
+        title='Oops!',
+        description=f"```{error}```",
+        color=bot_config.MISTAKE_COLOR
+    )
     await ctx.send(embed=embed)
 
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=discord.Game("Mention Me For Help"))
+    await db.open()
+    await bot.change_presence(activity=discord.Game("Mention me for help"))
     print(f"Logged in as {bot.user.name} in {len(bot.guilds)} guilds!")
 
 
 if __name__ == '__main__':
     try:
+        web_server.start()
+        _handle_donation.start()
+
         bot.add_cog(Starboard(bot, db))
         bot.add_cog(Owner(bot, db))
+        bot.add_cog(PatronCommands(bot, db))
         bot.run(TOKEN)
     except Exception as e:
         if type(e) is KeyboardInterrupt:
             pass
         else:
             print(f"An error occured: {type(e)}: {e}")
-        print("Logging Out")
     finally:
-        db.close()
+        print("Logging Out")
+        running = False
+        if len(web_server.queue) > 0:
+            print("Handeling Donations")
+            handle_donations()
+        sys.exit()
