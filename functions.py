@@ -1,4 +1,5 @@
 from discord import utils
+from bot_config import PATRON_LEVELS
 
 
 async def check_single_exists(c, sql, params):
@@ -46,3 +47,35 @@ async def check_or_create_existence(db, c, bot, guild_id=None, user_id=None, sta
         mexists = None
 
     return dict(ge=gexists, ue=uexists, se=s_exists, me=mexists)
+
+
+async def required_patron_level(db, user_id, level):
+    all_levels = [PATRON_LEVELS[p['product_id']]['num'] for p in await get_patron_levels(db, user_id)]
+    largest = max(all_levels) if all_levels != [] else None
+    if largest is not None and largest >= level:
+        return True
+    else:
+        return False
+
+
+async def get_patron_levels(db, user_id):
+    get_patrons = \
+        """SELECT * FROM patrons WHERE user_id=?"""
+
+    conn = await db.connect()
+    c = await conn.cursor()
+    async with db.lock:
+        await c.execute(get_patrons, [user_id])
+        rows = await c.fetchall()
+    await conn.close()
+    return rows
+
+
+async def handle_role(bot, db, user_id, guild_id, role_id, add):
+    guild = bot.get_guild(guild_id)
+    member = utils.get(guild.members, id=user_id)
+    role = utils.get(guild.roles, id=role_id)
+    if add:
+        await member.add_roles(role)
+    else:
+        await member.remove_roles(role)

@@ -12,6 +12,9 @@ class CommonSql:
         self.create_user = \
             """INSERT INTO users (id, is_bot)
             VALUES(?, ?)"""
+        self.create_patron = \
+            """INSERT INTO patrons (user_id, product_id)
+            VALUES(?, ?)"""
         self.create_member = \
             """INSERT INTO members (user_id, guild_id)
             VALUES(?, ?)"""
@@ -81,8 +84,14 @@ class Database:
         users_table = \
             """CREATE TABLE IF NOT EXISTS users (
                 id integer PRIMARY KEY,
-                is_bot bool NOT NULL,
-                patron_level int NOT NULL DEFAULT 0
+                is_bot bool NOT NULL
+            )"""
+
+        patrons_table = \
+            """CREATE TABLE IF NOT EXISTS patrons (
+                id integer PRIMARY KEY,
+                user_id integer NOT NULL,
+                product_id text NOT NULL
             )"""
 
         members_table = \
@@ -172,6 +181,7 @@ class Database:
         await self.lock.acquire()
         await self._create_table(guilds_table)
         await self._create_table(users_table)
+        await self._create_table(patrons_table)
         await self._create_table(members_table)
         await self._create_table(starboards_table)
         await self._create_table(sbemoijs_table)
