@@ -72,6 +72,45 @@ async def show_privacy_policy(ctx):
     await ctx.send(embed=embed)
 
 
+@bot.command(
+    name='about', brief='About Starboards',
+    description='Give quick description of what a starboard is and what it is for'
+)
+async def about_starbot(ctx):
+    msg = """
+    StarBot is a Discord starboard bot.\
+    Starboards are kind of like democratic pins.\
+    A user can "vote" to have a message displayed on a channel by reacting with an emoji, usually a star.\
+    A Starboard is a great way to archive funny messages.\
+    """
+    embed=discord.Embed(
+        title='About StarBot and Starboards',
+        description=msg, color=0xFCFF00
+    )
+    await ctx.send(embed=embed)
+
+
+@bot.command(
+    name='ping', aliases=['latency'], description='Get bot latency',
+    brief='Get bot latency'
+    )
+async def ping(ctx):
+    await ctx.send('Pong! {0} ms'.format(round(bot.latency*1000, 3)))
+
+
+@bot.command(name='info', aliases=['botstats'], description='Bot stats', brief='Bot stats')
+async def stats_for_bot(ctx):
+    embed = discord.Embed(
+        title='Bot Stats', colour=0xFCFF00,
+        description = f"""
+        **Guilds:** {len(bot.guilds)}
+        **Users:** {len(bot.users)}
+        **Ping:** {round(bot.latency*1000, 3)} ms
+        """
+        )
+    await ctx.send(embed=embed)
+
+
 # Events
 @bot.event
 async def on_raw_reaction_add(payload):
