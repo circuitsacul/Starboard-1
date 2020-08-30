@@ -1,4 +1,4 @@
-import discord, sys, asyncio, sys, os
+import discord, sys, asyncio, sys, os, asyncio
 from discord.ext import commands, tasks
 from flask.app import Flask
 from pretty_help import PrettyHelp
@@ -9,7 +9,8 @@ from events import starboard_events
 from database.database import Database
 from cogs.starboard import Starboard
 from cogs.owner import Owner
-from cogs.patron import PatronCommands, FlaskWebHook
+from cogs.patron import PatronCommands, HttpWebHook
+#from cogs.patron import FlaskWebHook
 
 BETA = True if len(sys.argv) > 1 and sys.argv[1] == 'beta' else False
 TOKEN = secrets.BETA_TOKEN if BETA and secrets.BETA_TOKEN is not None else secrets.TOKEN
@@ -20,17 +21,18 @@ db = Database(DB_PATH)
 bot = commands.Bot(PREFIX, help_command=PrettyHelp(
     color=bot_config.COLOR, no_category="Info", active=30
 ))
-web_server = FlaskWebHook(bot, db)
+#web_server = FlaskWebHook(bot, db)
+web_server = HttpWebHook(bot, db)
 
-running = True
+#running = True
 
 
 # Handle Donations
-@tasks.loop(seconds=30)
-async def _handle_donation():
-    if not running:
-        return
-    handle_donations()
+#@tasks.loop(seconds=30)
+#async def _handle_donation():
+#    if not running:
+#        return
+#    handle_donations()
 
 
 def handle_donations():
@@ -148,24 +150,20 @@ async def on_ready():
     print(f"Logged in as {bot.user.name} in {len(bot.guilds)} guilds!")
 
 
-if __name__ == '__main__':
-    try:
-        web_server.start()
-        _handle_donation.start()
+async def main():
+    await web_server.start()
 
-        bot.add_cog(Starboard(bot, db))
-        bot.add_cog(Owner(bot, db))
-        bot.add_cog(PatronCommands(bot, db))
-        bot.run(TOKEN)
-    except Exception as e:
-        if type(e) is KeyboardInterrupt:
-            pass
-        else:
-            print(f"An error occured: {type(e)}: {e}")
-    finally:
-        print("Logging Out")
-        running = False
-        if len(web_server.queue) > 0:
-            print("Handeling Donations")
-            handle_donations()
-        sys.exit()
+    bot.add_cog(Starboard(bot, db))
+    bot.add_cog(Owner(bot, db))
+    bot.add_cog(PatronCommands(bot, db))
+    await bot.start(TOKEN)
+
+
+if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
+    try:
+        loop.run_until_complete(main())
+    except:
+        print("Logging out")
+        loop.run_until_complete(bot.logout())
+        loop.run_until_complete(web_server.close())
