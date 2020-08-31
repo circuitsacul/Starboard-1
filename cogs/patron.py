@@ -1,4 +1,4 @@
-import discord, flask, functions
+import discord, flask, functions, os, dotenv
 
 #from flask import Response
 from aiohttp import web
@@ -7,7 +7,10 @@ from discord.ext import commands
 #from threading import Thread
 
 from bot_config import COLOR, SUPPORT_SERVER_ID, PATRON_LEVELS
-from secrets import DONATEBOT_TOKEN
+
+dotenv.load_dotenv()
+
+DONATEBOT_TOKEN = os.getenv("DONATEBOT_TOKEN")
 
 
 async def update_patron_for_user(bot, db, user_id, product_id, add: bool):

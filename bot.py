@@ -1,9 +1,9 @@
-import discord, sys, asyncio, sys, os, asyncio
-from discord.ext import commands, tasks
+import discord, sys, asyncio, sys, os, asyncio, dotenv
+from discord.ext import commands
 from flask.app import Flask
 from pretty_help import PrettyHelp
 
-import bot_config, secrets
+import bot_config
 from events import starboard_events
 
 from database.database import Database
@@ -12,8 +12,13 @@ from cogs.owner import Owner
 from cogs.patron import PatronCommands, HttpWebHook
 #from cogs.patron import FlaskWebHook
 
+dotenv.load_dotenv()
+
+_TOKEN = os.getenv('TOKEN')
+_BETA_TOKEN = os.getenv('BETA_TOKEN')
+
 BETA = True if len(sys.argv) > 1 and sys.argv[1] == 'beta' else False
-TOKEN = secrets.BETA_TOKEN if BETA and secrets.BETA_TOKEN is not None else secrets.TOKEN
+TOKEN = _BETA_TOKEN if BETA and _BETA_TOKEN is not None else _TOKEN
 DB_PATH = bot_config.BETA_DB_PATH if BETA else bot_config.DB_PATH
 PREFIX = commands.when_mentioned_or('sb!', 'Sb!')
 
@@ -202,7 +207,7 @@ if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     try:
         loop.run_until_complete(main())
-    except:
+    finally:
         print("Logging out")
         loop.run_until_complete(bot.logout())
         loop.run_until_complete(web_server.close())
