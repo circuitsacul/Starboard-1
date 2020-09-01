@@ -1,12 +1,16 @@
-import discord, flask, functions
+import discord, flask, functions, os, dotenv
 
-from flask import Response
+#from flask import Response
+from aiohttp import web
+
 from discord.ext import commands
-from copy import deepcopy
-from threading import Thread
+#from threading import Thread
 
 from bot_config import COLOR, SUPPORT_SERVER_ID, PATRON_LEVELS
-from secrets import DONATEBOT_TOKEN
+
+dotenv.load_dotenv()
+
+DONATEBOT_TOKEN = os.getenv("DONATEBOT_TOKEN")
 
 
 async def update_patron_for_user(bot, db, user_id, product_id, add: bool):
@@ -96,36 +100,77 @@ class PatronCommands(commands.Cog):
                 await ctx.send(f"Removed product **{product_id}** from user")
 
 
-class FlaskWebHook():
+class HttpWebHook():
     def __init__(self, bot, db):
         self.bot = bot
         self.db = db
-        self.app = flask.Flask(__name__)
-        self.queue = []
+        self.routes = web.RouteTableDef()
+        self.app = web.Application()
+        self._set_routes()
 
-        @self.app.route('/donatebot', methods=['POST'])
-        def handle_donation():
-            print("got connection")
-            data = request.get_json(silent=True)
-            token = request.headers['authorization']
-            if token != DONATEBOT_TOKEN:
-                return Response(response="Invalid Token", status=400)
+        self.runner = web.AppRunner(self.app)
 
-            purchase_id = data['product_id']
+    async def start(self):
+        await self.runner.setup()
+        self.site = web.TCPSite(self.runner, '0.0.0.0', 8080)
+        await self.site.start()
 
-            if purchase_id == "":
-                return Response(response='Ignoring Role Purchase', status=200)
-            if str(purchase_id) not in PATRON_LEVELS:
-                return Response(response="Unknown Product", status=200)
+    async def close(self):
+        await self.runner.cleanup()
 
-            self.queue.append(data)
+    def _set_routes(self):
+        @self.routes.post('/webhook')
+        async def donation_event(request):
+            try:
+                data = await request.json()
+                headers = request.headers
+                # Check if authenticaiton token is in headers and matches token
+                status = await self.handle_donation_event(data)
+            except Exception as e:
+                print(f"Error in donation event: {type(e)}: {e}")
+                return web.Response(body="Error!", status=500)
+            return web.Response(body="Caught!", status=200)
+        
+        @self.routes.get('')
+        async def ping(request):
+            return web.Response(body="I'm Here!", status=200)
 
-            return Response(response="Caught :)", status=200)
+        self.app.add_routes(self.routes)
 
-        self.app_thread = Thread(
-            target=self.app.run, kwargs={'port': 8080, 'host': '0.0.0.0', 'use_reloader': False, 'debug': False},
-            daemon=True
-        )
-    
-    def start(self):
-        self.app_thread.start()
+    async def handle_donation_event(self, data):
+        pass
+
+
+#class FlaskWebHook():
+#    def __init__(self, bot, db):
+#        self.bot = bot
+#        self.db = db
+#        self.app = flask.Flask(__name__)
+#        self.queue = []
+#
+#        @self.app.route('/donatebot', methods=['POST'])
+#        def handle_donation():
+#            print("got connection")
+#            data = request.get_json(silent=True)
+#            token = request.headers['authorization']
+#            if token != DONATEBOT_TOKEN:
+#                return Response(response="Invalid Token", status=400)
+#
+#            purchase_id = data['product_id']
+#
+#            if purchase_id == "":
+#                return Response(response='Ignoring Role Purchase', status=200)
+#            if str(purchase_id) not in PATRON_LEVELS:
+#                return Response(response="Unknown Product", status=200)
+#
+#            self.queue.append(data)
+#
+#            return Response(response="Caught :)", status=200)
+#
+#        self.app_thread = Thread(
+#            target=self.app.run, kwargs={'port': 8080, 'host': '0.0.0.0', 'use_reloader': False, 'debug': False},
+#            daemon=True
+#        )
+#    
+#    def start(self):
+#        self.app_thread.start()

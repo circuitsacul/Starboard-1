@@ -1,18 +1,24 @@
-import discord, sys, asyncio, sys, os
-from discord.ext import commands, tasks
+import discord, sys, asyncio, sys, os, asyncio, dotenv
+from discord.ext import commands
 from flask.app import Flask
 from pretty_help import PrettyHelp
 
-import bot_config, secrets
+import bot_config
 from events import starboard_events
 
 from database.database import Database
 from cogs.starboard import Starboard
 from cogs.owner import Owner
-from cogs.patron import PatronCommands, FlaskWebHook
+from cogs.patron import PatronCommands, HttpWebHook
+#from cogs.patron import FlaskWebHook
+
+dotenv.load_dotenv()
+
+_TOKEN = os.getenv('TOKEN')
+_BETA_TOKEN = os.getenv('BETA_TOKEN')
 
 BETA = True if len(sys.argv) > 1 and sys.argv[1] == 'beta' else False
-TOKEN = secrets.BETA_TOKEN if BETA and secrets.BETA_TOKEN is not None else secrets.TOKEN
+TOKEN = _BETA_TOKEN if BETA and _BETA_TOKEN is not None else _TOKEN
 DB_PATH = bot_config.BETA_DB_PATH if BETA else bot_config.DB_PATH
 PREFIX = commands.when_mentioned_or('sb!', 'Sb!')
 
@@ -20,17 +26,18 @@ db = Database(DB_PATH)
 bot = commands.Bot(PREFIX, help_command=PrettyHelp(
     color=bot_config.COLOR, no_category="Info", active=30
 ))
-web_server = FlaskWebHook(bot, db)
+#web_server = FlaskWebHook(bot, db)
+web_server = HttpWebHook(bot, db)
 
-running = True
+#running = True
 
 
 # Handle Donations
-@tasks.loop(seconds=30)
-async def _handle_donation():
-    if not running:
-        return
-    handle_donations()
+#@tasks.loop(seconds=30)
+#async def _handle_donation():
+#    if not running:
+#        return
+#    handle_donations()
 
 
 def handle_donations():
@@ -67,6 +74,45 @@ async def show_links(ctx):
 async def show_privacy_policy(ctx):
     embed = discord.Embed(title='Privacy Policy', color=bot_config.COLOR)
     embed.description = bot_config.PRIVACY_POLICY
+    await ctx.send(embed=embed)
+
+
+@bot.command(
+    name='about', brief='About Starboards',
+    description='Give quick description of what a starboard is and what it is for'
+)
+async def about_starbot(ctx):
+    msg = """
+    StarBot is a Discord starboard bot.\
+    Starboards are kind of like democratic pins.\
+    A user can "vote" to have a message displayed on a channel by reacting with an emoji, usually a star.\
+    A Starboard is a great way to archive funny messages.\
+    """
+    embed=discord.Embed(
+        title='About StarBot and Starboards',
+        description=msg, color=0xFCFF00
+    )
+    await ctx.send(embed=embed)
+
+
+@bot.command(
+    name='ping', aliases=['latency'], description='Get bot latency',
+    brief='Get bot latency'
+    )
+async def ping(ctx):
+    await ctx.send('Pong! {0} ms'.format(round(bot.latency*1000, 3)))
+
+
+@bot.command(name='info', aliases=['botstats'], description='Bot stats', brief='Bot stats')
+async def stats_for_bot(ctx):
+    embed = discord.Embed(
+        title='Bot Stats', colour=0xFCFF00,
+        description = f"""
+        **Guilds:** {len(bot.guilds)}
+        **Users:** {len(bot.users)}
+        **Ping:** {round(bot.latency*1000, 3)} ms
+        """
+        )
     await ctx.send(embed=embed)
 
 
@@ -148,24 +194,22 @@ async def on_ready():
     print(f"Logged in as {bot.user.name} in {len(bot.guilds)} guilds!")
 
 
+async def main():
+    await web_server.start()
+
+    bot.add_cog(Starboard(bot, db))
+    bot.add_cog(Owner(bot, db))
+    bot.add_cog(PatronCommands(bot, db))
+    await bot.start(TOKEN)
+
+
 if __name__ == '__main__':
     try:
-        web_server.start()
-        _handle_donation.start()
-
-        bot.add_cog(Starboard(bot, db))
-        bot.add_cog(Owner(bot, db))
-        bot.add_cog(PatronCommands(bot, db))
-        bot.run(TOKEN)
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(main())
     except Exception as e:
-        if type(e) is KeyboardInterrupt:
-            pass
-        else:
-            print(f"An error occured: {type(e)}: {e}")
+        pass
     finally:
-        print("Logging Out")
-        running = False
-        if len(web_server.queue) > 0:
-            print("Handeling Donations")
-            handle_donations()
-        sys.exit()
+        print("Logging out")
+        loop.run_until_complete(bot.logout())
+        loop.run_until_complete(web_server.close())
