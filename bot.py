@@ -23,9 +23,12 @@ DB_PATH = bot_config.BETA_DB_PATH if BETA else bot_config.DB_PATH
 PREFIX = commands.when_mentioned_or('sb!', 'Sb!')
 
 db = Database(DB_PATH)
-bot = commands.Bot(PREFIX, help_command=PrettyHelp(
-    color=bot_config.COLOR, no_category="Info", active=30
-))
+bot = commands.Bot(PREFIX,
+    help_command=PrettyHelp(
+        color=bot_config.COLOR, no_category="Info", active=30
+    ),
+    case_insensitive=True
+)
 #web_server = FlaskWebHook(bot, db)
 web_server = HttpWebHook(bot, db)
 
@@ -40,12 +43,12 @@ web_server = HttpWebHook(bot, db)
 #    handle_donations()
 
 
-def handle_donations():
-    print("Running Donation Handler")
-    cp_queue = web_server.queue.copy()
-    for item in cp_queue:
-        print("New Donation Event")
-        print(item)
+#def handle_donations():
+#    print("Running Donation Handler")
+#    cp_queue = web_server.queue.copy()
+#    for item in cp_queue:
+#        print("New Donation Event")
+#        print(item)
 
 
 # Info Commands
@@ -189,13 +192,13 @@ async def on_command_error(ctx, error):
 
 @bot.event
 async def on_ready():
-    await db.open()
     await bot.change_presence(activity=discord.Game("Mention me for help"))
     print(f"Logged in as {bot.user.name} in {len(bot.guilds)} guilds!")
 
 
 async def main():
     await web_server.start()
+    await db.open()
 
     bot.add_cog(Starboard(bot, db))
     bot.add_cog(Owner(bot, db))
@@ -204,12 +207,11 @@ async def main():
 
 
 if __name__ == '__main__':
-    try:
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(main())
-    except Exception as e:
-        pass
-    finally:
-        print("Logging out")
-        loop.run_until_complete(bot.logout())
-        loop.run_until_complete(web_server.close())
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
+    #except Exception as e:
+    #    print(type(e), e)
+    #finally:
+    #    print("Logging out")
+    loop.run_until_complete(bot.logout())
+    loop.run_until_complete(web_server.close())

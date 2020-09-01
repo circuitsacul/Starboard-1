@@ -135,7 +135,7 @@ class Starboard(commands.Cog):
         await ctx.send("Removed starboard")
 
     @commands.command(
-        name='addEmoji', aliases=['addemoji', 'ae'],
+        name='addEmoji', aliases=['ae'],
         description='Add emoji to a starboard',
         brief='Add emoji to starboard'
     )
@@ -172,7 +172,7 @@ class Starboard(commands.Cog):
             await ctx.send(f"Added {emoji} to {starboard.mention}")
 
     @commands.command(
-        name='removeEmoji', aliases=['removeemoji', 're'],
+        name='removeEmoji', aliases=['re'],
         description='Removes a starboard emoji',
         brief='Removes a starboard emoji'
     )
@@ -214,7 +214,7 @@ class Starboard(commands.Cog):
         await ctx.send(f"Removed {emoji} from {starboard.mention}")
 
     @commands.command(
-        name='requiredStars', aliases=['rs', 'required', 'requiredstars'],
+        name='requiredStars', aliases=['rs', 'required'],
         description='Set\'s how many stars are needed before a message appears on the starboard',
         brief='Set\'s required stars'
     )
@@ -230,7 +230,7 @@ class Starboard(commands.Cog):
             await ctx.send(f"Set requiredStars to {value} for {starboard.mention}")
 
     @commands.command(
-        name='requiredToLose', aliases=['rtl', 'requiredtolose'],
+        name='requiredToLose', aliases=['rtl'],
         description='Set\'s how few stars a message needs before the messages is removed from the starboard',
         brief='Sets requiredToLose'
     )
@@ -246,7 +246,7 @@ class Starboard(commands.Cog):
             await ctx.send(f"Set requiredToLose to {value} for {starboard.mention}")
 
     @commands.command(
-        name='selfStar', aliases=['ss', 'selfstar'],
+        name='selfStar', aliases=['ss'],
         description='Set wether or not to allow a user to star their own message for starboard',
         brief='Set selfStar for starboard'
     )
