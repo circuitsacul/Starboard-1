@@ -1,3 +1,7 @@
+.replit
+poetry.lock
+pyproject.toml
+
 *.db
 *.db-journal
 .vscode
