@@ -2,7 +2,6 @@
 poetry.lock
 pyproject.toml
 
-secrets.py
 *.db
 *.db-journal
 .vscode
