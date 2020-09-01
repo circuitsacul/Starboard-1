@@ -112,7 +112,7 @@ class HttpWebHook():
 
     async def start(self):
         await self.runner.setup()
-        self.site = web.TCPSite(self.runner, '0.0.0.0', 8080)
+        self.site = web.TCPSite(self.runner, '0.0.0.0', 80)
         await self.site.start()
 
     async def close(self):
@@ -130,6 +130,10 @@ class HttpWebHook():
                 print(f"Error in donation event: {type(e)}: {e}")
                 return web.Response(body="Error!", status=500)
             return web.Response(body="Caught!", status=200)
+        
+        @self.routes.get('')
+        async def ping(request):
+            return web.Response(body="I'm Here!", status=200)
 
         self.app.add_routes(self.routes)
 
