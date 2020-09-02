@@ -215,10 +215,11 @@ async def main():
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
-    #except Exception as e:
-    #    print(type(e), e)
-    #finally:
-    #    print("Logging out")
-    loop.run_until_complete(bot.logout())
-    loop.run_until_complete(web_server.close())
+    try:
+        loop.run_until_complete(main())
+    except Exception as e:
+        print(type(e), e)
+    finally:
+        print("Logging out")
+        loop.run_until_complete(bot.logout())
+        loop.run_until_complete(web_server.close())
