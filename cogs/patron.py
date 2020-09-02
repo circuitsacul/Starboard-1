@@ -83,17 +83,18 @@ class PatronCommands(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(
-        name='patronLevel', aliases=['lvl'],
+        name='patronLevel', aliases=['lvl', 'pl'],
         description='View a suers current patron status. User defaults to you',
         brief='View current patrons status'
     )
     async def show_patron_info(self, ctx, user: discord.Member=None):
-        user_id = user.id if user else ctx.message.author.id
+        user = user if user else ctx.message.author
+        user_id = user.id
         levels = await functions.get_patron_levels(self.db, user_id)
         level_ids = [lvl['product_id'] for lvl in levels]
-        string = "Current Patron Levels:"
+        string = f"Current Patron Levels for **{user}**:"
         for lvl_id, lvl in PATRON_LEVELS.items():
-            string += f"\n**{lvl['display']['title']}: {'Yes' if lvl_id in level_ids else 'No'}**"
+            string += f"\n**--{lvl['display']['title']}: {'Yes' if lvl_id in level_ids else 'No'}**"
         await ctx.send(string)
 
     @commands.command(
