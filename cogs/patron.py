@@ -46,6 +46,24 @@ class PatronCommands(commands.Cog):
         self.bot = bot
         self.db = db
 
+    @commands.command(name='donationevents', aliases=['de'])
+    @commands.is_owner()
+    async def list_donation_events(self, ctx):
+        conn = await self.db.connect()
+        c = await conn.cursor()
+        async with self.db.lock:
+            await c.execute("SELECT * FROM donations")
+            donations = await c.fetchall()
+            await conn.close()
+        string = None
+        if len(donations) == 0:
+            string = "No Donations Yet"
+        else:
+            string = ""
+            for d in donations:
+                string += f"<@{d['user_id']}> {d['status']} purchase of **{d['product_id'] if d['product_id'] is not None else d['role_id']}**\n"
+        await ctx.send(string)
+
     @commands.command(
         name='patron', aliases=['donate'],
         description='View information on how you can donate and what the benefits are',
@@ -124,8 +142,12 @@ class HttpWebHook():
             try:
                 data = await request.json()
                 headers = request.headers
-                # Check if authenticaiton token is in headers and matches token
-                status = await self.handle_donation_event(data)
+                if request.headers['authorization'] != DONATEBOT_TOKEN:
+                    print("Invalid Token")
+                    return web.Response(body='Error!', status=500)
+                else:
+                    print("Successful Donation")
+                    status = await self.handle_donation_event(data)
             except Exception as e:
                 print(f"Error in donation event: {type(e)}: {e}")
                 return web.Response(body="Error!", status=500)
@@ -133,12 +155,34 @@ class HttpWebHook():
         
         @self.routes.get('')
         async def ping(request):
+            print("ping!")
             return web.Response(body="I'm Here!", status=200)
 
         self.app.add_routes(self.routes)
 
     async def handle_donation_event(self, data):
-        pass
+        product_id = None if 'product_id' not in data else data['product_id']
+        role_id = None if 'role_id' not in data else data['role_id']
+        conn = await self.db.connect()
+        c = await conn.cursor()
+        async with self.db.lock:
+            await c.execute(
+                self.db.q.create_donation,
+                [
+                    data['txn_id'], data['buyer_id'], product_id, role_id,
+                    data['guild_id'], data['buyer_email'], data['price'],
+                    data['currency'], data['recurring'], data['status']
+                ]
+            )
+        await conn.commit()
+        await conn.close()
+
+        if 'product_id' not in data:
+            print("Role Purchase Ignored")
+        else:
+            add = True if data['status'] == 'completed' else False
+            print(f"Add: {add}")
+            update_patron_for_user(self.bot, self.db, data['buyer_id'], data['product_id'], add)
 
 
 #class FlaskWebHook():

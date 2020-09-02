@@ -15,6 +15,11 @@ class CommonSql:
         self.create_patron = \
             """INSERT INTO patrons (user_id, product_id)
             VALUES(?, ?)"""
+        self.create_donation = \
+            """INSERT INTO donations
+            (txn_id, user_id, product_id, role_id, guild_id,
+            email, price, currency, recurring, status)
+            VALUES(?,?,?,?,?,?,?,?,?,?)"""
         self.create_member = \
             """INSERT INTO members (user_id, guild_id)
             VALUES(?, ?)"""
@@ -92,6 +97,23 @@ class Database:
                 id integer PRIMARY KEY,
                 user_id integer NOT NULL,
                 product_id text NOT NULL
+            )"""
+
+        donations_table = \
+            """CREATE TABLE IF NOT EXISTS donations (
+                id integer PRIMARY KEY,
+                txn_id integer NOT NULL,
+                user_id integer NOT NULL,
+                product_id text DEFAULT NULL,
+                role_id text DEFAULT NULL,
+                guild_id integer NOT NULL,
+
+                email text NOT NULL,
+                price integer NOT NULL,
+                currency text NOT NULL,
+
+                recurring bool NOT NULL,
+                status text NOT NULL
             )"""
 
         members_table = \
@@ -182,6 +204,7 @@ class Database:
         await self._create_table(guilds_table)
         await self._create_table(users_table)
         await self._create_table(patrons_table)
+        await self._create_table(donations_table)
         await self._create_table(members_table)
         await self._create_table(starboards_table)
         await self._create_table(sbemoijs_table)
