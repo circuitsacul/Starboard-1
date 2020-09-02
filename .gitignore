@@ -2,6 +2,8 @@
 poetry.lock
 pyproject.toml
 
+bot_config.py
+
 *.db
 *.db-journal
 .vscode
