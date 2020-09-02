@@ -1,5 +1,4 @@
-![Starboard Logo](https://cdn.discordapp.com/avatars/745642023964639333/69be53978fbf10596bb43a26f76d1b21.png?size=1024)
-
+<div style="text-align: center"><img src="https://cdn.discordapp.com/avatars/745642023964639333/69be53978fbf10596bb43a26f76d1b21.png?size=1024" /></div>
 # Starboard
 
 Starboard is a free, advanced, and highly-customizable starboard bot. This documentation gives you a quick start to using the bot. If you see a problem, please let me know. You can use the bots `suggest` command, or you can join the support server. My discord username is `@Circuit#5585`.
