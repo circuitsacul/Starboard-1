@@ -1,6 +1,6 @@
 # Starboard
 
-Starboard is a free, advanced, and highly-customizable starboard bot. This documentation gives you a quick start to using the bot, as well as listing all the available commands. If you see a problem, please let me know. You can use the bots `suggest` command, or you can join the support server. My discord username is `@CircuitSacul#5585`.
+Starboard is a free, advanced, and highly-customizable starboard bot. This documentation gives you a quick start to using the bot. If you see a problem, please let me know. You can use the bots `suggest` command, or you can join the support server. My discord username is `@CircuitSacul#5585`.
 
 [Invite Starboard to your server](https://discord.com/api/oauth2/authorize?client_id=700796664276844612&permissions=117824&scope=bot)
 
@@ -17,5 +17,5 @@ Starboard is a free, advanced, and highly-customizable starboard bot. This docum
 These directions are for self-hosting the bot. If you just want a working bot, you can invite it to your server instead.
  - Make a copy of `bot_config.py.example`, and rename it to `bot_config.py`. Update the settings to your liking.
    - Note: This bot was designed to work with donatebot.io for patron features. If you need help setting this up, you can join the support server.
- - Create a file called `.env`, and inside it put `TOKEN="your token"`.
+ - Create a file called `.env`, and inside it put `TOKEN="your token"`
  - Run `python bot.py` to run the bot!
