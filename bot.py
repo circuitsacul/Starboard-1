@@ -70,7 +70,8 @@ async def show_links(ctx):
         f"""**[Support Server]({bot_config.SUPPORT_SERVER})
         [Invite Me]({bot_config.INVITE})
         [Source Code]({bot_config.SOURCE_CODE})
-        [Donate/Become a Patron]({bot_config.DONATE})**
+        [Donate/Become a Patron]({bot_config.DONATE})
+        [Submit Bug Report or Suggestion]({bot_config.ISSUES_PAGE})**
         """
     embed.description = description
     await ctx.send(embed=embed)
