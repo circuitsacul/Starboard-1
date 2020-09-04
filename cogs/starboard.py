@@ -1,3 +1,6 @@
+# TODO: Allow user to set botsReact, but also need to make it still ignore starboards reactions
+
+
 import discord, functions
 from discord.embeds import Embed
 from discord.ext import commands
@@ -339,3 +342,51 @@ class Starboard(commands.Cog):
             await ctx.send("Invalid Setting")
         else:
             await ctx.send(f"Set selfStar to {value} for {starboard.mention}")
+
+    @commands.command(
+        name='linkEdits', aliases=['le'],
+        description='Sets wether or not the bot should edit the starboard message if the user edits it',
+        brief='Sets linkEdits for a starboard'
+    )
+    @commands.guild_only()
+    @commands.has_permissions(manage_channels=True, manage_messages=True)
+    async def set_link_edits(self, ctx, starboard: discord.TextChannel, value: bool):
+        status = await change_starboard_settings(self.db, starboard.id, link_edits=value)
+        if status is None:
+            await ctx.send("That is not a starboard!")
+        elif status is False:
+            await ctx.send("Invalid Setting")
+        else:
+            await ctx.send(f"Set linkEdits to {value} for {starboard.mention}")
+
+    @commands.command(
+        name='linkDeletes', aliases=['ld'],
+        description='Sets wether or not the bot should delete the starboard message if the original is deleted',
+        brief='Sets linkDeletes for a starboard'
+    )
+    @commands.guild_only()
+    @commands.has_permissions(manage_channels=True, manage_messages=True)
+    async def set_link_deletes(self, ctx, starboard: discord.TextChannel, value: bool):
+        status = await change_starboard_settings(self.db, starboard.id, link_deletes=value)
+        if status is None:
+            await ctx.send("That is not a starboard!")
+        elif status is False:
+            await ctx.send("Invalid Setting")
+        else:
+            await ctx.send(f"Set linkDeletes to {value} for {starboard.mention}")
+
+    @commands.command(
+        name='botsOnStarboard', aliases=['botsOnSb', 'bos'],
+        description="Sets wether or not to allow bot messages to be put on the starboard",
+        brief='Sets botsOnStarboards for a starboard'
+    )
+    @commands.guild_only()
+    @commands.has_permissions(manage_channels=True, manage_messages=True)
+    async def set_bots_on_starboard(self, ctx, starboard: discord.TextChannel, value: bool):
+        status = await change_starboard_settings(self.db, starboard.id, bots_on_sb=value)
+        if status is None:
+            await ctx.send("That is not a starboard!")
+        elif status is False:
+            await ctx.send("Invalid Setting")
+        else:
+            await ctx.send(f"Set botsOnStarboard to {value} for {starboard.mention}")

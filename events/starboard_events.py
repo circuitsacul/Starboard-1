@@ -186,28 +186,27 @@ async def update_message(db, orig_message, orig_channel_id, sb_message, starboar
     async with db.lock:
         if remove:
             await sb_message.delete()
-            return
-        plain_text = f"**⭐ {points} | <#{orig_channel_id}>{' | 🔒' if forced else ''}**"
-        embed = await get_embed_from_message(orig_message) if orig_message is not None else None
-        if add and embed is not None:
-            sb_message = await starboard.send(plain_text, embed=embed)
-            await c.execute(db.q.create_message, [
-                sb_message.id, sb_message.guild.id, orig_message.author.id,
-                orig_message.id, starboard.id, False,
-                orig_message.channel.is_nsfw()
-            ])
-        elif update and sb_message:
-            if link_edits:
+        else:
+            plain_text = f"**⭐ {points} | <#{orig_channel_id}>{' | 🔒' if forced else ''}**"
+            embed = await get_embed_from_message(orig_message) if orig_message is not None else None
+            if add and embed is not None:
+                sb_message = await starboard.send(plain_text, embed=embed)
+                await c.execute(db.q.create_message, [
+                    sb_message.id, sb_message.guild.id, orig_message.author.id,
+                    orig_message.id, starboard.id, False,
+                    orig_message.channel.is_nsfw()
+                ])
+            elif update and sb_message and link_edits:
                 await sb_message.edit(
                     content=plain_text, embed=embed
                 )
-            else:
+            elif sb_message:
                 await sb_message.edit(
                     content=plain_text
                 )
-        await conn.commit()
-        await conn.close()
-    if sb_message is not None:
+            await conn.commit()
+            await conn.close()
+    if sb_message is not None and not remove:
         for _emoji in emojis:
             if _emoji['d_id'] is not None:
                 emoji = utils.get(starboard.guild.emojis, id=int(_emoji['id']))
