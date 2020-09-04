@@ -49,13 +49,6 @@ web_server = HttpWebHook(bot, db)
 #    for item in cp_queue:
 #        print("New Donation Event")
 #        print(item)
-# Test Command
-@bot.command()
-async def test(ctx):
-    if await functions.required_patron_level(db, ctx.message.author.id, 2):
-        await ctx.send("Yup!")
-    else:
-        await ctx.send("Nope")
 
 
 # Info Commands

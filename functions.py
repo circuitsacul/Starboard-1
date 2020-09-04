@@ -1,5 +1,6 @@
 from discord import utils
 from bot_config import PATRON_LEVELS
+import bot_config
 
 
 async def check_single_exists(c, sql, params):
@@ -79,3 +80,15 @@ async def handle_role(bot, db, user_id, guild_id, role_id, add):
         await member.add_roles(role)
     else:
         await member.remove_roles(role)
+
+
+async def get_limit(db, item, guild):
+    owner = guild.owner
+    max_of_item = bot_config.DEFAULT_LEVEL[item]
+    levels = await get_patron_levels(db, owner.id)
+    for _patron in levels:
+        product_id = _patron['product_id']
+        temp_max = bot_config.PATRON_LEVELS[product_id]['perks'][item]
+        if temp_max == float('inf') or temp_max > max_of_item:
+            max_of_item = temp_max
+    return max_of_item

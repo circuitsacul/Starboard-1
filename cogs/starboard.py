@@ -103,14 +103,32 @@ class Starboard(commands.Cog):
     async def add_starboard(self, ctx, starboard: discord.TextChannel):
         conn = await self.db.connect()
         c = await conn.cursor()
+        get_starboards = \
+            """SELECT * FROM starboards WHERE guild_id=?"""
+
+        limit = await functions.get_limit(self.db, 'starboards', ctx.guild)
+
         async with self.db.lock:
-            existed = await functions.check_or_create_existence(self.db, c, self.bot, guild_id=ctx.guild.id, starboard_id=starboard.id, user_id=ctx.message.author.id, do_member=True)
+            await functions.check_or_create_existence(self.db, c, self.bot, guild_id=ctx.guild.id, user_id=ctx.message.author.id, do_member=True)
+            await c.execute(get_starboards, [ctx.guild.id])
+            rows = await c.fetchall()
+            num_starboards = len(rows)
+
+            if num_starboards >= limit:
+                await ctx.send("You have reached your limit for starboards. Please upgrade by becoming a patron.")
+            else:
+                exists = await functions.check_or_create_existence(self.db, c, self.bot, guild_id=ctx.guild.id, starboard_id=starboard.id)
+                if exists['se']:
+                    await ctx.send("That is already a starboard!")
+                else:
+                    await ctx.send(f"Added starboard {starboard.mention}")
+
             await conn.commit()
             await conn.close()
-        if existed['se'] == True:
-            await ctx.send("That is already a starboard!")
-        else:
-            await ctx.send(f"Added starboard {starboard.mention}")
+        #if existed['se'] == True:
+        #    await ctx.send("That is already a starboard!")
+        #else:
+        #    await ctx.send(f"Added starboard {starboard.mention}")
 
     @commands.command(
         name='remove', aliases=['r'],
@@ -144,13 +162,17 @@ class Starboard(commands.Cog):
     async def add_starboard_emoji(self, ctx, starboard: discord.TextChannel, emoji: Union[discord.Emoji, str]):
         check_sbemoji = \
             """SELECT * FROM sbemojis WHERE name=? AND starboard_id=?"""
+        get_all_sbemoji = \
+            """SELECT * FROM sbemojis WHERE starboard_id=?"""
         emoji_name = str(emoji.id) if isinstance(emoji, discord.Emoji) else emoji
         emoji_id = emoji.id if isinstance(emoji, discord.Emoji) else None
 
+        limit = await functions.get_limit(self.db, 'emojis', ctx.guild)
+
         conn = await self.db.connect()
         c = await conn.cursor()
+        added = False
         async with self.db.lock:
-            added = False
             await functions.check_or_create_existence(
                 self.db, c, self.bot, guild_id=ctx.guild.id, user_id=ctx.message.author.id, do_member=True
             )
@@ -158,13 +180,18 @@ class Starboard(commands.Cog):
             if not exists['se']:
                 await ctx.send("That is not a starboard!")
             else:
-                await c.execute(check_sbemoji, [emoji_name, starboard.id])
-                exists = len(await c.fetchall()) > 0
-                if exists:
-                    await ctx.send("That emoji is already on that starboard!")
+                await c.execute(get_all_sbemoji, [starboard.id])
+                rows = await c.fetchall()
+                if len(rows) >= limit:
+                    await ctx.send("You have reached your limit for emojis on this starboard. Please upgrade by becoming a patron.")
                 else:
-                    await c.execute(self.db.q.create_sbemoji, [emoji_id, starboard.id, emoji_name, False])
-                    added = True
+                    await c.execute(check_sbemoji, [emoji_name, starboard.id])
+                    exists = len(await c.fetchall()) > 0
+                    if exists:
+                        await ctx.send("That emoji is already on that starboard!")
+                    else:
+                        await c.execute(self.db.q.create_sbemoji, [emoji_id, starboard.id, emoji_name, False])
+                        added = True
 
             await conn.commit()
             await conn.close()
