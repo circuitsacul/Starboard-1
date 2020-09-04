@@ -110,6 +110,8 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
         """SELECT * FROM messages WHERE orig_message_id=? AND channel_id=?"""
     delete_starboard_message = \
         """DELETE FROM messages WHERE orig_message_id=? and channel_id=?"""
+    get_author = \
+        """SELECT * FROM users WHERE id=?"""
 
     starboard_id = sql_starboard['id']
     starboard = bot.get_channel(starboard_id)
@@ -117,6 +119,8 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
     conn = await db.connect()
     c = await conn.cursor()
     async with db.lock:
+        await c.execute(get_author, [sql_message['user_id']])
+        sql_author = await c.fetchone()
         await c.execute(get_starboard_message, (sql_message['id'], sql_starboard['id']))
         rows = await c.fetchall()
         if len(rows) == 0:
@@ -142,6 +146,8 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
 
     link_deletes = sql_starboard['link_deletes']
     link_edits = sql_starboard['link_edits']
+    bots_on_sb = sql_starboard['bots_on_sb']
+    is_bot = sql_author['is_bot']
     forced = sql_message['is_forced']
     frozen = sql_message['is_frozen']
 
@@ -158,6 +164,11 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
         add = False
     elif on_starboard == False:
         remove = False
+
+    if is_bot and not bots_on_sb:
+        add = False
+        if on_starboard:
+            remove = True
 
     if forced == True:
         remove = False

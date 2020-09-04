@@ -140,7 +140,7 @@ class Database:
                 link_edits bool NOT NULL DEFAULT 1,
                 link_deletes bool NOT NULL DEFAULT 0,
                 bots_react bool NOT NULL DEFAULT 0,
-                bots_on_sb bool NOT NULL DEFAULT 0,
+                bots_on_sb bool NOT NULL DEFAULT 1,
 
                 locked bool NOT NULL DEFAULT 0,
                 is_archived bool NOT NULL DEFAULT 0,

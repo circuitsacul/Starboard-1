@@ -64,34 +64,86 @@ async def change_starboard_settings(
     return True
 
 
+async def pretty_emoji_string(emojis, guild):
+    string = ""
+    for emoji in emojis:
+        is_custom = emoji['d_id'] is not None
+        if is_custom:
+            emoji_string = str(discord.utils.get(guild.emojis, id=int(emoji['d_id'])))
+        else:
+            emoji_string = emoji['name']
+        string += emoji_string + " "
+    return string
+
+
 class Starboard(commands.Cog):
     def __init__(self, bot, db):
         self.bot = bot
         self.db = db
 
     @commands.command(
-        name='starboards', aliases=['boards', 'b', 's'],
+        name='starboards', aliases=['boards', 'b'],
         description='List all the starboars for this server',
         brief='List starboards'
     )
     @commands.guild_only()
     async def list_starboards(self, ctx):
+        get_starboards = """SELECT * FROM starboards WHERE guild_id=?"""
+        get_emojis = """SELECT * FROM sbemojis WHERE starboard_id=?"""
+
         conn = await self.db.connect()
         c = await conn.cursor()
         async with self.db.lock:
             _ = await functions.check_or_create_existence(self.db, c, self.bot, guild_id=ctx.guild.id, user_id=ctx.message.author.id, do_member=True)
-            get_starboards = """SELECT * FROM starboards WHERE guild_id=?"""
             await c.execute(get_starboards, (ctx.guild.id,))
             rows = await c.fetchall()
+
+            if len(rows) == 0:
+                await ctx.send("You don't have any starboards")
+            else:
+                msg = f'Starboards: {len(rows)}\n'
+                for row in rows:
+                    sb_id = row['id']
+                    await c.execute(get_emojis, [sb_id])
+                    emojis = await c.fetchall()
+                    emoji_string = await pretty_emoji_string(emojis, ctx.guild)
+                    msg += f"--<#{row['id']}>: {emoji_string}\n"
+                await ctx.send(msg)
+
             await conn.commit()
             await conn.close()
-        if len(rows) == 0:
-            await ctx.send("You don't have any starboards")
-        else:
-            msg = f'Starboards: {len(rows)}\n'
-            for row in rows:
-                msg += f"--<#{row['id']}>\n"
-            await ctx.send(msg)
+
+    @commands.command(
+        name='settings', aliases=['s'],
+        description='View all of the settings for a specific starboards',
+        brief='View settings for startboard'
+    )
+    @commands.guild_only()
+    async def get_starboard_settings(self, ctx, starboard: discord.TextChannel):
+        get_starboard = """SELECT * FROM starboards WHERE id=?"""
+        get_emojis = """SELECT * FROM sbemojis WHERE starboard_id=?"""
+
+        conn = await self.db.connect()
+        c = await conn.cursor()
+        async with self.db.lock:
+            await functions.check_or_create_existence(self.db, c, self.bot, guild_id=ctx.guild.id, user_id=ctx.message.author.id, do_member=True)
+            await c.execute(get_starboard, [starboard.id])
+            sql_starboard = await c.fetchone()
+            if sql_starboard is None:
+                await ctx.send("That is not a starboard!")
+            else:
+                string = f"<#{starboard.id}>:**"
+                string += f"\n--requiredStars: {sql_starboard['required']}"
+                string += f"\n--requiredToLose: {sql_starboard['rtl']}"
+                string += f"\n--selfStar: {bool(sql_starboard['self_star'])}"
+                string += f"\n--linkEdits: {bool(sql_starboard['link_edits'])}"
+                string += f"\n--linkDeletes: {bool(sql_starboard['link_deletes'])}"
+                string += f"\n--botsReact: {bool(sql_starboard['bots_react'])}"
+                string += f"\n--botsOnStarboard: {bool(sql_starboard['bots_on_sb'])}"
+                string += f"\n--locked: {bool(sql_starboard['locked'])}"
+                string += f"\n--archived: {bool(sql_starboard['is_archived'])}**"
+                await ctx.send(string)
+            await conn.close()
 
     @commands.command(
         name='add', aliases=['a'],
