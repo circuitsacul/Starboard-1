@@ -190,7 +190,7 @@ async def update_message(db, orig_message, orig_channel_id, sb_message, starboar
         if remove:
             await sb_message.delete()
         else:
-            plain_text = f"**⭐ {points} | <#{orig_channel_id}>{' | 🔒' if forced else ''}**"
+            plain_text = f"**{points} | <#{orig_channel_id}>{' | 🔒' if forced else ''}**"
             embed = await get_embed_from_message(orig_message) if orig_message is not None else None
             if add and embed is not None:
                 sb_message = await starboard.send(plain_text, embed=embed)
