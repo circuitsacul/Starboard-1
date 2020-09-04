@@ -15,7 +15,7 @@ Starboard is a free, advanced, and highly-customizable starboard bot. This docum
 
 ## Quick Setup:
 These directions are for self-hosting the bot. If you just want a working bot, you can invite it to your server instead.
- - Make a copy of `bot_config.py.example`, and rename it to `bot_config.py`. Update the settings to your liking.
-   - Note: This bot was designed to work with donatebot.io for patron features. If you need help setting this up, you can join the support server.
+ - Make a copy of `bot_config.py.example`, and rename it to `bot_config.py`. 
+   - Update the settings to your liking. If you need help with this, you can join the support server.
  - Create a file called `.env`, and inside it put `TOKEN="your token"`
  - Run `python bot.py` to run the bot!
