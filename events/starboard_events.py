@@ -32,6 +32,9 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
         channel = bot.get_channel(channel_id)
         try:
             message = await channel.fetch_message(message_id)
+            await functions.check_or_create_existence(
+                db, c, bot, guild_id=guild_id, user_id=message.author.id, do_member=True
+            )
         except discord.errors.NotFound:
             message = None
         await c.execute(get_message, [message_id])
