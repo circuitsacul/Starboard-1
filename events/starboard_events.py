@@ -1,4 +1,4 @@
-import discord, functions
+import discord, functions, time
 from discord import utils
 
 
@@ -22,21 +22,23 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
     get_message = \
         """SELECT * FROM messages WHERE id=?"""
 
+    message_id, orig_channel_id = await _orig_message_id(db, c, _message_id)
+    channel_id = orig_channel_id if orig_channel_id is not None else _channel_id
+    channel = bot.get_channel(channel_id)
+
+    try:
+        message = await channel.fetch_message(message_id)
+        await functions.check_or_create_existence(
+            db, c, bot, guild_id=guild_id, user_id=message.author.id, do_member=True
+        )
+    except discord.errors.NotFound:
+        message = None
+
     async with db.lock:
         await functions.check_or_create_existence(
             db, c, bot,
             guild_id=guild_id, user_id=user_id, do_member=True
         )
-        message_id, orig_channel_id = await _orig_message_id(db, c, _message_id)
-        channel_id = orig_channel_id if orig_channel_id is not None else _channel_id
-        channel = bot.get_channel(channel_id)
-        try:
-            message = await channel.fetch_message(message_id)
-            await functions.check_or_create_existence(
-                db, c, bot, guild_id=guild_id, user_id=message.author.id, do_member=True
-            )
-        except discord.errors.NotFound:
-            message = None
         await c.execute(get_message, [message_id])
         if len(await c.fetchall()) == 0:
             await c.execute(db.q.create_message, [
@@ -93,9 +95,12 @@ async def handle_starboards(db, bot, message_id, message):
         sql_message = rows[0]
         channel_id = sql_message['channel_id']
         message_id = sql_message['id']
-        channel = bot.get_channel(channel_id)
-        if channel is None:
-            return
+
+    channel = bot.get_channel(channel_id)
+    if channel is None:
+        return
+
+    async with db.lock:
         #try:
         #    message = await channel.fetch_message(message_id)
         #except discord.errors.NotFound:
@@ -126,20 +131,26 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
         sql_author = await c.fetchone()
         await c.execute(get_starboard_message, (sql_message['id'], sql_starboard['id']))
         rows = await c.fetchall()
-        if len(rows) == 0:
-            starboard_message = None
-        else:
-            sql_starboard_message = rows[0]
-            starboard_message_id = sql_starboard_message['id']
-            if starboard is not None:
-                try:
-                    starboard_message = await starboard.fetch_message(starboard_message_id)
-                except discord.errors.NotFound:
-                    starboard_message = None
-                    await c.execute(delete_starboard_message, [sql_message['id'], sql_starboard['id']])
-            else:
+
+    delete = False
+    if len(rows) == 0:
+        starboard_message = None
+    else:
+        sql_starboard_message = rows[0]
+        starboard_message_id = sql_starboard_message['id']
+        if starboard is not None:
+            try:
+                starboard_message = await starboard.fetch_message(starboard_message_id)
+            except discord.errors.NotFound:
                 starboard_message = None
                 await c.execute(delete_starboard_message, [sql_message['id'], sql_starboard['id']])
+        else:
+            starboard_message = None
+            delete = True
+
+    async with db.lock:
+        if delete:
+            await c.execure(delete_starboard_message, [sql_message['id'], sql_starboard['id']])
         points, emojis = await calculate_points(c, sql_message, sql_starboard)
         await conn.commit()
         await conn.close()
@@ -183,33 +194,34 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
 
 
 async def update_message(db, orig_message, orig_channel_id, sb_message, starboard, points, forced, add, remove, link_edits, emojis):
-    conn = await db.connect()
-    c = await conn.cursor()
     update = orig_message is not None
-    async with db.lock:
-        if remove:
-            await sb_message.delete()
-        else:
-            plain_text = f"**{points} | <#{orig_channel_id}>{' | 🔒' if forced else ''}**"
-            embed = await get_embed_from_message(orig_message) if orig_message is not None else None
-            if add and embed is not None:
-                sb_message = await starboard.send(plain_text, embed=embed)
+
+    if remove:
+        await sb_message.delete()
+    else:
+        plain_text = f"**{points} | <#{orig_channel_id}>{' | 🔒' if forced else ''}**"
+        embed = await get_embed_from_message(orig_message) if orig_message is not None else None
+        if add and embed is not None:
+            sb_message = await starboard.send(plain_text, embed=embed)
+            conn = await db.connect()
+            c = await conn.cursor()
+            async with db.lock:
                 await c.execute(db.q.create_message, [
                     sb_message.id, sb_message.guild.id, orig_message.author.id,
                     orig_message.id, starboard.id, False,
                     orig_message.channel.is_nsfw()
                 ])
-            elif update and sb_message and link_edits:
-                await sb_message.edit(
-                    content=plain_text, embed=embed
-                )
-            elif sb_message:
-                await sb_message.edit(
-                    content=plain_text
-                )
-            await conn.commit()
-            await conn.close()
-    if sb_message is not None and not remove:
+                await conn.commit()
+                await conn.close()
+        elif update and sb_message and link_edits:
+            await sb_message.edit(
+                content=plain_text, embed=embed
+            )
+        elif sb_message:
+            await sb_message.edit(
+                content=plain_text
+            )
+    if sb_message is not None and not remove and add:
         for _emoji in emojis:
             if _emoji['d_id'] is not None:
                 emoji = utils.get(starboard.guild.emojis, id=int(_emoji['id']))
