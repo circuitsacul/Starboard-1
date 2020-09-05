@@ -229,7 +229,7 @@ class Starboard(commands.Cog):
         added = False
         async with self.db.lock:
             await functions.check_or_create_existence(
-                self.db, c, self.bot, guild_id=ctx.guild.id, user_id=ctx.message.author.id, do_member=True
+                self.db, c, self.bot, guild_id=ctx.guild.id, user=ctx.message.author, do_member=True
             )
             exists = await functions.check_or_create_existence(self.db, c, self.bot, starboard_id=starboard.id, guild_id=ctx.guild.id, create_new=False)
             if not exists['se']:
