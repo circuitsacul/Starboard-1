@@ -25,19 +25,20 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
     message_id, orig_channel_id = await _orig_message_id(db, c, _message_id)
     channel_id = orig_channel_id if orig_channel_id is not None else _channel_id
     channel = bot.get_channel(channel_id)
+    user = bot.get_user(user_id)
 
     try:
         message = await channel.fetch_message(message_id)
-        await functions.check_or_create_existence(
-            db, c, bot, guild_id=guild_id, user_id=message.author.id, do_member=True
-        )
     except discord.errors.NotFound:
         message = None
 
     async with db.lock:
         await functions.check_or_create_existence(
+            db, c, bot, guild_id=guild_id, user=message.author, do_member=True
+        )
+        await functions.check_or_create_existence(
             db, c, bot,
-            guild_id=guild_id, user_id=user_id, do_member=True
+            guild_id=guild_id, user=user, do_member=True
         )
         await c.execute(get_message, [message_id])
         if len(await c.fetchall()) == 0:

@@ -97,7 +97,7 @@ class Starboard(commands.Cog):
         conn = await self.db.connect()
         c = await conn.cursor()
         async with self.db.lock:
-            _ = await functions.check_or_create_existence(self.db, c, self.bot, guild_id=ctx.guild.id, user_id=ctx.message.author.id, do_member=True)
+            _ = await functions.check_or_create_existence(self.db, c, self.bot, guild_id=ctx.guild.id, user=ctx.message.author, do_member=True)
             await c.execute(get_starboards, (ctx.guild.id,))
             rows = await c.fetchall()
 
@@ -129,7 +129,7 @@ class Starboard(commands.Cog):
         conn = await self.db.connect()
         c = await conn.cursor()
         async with self.db.lock:
-            await functions.check_or_create_existence(self.db, c, self.bot, guild_id=ctx.guild.id, user_id=ctx.message.author.id, do_member=True)
+            await functions.check_or_create_existence(self.db, c, self.bot, guild_id=ctx.guild.id, user=ctx.message.author, do_member=True)
             await c.execute(get_starboard, [starboard.id])
             sql_starboard = await c.fetchone()
             if sql_starboard is None:
@@ -164,7 +164,7 @@ class Starboard(commands.Cog):
         limit = await functions.get_limit(self.db, 'starboards', ctx.guild)
 
         async with self.db.lock:
-            await functions.check_or_create_existence(self.db, c, self.bot, guild_id=ctx.guild.id, user_id=ctx.message.author.id, do_member=True)
+            await functions.check_or_create_existence(self.db, c, self.bot, guild_id=ctx.guild.id, user=ctx.message.author, do_member=True)
             await c.execute(get_starboards, [ctx.guild.id])
             rows = await c.fetchall()
             num_starboards = len(rows)
@@ -196,7 +196,7 @@ class Starboard(commands.Cog):
         conn = await self.db.connect()
         c = await conn.cursor()
         async with self.db.lock:
-            await functions.check_or_create_existence(self.db, c, self.bot, guild_id=ctx.guild.id, user_id=ctx.message.author.id, do_member=True)
+            await functions.check_or_create_existence(self.db, c, self.bot, guild_id=ctx.guild.id, user=ctx.message.author, do_member=True)
             existed = await functions.check_or_create_existence(self.db, c, self.bot, starboard_id=starboard.id, guild_id=ctx.guild.id, create_new=False)
             if existed['se'] == False:
                 await ctx.send("That is not a starboard!")
@@ -272,7 +272,7 @@ class Starboard(commands.Cog):
         c = await conn.cursor()
         async with self.db.lock:
             await functions.check_or_create_existence(
-                self.db, c, self.bot, guild_id=ctx.guild.id, user_id=ctx.message.author.id, do_member=True
+                self.db, c, self.bot, guild_id=ctx.guild.id, user=ctx.message.author, do_member=True
             )
             exists = await functions.check_or_create_existence(
                 self.db, c, self.bot, starboard_id=starboard.id, guild_id=ctx.guild.id, create_new=False

@@ -11,7 +11,7 @@ async def check_single_exists(c, sql, params):
     return False
 
 
-async def check_or_create_existence(db, c, bot, guild_id=None, user_id=None, starboard_id=None, do_member=False, create_new=True):
+async def check_or_create_existence(db, c, bot, guild_id=None, user=None, starboard_id=None, do_member=False, create_new=True):
     check_guild = \
         """SELECT * FROM guilds WHERE id=?"""
     check_user = \
@@ -27,11 +27,10 @@ async def check_or_create_existence(db, c, bot, guild_id=None, user_id=None, sta
             await c.execute(db.q.create_guild, (guild_id,))
     else:
         gexists = None
-    if user_id is not None:
-        user = bot.get_user(user_id)
-        uexists = await check_single_exists(c, check_user, (user_id,))
+    if user is not None:
+        uexists = await check_single_exists(c, check_user, (user.id,))
         if not uexists and create_new:
-            await c.execute(db.q.create_user, (user_id, user.bot,))
+            await c.execute(db.q.create_user, (user.id, user.bot,))
     else:
         uexists = None
     if starboard_id is not None and guild_id is not None:
@@ -40,10 +39,10 @@ async def check_or_create_existence(db, c, bot, guild_id=None, user_id=None, sta
             await c.execute(db.q.create_starboard, (starboard_id, guild_id,))
     else:
         s_exists = None
-    if do_member and user_id is not None and guild_id is not None:
-        mexists = await check_single_exists(c, check_member, (guild_id, user_id,))
+    if do_member and user is not None and guild_id is not None:
+        mexists = await check_single_exists(c, check_member, (guild_id, user.id,))
         if not mexists and create_new:
-            await c.execute(db.q.create_member, (user_id, guild_id,))
+            await c.execute(db.q.create_member, (user.id, guild_id,))
     else:
         mexists = None
 
