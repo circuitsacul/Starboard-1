@@ -33,9 +33,10 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
         message = None
 
     async with db.lock:
-        await functions.check_or_create_existence(
-            db, c, bot, guild_id=guild_id, user=message.author, do_member=True
-        )
+        if message:
+            await functions.check_or_create_existence(
+                db, c, bot, guild_id=guild_id, user=message.author, do_member=True
+            )
         await functions.check_or_create_existence(
             db, c, bot,
             guild_id=guild_id, user=user, do_member=True
