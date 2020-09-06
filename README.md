@@ -11,7 +11,7 @@ Starboard is an advanced, reliable, and highly-customizable starboard bot. This 
  - Supports multiple normal and custom emojis for *each* starboard
  - Completely free
  
- I'm planning on putting more info in the [wiki](https://github.com/CircuitSacul/Starboard/wiki)
+ I'm planning on putting more info in the [wiki](https://github.com/CircuitsBots/Starboard/wiki)
 
 ## Quick Setup:
 These directions are for self-hosting the bot. If you just want a working bot, you can invite it to your server instead.
