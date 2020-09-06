@@ -193,6 +193,16 @@ class Starboard(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
     async def remove_starboard(self, ctx, starboard: discord.TextChannel):
+        confirmed = await functions.confirm(
+            self.bot, ctx.channel,
+            "Are you sure? All starboard messages will be lost forever.",
+            ctx.message.author.id
+        )
+
+        if not confirmed:
+            await ctx.send("Cancelling")
+            return
+
         conn = await self.db.connect()
         c = await conn.cursor()
         async with self.db.lock:

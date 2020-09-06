@@ -91,3 +91,28 @@ async def get_limit(db, item, guild):
         if temp_max == float('inf') or temp_max > max_of_item:
             max_of_item = temp_max
     return max_of_item
+
+
+async def confirm(bot, channel, text, user_id):
+    message = await channel.send(text)
+    await message.add_reaction('✅')
+    await message.add_reaction('❌')
+
+    def check(reaction, user):
+        if user.id != user_id or str(reaction) not in ['✅', '❌']:
+            return False
+        return True
+
+    reaction, _user = await bot.wait_for('reaction_add', check=check)
+    if str(reaction) == '✅':
+        try:
+            await message.delete()
+        except:
+            pass
+        return True
+    elif str(reaction) == '❌':
+        try:
+            await message.delete()
+        except:
+            pass
+        return False
