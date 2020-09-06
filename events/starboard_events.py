@@ -25,8 +25,6 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
     message_id, orig_channel_id = await _orig_message_id(db, c, _message_id)
     channel_id = orig_channel_id if orig_channel_id is not None else _channel_id
 
-    #channel = bot.get_channel(channel_id)
-    #user = bot.get_user(user_id)
     guild = bot.get_guild(guild_id)
     channel = utils.get(guild.channels, id=channel_id)
     user = utils.get(guild.members, id=user_id)
@@ -99,22 +97,13 @@ async def handle_starboards(db, bot, message_id, channel, message):
         await c.execute(get_message, [message_id])
         rows = await c.fetchall()
         sql_message = rows[0]
-        #guild_id = sql_message['guild_id']
-        #channel_id = sql_message['channel_id']
-        message_id = sql_message['id']
 
-    #channel = bot.get_channel(channel_id)
     if channel is None:
         return
 
     async with db.lock:
-        #try:
-        #    message = await channel.fetch_message(message_id)
-        #except discord.errors.NotFound:
-        #    message = None
         await c.execute(get_starboards, [sql_message['guild_id']])
         sql_starboards = await c.fetchall()
-        await conn.commit()
         await conn.close()
     for sql_starboard in sql_starboards:
         await handle_starboard(db, bot, sql_message, message, sql_starboard)
