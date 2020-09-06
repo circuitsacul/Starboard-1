@@ -24,8 +24,12 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
 
     message_id, orig_channel_id = await _orig_message_id(db, c, _message_id)
     channel_id = orig_channel_id if orig_channel_id is not None else _channel_id
-    channel = bot.get_channel(channel_id)
-    user = bot.get_user(user_id)
+
+    #channel = bot.get_channel(channel_id)
+    #user = bot.get_user(user_id)
+    guild = bot.get_guild(guild_id)
+    channel = utils.get(guild.channels, id=channel_id)
+    user = utils.get(guild.members, id=user_id)
 
     try:
         message = await channel.fetch_message(message_id)
@@ -60,7 +64,7 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
 
         await conn.commit()
         await conn.close()
-    await handle_starboards(db, bot, message_id, message)
+    await handle_starboards(db, bot, message_id, channel, message)
 
 
 async def _orig_message_id(db, c, message_id):
@@ -81,7 +85,7 @@ async def _orig_message_id(db, c, message_id):
     return orig_messsage_id, sql_orig_message['channel_id']
 
 
-async def handle_starboards(db, bot, message_id, message):
+async def handle_starboards(db, bot, message_id, channel, message):
     get_message = \
         """SELECT * FROM messages WHERE id=?"""
     get_starboards = \
@@ -95,10 +99,11 @@ async def handle_starboards(db, bot, message_id, message):
         await c.execute(get_message, [message_id])
         rows = await c.fetchall()
         sql_message = rows[0]
-        channel_id = sql_message['channel_id']
+        #guild_id = sql_message['guild_id']
+        #channel_id = sql_message['channel_id']
         message_id = sql_message['id']
 
-    channel = bot.get_channel(channel_id)
+    #channel = bot.get_channel(channel_id)
     if channel is None:
         return
 
