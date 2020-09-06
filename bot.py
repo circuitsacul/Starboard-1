@@ -1,6 +1,6 @@
 import discord, sys, asyncio, sys, os, asyncio, dotenv, functions
 from discord.ext import commands
-from flask.app import Flask
+#from flask.app import Flask
 from pretty_help import PrettyHelp
 
 import bot_config

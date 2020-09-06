@@ -1,5 +1,6 @@
-import discord, flask, functions, os, dotenv
+import discord,functions, os, dotenv
 
+#import flask
 #from flask import Response
 from aiohttp import web
 
