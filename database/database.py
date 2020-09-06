@@ -55,6 +55,9 @@ class Database:
         conn = None
         try:
             conn = await aiosqlite.connect(self._db_path)
+            await conn.execute(
+                "PRAGMA foreign_keys=True"
+            )
             conn.row_factory = self._dict_factory
         except Error as e:
             print(f"Couldn't connect to database: {e}")
