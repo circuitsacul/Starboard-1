@@ -9,6 +9,7 @@ from events import starboard_events
 from database.database import Database
 from cogs.starboard import Starboard
 from cogs.owner import Owner
+from cogs.utility import Utility
 from cogs.patron import PatronCommands, HttpWebHook
 #from cogs.patron import FlaskWebHook
 
@@ -203,6 +204,7 @@ async def main():
 
     bot.add_cog(Starboard(bot, db))
     bot.add_cog(Owner(bot, db))
+    bot.add_cog(Utility(bot, db))
     bot.add_cog(PatronCommands(bot, db))
     await bot.start(TOKEN)
 

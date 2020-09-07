@@ -116,3 +116,20 @@ async def confirm(bot, channel, text, user_id):
         except:
             pass
         return False
+
+async def orig_message_id(db, c, message_id):
+    get_message = \
+        """SELECT * FROM messages WHERE id=?"""
+
+    await c.execute(get_message, (message_id,))
+    rows = await c.fetchall()
+    if len(rows) == 0:
+        return message_id, None
+    sql_message = rows[0]
+    if sql_message['is_orig'] == True:
+        return message_id, sql_message['channel_id']
+    orig_messsage_id = sql_message['orig_message_id']
+    await c.execute(get_message, [orig_messsage_id])
+    rows = await c.fetchall()
+    sql_orig_message = rows[0]
+    return orig_messsage_id, sql_orig_message['channel_id']

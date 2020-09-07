@@ -22,7 +22,7 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
     get_message = \
         """SELECT * FROM messages WHERE id=?"""
 
-    message_id, orig_channel_id = await _orig_message_id(db, c, _message_id)
+    message_id, orig_channel_id = await functions.orig_message_id(db, c, _message_id)
     channel_id = orig_channel_id if orig_channel_id is not None else _channel_id
 
     guild = bot.get_guild(guild_id)
@@ -65,24 +65,6 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
     await handle_starboards(db, bot, message_id, channel, message)
 
 
-async def _orig_message_id(db, c, message_id):
-    get_message = \
-        """SELECT * FROM messages WHERE id=?"""
-
-    await c.execute(get_message, (message_id,))
-    rows = await c.fetchall()
-    if len(rows) == 0:
-        return message_id, None
-    sql_message = rows[0]
-    if sql_message['is_orig'] == True:
-        return message_id, sql_message['channel_id']
-    orig_messsage_id = sql_message['orig_message_id']
-    await c.execute(get_message, [orig_messsage_id])
-    rows = await c.fetchall()
-    sql_orig_message = rows[0]
-    return orig_messsage_id, sql_orig_message['channel_id']
-
-
 async def handle_starboards(db, bot, message_id, channel, message):
     get_message = \
         """SELECT * FROM messages WHERE id=?"""
@@ -90,8 +72,6 @@ async def handle_starboards(db, bot, message_id, channel, message):
         """SELECT * FROM starboards
         WHERE guild_id=?
         AND locked=False"""
-    get_author = \
-        """SELECT * FROM users WHERE id=?"""
 
     conn = await db.connect()
     c = await conn.cursor()
@@ -104,25 +84,20 @@ async def handle_starboards(db, bot, message_id, channel, message):
         return
 
     async with db.lock:
-        await c.execute(get_author, [sql_message['user_id']])
-        sql_author = await c.fetchone()
-
         await c.execute(get_starboards, [sql_message['guild_id']])
         sql_starboards = await c.fetchall()
         await conn.close()
-
-    if sql_author['is_bot']:
-        return
-
     for sql_starboard in sql_starboards:
-        await handle_starboard(db, bot, sql_message, message, sql_starboard, sql_author)
+        await handle_starboard(db, bot, sql_message, message, sql_starboard)
 
 
-async def handle_starboard(db, bot, sql_message, message, sql_starboard, sql_author):
+async def handle_starboard(db, bot, sql_message, message, sql_starboard):
     get_starboard_message = \
         """SELECT * FROM messages WHERE orig_message_id=? AND channel_id=?"""
     delete_starboard_message = \
         """DELETE FROM messages WHERE orig_message_id=? and channel_id=?"""
+    get_author = \
+        """SELECT * FROM users WHERE id=?"""
 
     starboard_id = sql_starboard['id']
     starboard = bot.get_channel(starboard_id)
@@ -130,7 +105,8 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard, sql_aut
     conn = await db.connect()
     c = await conn.cursor()
     async with db.lock:
-
+        await c.execute(get_author, [sql_message['user_id']])
+        sql_author = await c.fetchone()
         await c.execute(get_starboard_message, (sql_message['id'], sql_starboard['id']))
         rows = await c.fetchall()
 
