@@ -90,6 +90,8 @@ async def handle_starboards(db, bot, message_id, channel, message):
         """SELECT * FROM starboards
         WHERE guild_id=?
         AND locked=False"""
+    get_author = \
+        """SELECT * FROM users WHERE id=?"""
 
     conn = await db.connect()
     c = await conn.cursor()
@@ -102,20 +104,25 @@ async def handle_starboards(db, bot, message_id, channel, message):
         return
 
     async with db.lock:
+        await c.execute(get_author, [sql_message['user_id']])
+        sql_author = await c.fetchone()
+
         await c.execute(get_starboards, [sql_message['guild_id']])
         sql_starboards = await c.fetchall()
         await conn.close()
+
+    if sql_author['is_bot']:
+        return
+
     for sql_starboard in sql_starboards:
-        await handle_starboard(db, bot, sql_message, message, sql_starboard)
+        await handle_starboard(db, bot, sql_message, message, sql_starboard, sql_author)
 
 
-async def handle_starboard(db, bot, sql_message, message, sql_starboard):
+async def handle_starboard(db, bot, sql_message, message, sql_starboard, sql_author):
     get_starboard_message = \
         """SELECT * FROM messages WHERE orig_message_id=? AND channel_id=?"""
     delete_starboard_message = \
         """DELETE FROM messages WHERE orig_message_id=? and channel_id=?"""
-    get_author = \
-        """SELECT * FROM users WHERE id=?"""
 
     starboard_id = sql_starboard['id']
     starboard = bot.get_channel(starboard_id)
@@ -123,8 +130,7 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
     conn = await db.connect()
     c = await conn.cursor()
     async with db.lock:
-        await c.execute(get_author, [sql_message['user_id']])
-        sql_author = await c.fetchone()
+
         await c.execute(get_starboard_message, (sql_message['id'], sql_starboard['id']))
         rows = await c.fetchall()
 
