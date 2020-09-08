@@ -1,5 +1,6 @@
 import discord, functions
 from discord.ext import commands
+from events import starboard_events
 
 
 class Utility(commands.Cog):
@@ -8,7 +9,8 @@ class Utility(commands.Cog):
         self.db = db
 
     @commands.command(
-        name='frozen', brief='Lists all frozen messages',
+        name='frozen', aliases=['f'],
+        brief='Lists all frozen messages',
         description='Lists all frozen messages'
     )
     @commands.guild_only()
@@ -100,3 +102,52 @@ class Utility(commands.Cog):
             await ctx.send(f"Message **{message_id}** is now unfrozen")
 
         await conn.close()
+
+    @commands.command(
+        name='force',
+        description='Forces a message to all starboards',
+        brief='Forces a message to all starboards'
+    )
+    @commands.guild_only()
+    @commands.has_permissions(manage_messages=True)
+    async def force_message(self, ctx, _message_id, _channel: discord.TextChannel = None):
+        check_message = \
+            """SELECT * FROM messages WHERE id=?"""
+        force_message = \
+            """UPDATE messages
+            SET is_forced=1
+            WHERE id=?"""
+
+        _channel = ctx.channel if _channel is None else _channel
+
+        try:
+            _message = await _channel.fetch_message(_message_id)
+        except discord.errors.NotFound:
+            await ctx.send("I couldn't find that message.")
+            return
+        
+        conn = await self.db.connect()
+        c = await conn.cursor()
+        async with self.db.lock:
+            message_id, channel_id = await functions.orig_message_id(self.db, c, _message_id)
+
+        channel = self.bot.get_channel(channel_id)
+        message = await channel.fetch_message(message_id)
+
+        async with self.db.lock:
+            await c.execute(check_message, [message_id])
+            sql_message = await c.fetchone()
+            if sql_message is None:
+                await c.execute(
+                    self.db.q.create_message,
+                    [
+                        message.id, ctx.guild.id, message.author.id,
+                        None, message.channel.id, True, message.channel.is_nsfw()
+                    ]
+                )
+            await c.execute(force_message, [message.id])
+            await conn.commit()
+            await conn.close()
+        print('forced')
+        
+        await starboard_events.handle_starboards(self.db, self.bot, message.id, message.channel, message)
