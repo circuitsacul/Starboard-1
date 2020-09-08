@@ -3,6 +3,41 @@ from discord.ext import commands
 from events import starboard_events
 
 
+async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
+    check_message = \
+        """SELECT * FROM messages WHERE id=?"""
+    trash_message = \
+        """UPDATE messages
+        SET is_trashed=?
+        WHERE id=?"""
+
+    status = True
+
+    conn = await db.connect()
+    c = await conn.cursor()
+    async with db.lock:
+        message_id, channel_id = await functions.orig_message_id(db, c, _message_id)
+
+        await c.execute(check_message, [message_id])
+        sql_message = await c.fetchone()
+        if sql_message is None:
+            await ctx.send("That message either has no reactions or does not exist")
+            status = False
+        else:
+            await c.execute(trash_message, [trash, message_id])
+            await conn.commit()
+        await conn.close()
+
+    channel = bot.get_channel(channel_id)
+    try:
+        message = await channel.fetch_message(message_id) if channel is not None else None
+    except discord.errors.NotFound:
+        message = None
+
+    await starboard_events.handle_starboards(db, bot, message_id, channel, message)
+    return status
+
+
 class Utility(commands.Cog):
     def __init__(self, bot, db):
         self.bot = bot
@@ -151,3 +186,27 @@ class Utility(commands.Cog):
         print('forced')
         
         await starboard_events.handle_starboards(self.db, self.bot, message.id, message.channel, message)
+
+    @commands.command(
+        name='trash',
+        description='Trashing a message prevents users from seeing it or reacting to it.',
+        brief='Trashes a message'
+    )
+    @commands.guild_only()
+    @commands.has_permissions(manage_messages=True)
+    async def trash_message(self, ctx, _messsage_id):
+        status = await handle_trashing(self.db, self.bot, ctx, _messsage_id, True)
+        if status is True:
+            await ctx.send("Message Trashed")
+
+    @commands.command(
+        name='untrash',
+        description='Untrashes a message',
+        brief='Untrashes a message'
+    )
+    @commands.guild_only()
+    @commands.has_permissions(manage_messages=True)
+    async def untrash_message(self, ctx, _message_id):
+        status = await handle_trashing(self.db, self.bot, ctx, _message_id, False)
+        if status is True:
+            await ctx.send("Message untrashed")

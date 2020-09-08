@@ -108,7 +108,7 @@ async def ping(ctx):
     await ctx.send('Pong! {0} ms'.format(round(bot.latency*1000, 3)))
 
 
-@bot.command(name='info', aliases=['botstats'], description='Bot stats', brief='Bot stats')
+@bot.command(name='stats', aliases=['botstats'], description='Bot stats', brief='Bot stats')
 async def stats_for_bot(ctx):
     embed = discord.Embed(
         title='Bot Stats', colour=0xFCFF00,

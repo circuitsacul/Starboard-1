@@ -142,6 +142,7 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
     is_bot = sql_author['is_bot']
     forced = sql_message['is_forced']
     frozen = sql_message['is_frozen']
+    trashed = sql_message['is_trashed']
 
     add = False
     remove = False
@@ -168,13 +169,18 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
             add = True
 
     if not frozen:
-        await update_message(db, message, sql_message['channel_id'], starboard_message, starboard, points, forced, add, remove, link_edits, emojis)
+        await update_message(db, message, sql_message['channel_id'], starboard_message, starboard, points, forced, trashed, add, remove, link_edits, emojis)
 
 
-async def update_message(db, orig_message, orig_channel_id, sb_message, starboard, points, forced, add, remove, link_edits, emojis):
+async def update_message(db, orig_message, orig_channel_id, sb_message, starboard, points, forced, trashed, add, remove, link_edits, emojis):
     update = orig_message is not None
 
-    if remove:
+    if trashed:
+        if sb_message is not None:
+            embed = discord.Embed(title='Trashed Message')
+            embed.description = "This message was trashed by a moderator."
+            await sb_message.edit(embed=embed)
+    elif remove:
         await sb_message.delete()
     else:
         plain_text = f"**{points} | <#{orig_channel_id}>{' | 🔒' if forced else ''}**"
