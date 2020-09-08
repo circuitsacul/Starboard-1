@@ -160,13 +160,16 @@ class Utility(commands.Cog):
         except discord.errors.NotFound:
             await ctx.send("I couldn't find that message.")
             return
+        except AttributeError:
+            await ctx.send("I can't find that channel")
+            return
         
         conn = await self.db.connect()
         c = await conn.cursor()
         async with self.db.lock:
             message_id, channel_id = await functions.orig_message_id(self.db, c, _message_id)
 
-        channel = self.bot.get_channel(channel_id)
+        channel = self.bot.get_channel(channel_id) if channel_id is not None else ctx.channel
         message = await channel.fetch_message(message_id)
 
         async with self.db.lock:
