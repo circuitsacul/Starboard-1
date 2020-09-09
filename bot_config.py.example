@@ -15,8 +15,8 @@ ERROR_COLOR = 0xff0000 # hex
 
 # Donation Config
 DEFAULT_LEVEL = {
-    'starboards': num_starboards,
-    'emojis': nmm_emojis
+    'starboards': float('inf'), # Set to default number of starboards. Right now it's infinite
+    'emojis': float('inf') # Same as above
 }
 
 PATRON_LEVELS = {
@@ -28,22 +28,22 @@ PATRON_LEVELS = {
         'gives_role': None, #option id of role to give to user if they are in your support server,
         'num': 1 # The level... Essentially means that level 2 will have all the features level 1 has. Can all be set to 0 if needed
         'perks': {
-            'starboards': num_starboards,
-            'emojis': num_emojis # For unlimited do float('inf')
+            'starboards': 4, # How many starboards do users get if they have this level
+            'emojis': 4 # How many emojis per starboard do users get if they have this level
         }
     },
     "bJZn0tdzNl": {
         'display': {
             'title': 'Gold Patron',
             'description': """For all servers you own:\
-                \n**- Up to 5 starboards**\
-                \n**- Up to 5 emojis per starboard**"""
+                \n**- Up to 6 starboards**\
+                \n**- Up to 6 emojis per starboard**"""
         },
-        'gives_role': 748348092566208542,
+        'gives_role': None,
         'num': 2,
         'perks': {
-            'starboards': num_starboards,
-            'emojis': num_emojis
+            'starboards': 6,
+            'emojis': 6
         }
     }
 }
