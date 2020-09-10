@@ -11,7 +11,11 @@ Starboard is an advanced, reliable, and highly-customizable starboard bot. This 
 ## Bot Features:
  - Supports multiple starboards
  - Supports multiple normal and custom emojis for *each* starboard
- - Completely free
+ - Starboard moderation, such as:
+   - Freezing a message, preventing the points from updating on it
+   - Forcing a message, so it's on the starboard no matter what
+   - Trashing a message, in case a bad message gets on the starboard
+ - Advanced customization, giving you complete control over the bot
  
  I'm planning on putting more info in the [wiki](https://github.com/CircuitsBots/Starboard/wiki)
 
