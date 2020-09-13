@@ -22,7 +22,8 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
     get_message = \
         """SELECT * FROM messages WHERE id=?"""
 
-    message_id, orig_channel_id = await functions.orig_message_id(db, c, _message_id)
+    async with db.lock:
+        message_id, orig_channel_id = await functions.orig_message_id(db, c, _message_id)
     channel_id = orig_channel_id if orig_channel_id is not None else _channel_id
 
     guild = bot.get_guild(guild_id)
