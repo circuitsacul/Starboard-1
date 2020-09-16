@@ -6,6 +6,8 @@ pyproject.toml
 bot_config.py
 
 *.db
+*.sqlite3
+*.sqlite3-journal
 *.db-journal
 .vscode
 
