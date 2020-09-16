@@ -319,5 +319,5 @@ async def calculate_points(c, sql_message, sql_starboard):
             if sql_user['is_bot'] == True and bots_react == False:
                 continue
             total_points += 1
-    
+
     return total_points, emojis

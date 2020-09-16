@@ -36,9 +36,15 @@ class CommonSql:
             """INSERT INTO reactions (d_id, guild_id, user_id, message_id, name)
             VALUES (?, ?, ?, ?, ?)"""
 
-        self.set_starboard_settings = \
+        self.update_starboard = \
             """UPDATE starboards
-            SET self_star = ?, link_edits = ?, link_deletes = ?, bots_react = ?, bots_on_sb = ?
+            SET self_star=?,
+            link_edits=?,
+            link_deletes=?,
+            bots_react=?,
+            bots_on_sb=?,
+            required=?,
+            rtl=?
             WHERE id=?"""
 
 
