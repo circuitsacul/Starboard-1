@@ -6,7 +6,7 @@ from emoji import UNICODE_EMOJI
 PICKLE_FILE = "db.pickle"
 SQL_FILE = 'sql/converted.sqlite3'
 
-TOKEN = "NzAwNzk2NjY0Mjc2ODQ0NjEy.XpoJwA.dKmD-tdj6r4zJ1nqTmaWRU3oJxo"
+TOKEN = "redacted"
 
 bot = Bot(command_prefix='!')
 db = database.Database(SQL_FILE)
