@@ -4,7 +4,7 @@ Starboard is an advanced, reliable, and highly-customizable starboard bot. This 
 
 [Click here for a demonstration](https://drive.google.com/file/d/1hIeeL8Y_PweQIovyAzsXJX4_-gZiqstU/view?usp=sharing)
 
-[Invite Starboard to your server](https://discord.com/api/oauth2/authorize?client_id=700796664276844612&permissions=117824&scope=bot)
+[Invite Starboard to your server](https://discord.com/api/oauth2/authorize?client_id=700796664276844612&permissions=388160&scope=bot)
 
 [Join the support server](https://discord.gg/3gK8mSA)
 
