@@ -32,7 +32,7 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
 
     try:
         message = await channel.fetch_message(message_id)
-    except discord.errors.NotFound:
+    except (discord.errors.NotFound, AttributeError):
         message = None
 
     async with db.lock:
@@ -81,13 +81,14 @@ async def handle_starboards(db, bot, message_id, channel, message):
         rows = await c.fetchall()
         sql_message = rows[0]
 
-    if channel is None:
-        return
+    #if channel is None:
+    #    return
 
     async with db.lock:
         await c.execute(get_starboards, [sql_message['guild_id']])
         sql_starboards = await c.fetchall()
         await conn.close()
+
     for sql_starboard in sql_starboards:
         await handle_starboard(db, bot, sql_message, message, sql_starboard)
 
@@ -129,7 +130,7 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
 
     async with db.lock:
         if delete:
-            await c.execure(delete_starboard_message, [sql_message['id'], sql_starboard['id']])
+            await c.execute(delete_starboard_message, [sql_message['id'], sql_starboard['id']])
         points, emojis = await calculate_points(c, sql_message, sql_starboard)
         await conn.commit()
         await conn.close()
