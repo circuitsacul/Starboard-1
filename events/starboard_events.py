@@ -32,7 +32,7 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
 
     try:
         message = await channel.fetch_message(message_id)
-    except (discord.errors.NotFound, AttributeError):
+    except (discord.errors.NotFound, discord.errors.Forbidden, AttributeError):
         message = None
 
     async with db.lock:
