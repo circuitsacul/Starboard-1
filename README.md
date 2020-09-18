@@ -30,6 +30,7 @@ The starboard is now good to go, but you might want to change more settings (lik
 
 ## Self Hosting:
 These directions are for self-hosting the bot. If you just want a working bot, you can invite it to your server instead.
+ - Clone the repo by running `git clone https://github.com/CircuitsBots/Starboard.git` in the command line.
  - Make a copy of `bot_config.py.example`, and rename it to `bot_config.py`. 
    - Update the settings to your liking. If you need help with this, you can join the support server.
  - Create a file called `.env`, and inside it put `TOKEN="your token"`
