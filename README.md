@@ -16,8 +16,8 @@ Starboard is an advanced, reliable, and highly-customizable starboard bot. This 
    - Forcing a message, so it's on the starboard no matter what
    - Trashing a message, in case a bad message gets on the starboard
  - Advanced customization, giving you complete control over the bot
- 
- I'm planning on putting more info in the [wiki](https://github.com/CircuitsBots/Starboard/wiki)
+
+If you have any suggestions or found any bugs, please [create an issue](https://github.com/CircuitsBots/Starboard/issues/new/choose).
  
 ## Quick Setup:
 Note: Don't actually type out `< > [ ]` when I give you commands to run. `channel` means type "channel", where as `<channel>` means replace "\<channel\>" with the name of the channel.
