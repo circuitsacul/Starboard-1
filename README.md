@@ -18,8 +18,17 @@ Starboard is an advanced, reliable, and highly-customizable starboard bot. This 
  - Advanced customization, giving you complete control over the bot
  
  I'm planning on putting more info in the [wiki](https://github.com/CircuitsBots/Starboard/wiki)
-
+ 
 ## Quick Setup:
+Note: Don't actually type out `< > [ ]` when I give you commands to run. `channel` means type "channel", where as `<channel>` means replace "\<channel\>" with the name of the channel.
+ 1. [Invite the bot to your server](https://discord.com/api/oauth2/authorize?client_id=700796664276844612&permissions=388160&scope=bot)
+ 2. Create a channel for the bot (name it something like #starboard).
+ 3. Type `sb!add <channel>` ("\<channel\>" is the name of the channel you just created)
+ 4. Type `sb!addEmoji <channel> <emoji>` (`<emoji>` is usually ":star:")
+
+The starboard is now good to go, but you might want to change more settings (like the number of reactions needed). A complete list of setting in the [wiki](https://github.com/CircuitsBots/Starboard/wiki).
+
+## Self Hosting:
 These directions are for self-hosting the bot. If you just want a working bot, you can invite it to your server instead.
  - Make a copy of `bot_config.py.example`, and rename it to `bot_config.py`. 
    - Update the settings to your liking. If you need help with this, you can join the support server.
