@@ -145,10 +145,8 @@ class HttpWebHook():
                 data = await request.json()
                 headers = request.headers
                 if request.headers['authorization'] != DONATEBOT_TOKEN:
-                    print("Invalid Token")
                     return web.Response(body='Error!', status=500)
                 else:
-                    print("Successful Donation")
                     status = await self.handle_donation_event(data)
             except Exception as e:
                 print(f"Error in donation event: {type(e)}: {e}")
@@ -157,7 +155,6 @@ class HttpWebHook():
         
         @self.routes.get('')
         async def ping(request):
-            print("ping!")
             return web.Response(body="I'm Here!", status=200)
 
         self.app.add_routes(self.routes)

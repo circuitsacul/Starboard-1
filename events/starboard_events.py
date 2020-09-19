@@ -3,8 +3,8 @@ from discord import utils
 
 
 async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, _emoji, is_add):
-    emoji_id = _emoji.id
-    emoji_name = _emoji.name
+    emoji_id = None
+    emoji_name = _emoji.name if _emoji.id is None else _emoji.id
 
     conn = await db.connect()
     c = await conn.cursor()
@@ -210,7 +210,7 @@ async def update_message(db, orig_message, orig_channel_id, sb_message, starboar
     if sb_message is not None and not remove and add:
         for _emoji in emojis:
             if _emoji['d_id'] is not None:
-                emoji = utils.get(starboard.guild.emojis, id=int(_emoji['id']))
+                emoji = utils.get(starboard.guild.emojis, id=int(_emoji['d_id']))
                 if emoji is None:
                     continue
             else:
@@ -305,7 +305,9 @@ async def calculate_points(c, sql_message, sql_starboard):
 
     total_points = 0
     for emoji in emojis:
-        await c.execute(get_reactions, [message_id, emoji['name']])
+        emoji_id = int(emoji['d_id']) if emoji['d_id'] is not None else None
+        emoji_name = None if emoji_id is not None else emoji['name']
+        await c.execute(get_reactions, [message_id, emoji_name if emoji_id is None else emoji_id])
         reactions = await c.fetchall()
         for sql_reaction in reactions:
             user_id = sql_reaction['user_id']
