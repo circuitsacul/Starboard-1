@@ -3,7 +3,7 @@ from discord import utils
 
 
 async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, _emoji, is_add):
-    emoji_id = None
+    emoji_id = _emoji.id
     emoji_name = _emoji.name if _emoji.id is None else _emoji.id
 
     conn = await db.connect()
