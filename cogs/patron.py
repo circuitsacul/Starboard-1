@@ -39,7 +39,10 @@ async def update_patron_for_user(bot, db, user_id, product_id, add: bool):
 
     give_role = PATRON_LEVELS[product_id]['gives_role']
     if give_role:
-        await functions.handle_role(bot, db, user_id, SUPPORT_SERVER_ID, give_role, add=add)
+        try:
+            await functions.handle_role(bot, db, user_id, SUPPORT_SERVER_ID, give_role, add=add)
+        except AttributeError:
+            pass
 
 
 class PatronCommands(commands.Cog):
