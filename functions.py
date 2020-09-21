@@ -93,8 +93,8 @@ async def get_limit(db, item, guild):
     return max_of_item
 
 
-async def confirm(bot, channel, text, user_id):
-    message = await channel.send(text)
+async def confirm(bot, channel, text, user_id, embed=None, delete=True):
+    message = await channel.send(text, embed=embed)
     await message.add_reaction('✅')
     await message.add_reaction('❌')
 
@@ -105,16 +105,18 @@ async def confirm(bot, channel, text, user_id):
 
     reaction, _user = await bot.wait_for('reaction_add', check=check)
     if str(reaction) == '✅':
-        try:
-            await message.delete()
-        except:
-            pass
+        if delete:
+            try:
+                await message.delete()
+            except:
+                pass
         return True
     elif str(reaction) == '❌':
-        try:
-            await message.delete()
-        except:
-            pass
+        if delete:
+            try:
+                await message.delete()
+            except:
+                pass
         return False
 
 async def orig_message_id(db, c, message_id):

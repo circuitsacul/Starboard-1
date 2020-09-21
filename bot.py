@@ -88,7 +88,7 @@ async def show_privacy_policy(ctx):
 )
 async def about_starbot(ctx):
     msg = """
-    StarBot is a Discord starboard bot.\
+    Starboard is a Discord starboard bot.\
     Starboards are kind of like democratic pins.\
     A user can "vote" to have a message displayed on a channel by reacting with an emoji, usually a star.\
     A Starboard is a great way to archive funny messages.\
@@ -171,6 +171,8 @@ async def on_command_error(ctx, error):
     elif type(error) is discord.http.Forbidden:
         error = "I don't have the permissions to do that"
     else:
+        print(f"Error {type(error)}: {error}")
+
         embed = discord.Embed(
             title='Error!',
             description='An unexpected error ocurred.\
@@ -179,10 +181,33 @@ async def on_command_error(ctx, error):
         )
         embed.add_field(
             name='Error Message:',
-            value=f"```{type(error)}:\n{error}```"
+            value=f"{type(error)}:\n{error}",
+            inline=False
         )
-        print(f"Error: {error}")
-        await ctx.send(embed=embed)
+        embed.add_field(
+            name='Report?',
+            value=f"Are you ok if I report this to the bot dev? React below with :white_check_mark: for yes.",
+            inline=False
+        )
+
+        report = await functions.confirm(
+            bot, ctx.channel,
+            None,
+            ctx.message.author.id,
+            embed=embed,
+            delete=False
+        )
+        if report:
+            await ctx.send("I've reported the problem! Please still consider joining the support server and explaining what happened.")
+            owner_embed = discord.Embed(
+                title=f'Error in {ctx.guild.name} ({ctx.guild.id})',
+                description=f"{type(error)}:\n{error}",
+                color=bot_config.ERROR_COLOR
+            )
+            owner = bot.get_user(bot.owner_id)
+            await owner.send(embed=owner_embed)
+        else:
+            await ctx.send("This problem was not reported. Please consider joining the support server and explaining what happened.")
         return
     embed = discord.Embed(
         title='Oops!',
