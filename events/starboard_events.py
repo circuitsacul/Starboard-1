@@ -215,7 +215,10 @@ async def update_message(db, orig_message, orig_channel_id, sb_message, starboar
                     continue
             else:
                 emoji = _emoji['name']
-            await sb_message.add_reaction(emoji)
+            try:
+                await sb_message.add_reaction(emoji)
+            except:
+                pass
 
 
 async def get_embed_from_message(message):

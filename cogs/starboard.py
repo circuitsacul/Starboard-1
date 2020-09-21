@@ -229,6 +229,10 @@ class Starboard(commands.Cog):
             """SELECT * FROM sbemojis WHERE name=? AND starboard_id=?"""
         get_all_sbemoji = \
             """SELECT * FROM sbemojis WHERE starboard_id=?"""
+        if not isinstance(emoji, discord.Emoji):
+            if not functions.is_emoji(emoji):
+                await ctx.send("I don't recognize that emoji. Please make sure it is correct, and if it's a custom emoji it has to be in this server.")
+                return
         emoji_name = str(emoji.id) if isinstance(emoji, discord.Emoji) else emoji
         emoji_id = emoji.id if isinstance(emoji, discord.Emoji) else None
 

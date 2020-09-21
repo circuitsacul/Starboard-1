@@ -1,6 +1,10 @@
 from discord import utils
 from bot_config import PATRON_LEVELS
-import bot_config
+import bot_config, emoji
+
+
+def is_emoji(string):
+    return string in emoji.UNICODE_EMOJI
 
 
 async def check_single_exists(c, sql, params):
