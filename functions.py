@@ -101,6 +101,8 @@ async def confirm(bot, channel, text, user_id, embed=None, delete=True):
     def check(reaction, user):
         if user.id != user_id or str(reaction) not in ['✅', '❌']:
             return False
+        if reaction.message.id != message.id:
+            return False
         return True
 
     reaction, _user = await bot.wait_for('reaction_add', check=check)
@@ -118,6 +120,7 @@ async def confirm(bot, channel, text, user_id, embed=None, delete=True):
             except:
                 pass
         return False
+
 
 async def orig_message_id(db, c, message_id):
     get_message = \
