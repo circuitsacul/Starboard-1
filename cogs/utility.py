@@ -34,7 +34,8 @@ async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
     except discord.errors.NotFound:
         message = None
 
-    await starboard_events.handle_starboards(db, bot, message_id, channel, message)
+    if status is True:
+        await starboard_events.handle_starboards(db, bot, message_id, channel, message)
     return status
 
 
