@@ -1,10 +1,13 @@
 import requests
 import json
 import asyncio
+import os
+
+BOD_TOKEN = os.getenv("BOD_TOKEN")
 
 
 def post_bod(bot):
-    headers = {"Authorization": "397006357cfdb58b33143eafa0f3d696", "Content-Type": "application/json"}
+    headers = {"Authorization": BOD_TOKEN, "Content-Type": "application/json"}
     data = json.dumps({"guildCount": len(bot.guilds)})
     url = "https://bots.ondiscord.xyz/bot-api/bots/700796664276844612/guilds"
 
