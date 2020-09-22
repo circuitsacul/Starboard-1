@@ -54,6 +54,9 @@ async def change_starboard_settings(
         s['r'] = required if required is not None else ssb['required']
         s['rtl'] = rtl if rtl is not None else ssb['rtl']
 
+        if s['r'] <= s['rtl']:
+            return False
+
         try:
             await c.execute(update_starboard, [
                 s['ss'], s['le'], s['ld'], s['br'], s['bos'], s['r'], s['rtl'],
@@ -317,11 +320,12 @@ class Starboard(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
     async def set_required_stars(self, ctx, starboard: discord.TextChannel, value: int):
+        value = 1 if value < 1 else value
         status = await change_starboard_settings(self.db, starboard.id, required=value)
         if status is None:
             await ctx.send("That is not a starboard!")
         elif status is False:
-            await ctx.send("Invalid Value")
+            await ctx.send("RequiredStars cannot be less than or equal to RequiredToLose")
         else:
             await ctx.send(f"Set requiredStars to {value} for {starboard.mention}")
 
@@ -333,11 +337,12 @@ class Starboard(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
     async def set_required_to_lose(self, ctx, starboard: discord.TextChannel, value: int):
+        value = -1 if value < -1 else value
         status = await change_starboard_settings(self.db, starboard.id, rtl=value)
         if status is None:
             await ctx.send("That is not a starboard!")
         elif status is False:
-            await ctx.send("Invalid setting")
+            await ctx.send("RequiredToLose cannot be greater than or equal to RequiredStars")
         elif status is True:
             await ctx.send(f"Set requiredToLose to {value} for {starboard.mention}")
 
@@ -353,7 +358,7 @@ class Starboard(commands.Cog):
         if status is None:
             await ctx.send("That is not a starboard!")
         elif status is False:
-            await ctx.send("Invalid Setting")
+            await ctx.send("Invalid Value")
         else:
             await ctx.send(f"Set selfStar to {value} for {starboard.mention}")
 
