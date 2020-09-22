@@ -227,7 +227,8 @@ async def on_ready():
 async def main():
     await web_server.start()
     await db.open()
-    bot.loop.create_task(post_guild_count.loop_post(bot))
+    if not BETA:
+        bot.loop.create_task(post_guild_count.loop_post(bot))
 
     bot.add_cog(Starboard(bot, db))
     bot.add_cog(Owner(bot, db))
