@@ -159,6 +159,13 @@ class Starboard(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(manage_channels=True)
     async def add_starboard(self, ctx, starboard: discord.TextChannel):
+        perms = starboard.permissions_for(ctx.guild.me)
+        if not perms.send_messages:
+            await ctx.send("I can't send messages there.")
+            return
+        elif not perms.add_reactions:
+            await ctx.send("I can't add reactions to messages there. If you want me to automatically add reactions, please enable this setting.")
+
         conn = await self.db.connect()
         c = await conn.cursor()
         get_starboards = \
