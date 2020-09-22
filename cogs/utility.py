@@ -1,6 +1,7 @@
-import discord, functions
+import discord, functions, bot_config
 from discord.ext import commands
 from events import starboard_events
+from disputils import BotEmbedPaginator
 
 
 async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
@@ -66,11 +67,26 @@ class Utility(commands.Cog):
         if len(frozen_messages) == 0:
             await ctx.send("You don't have any frozen messages")
         else:
-            p = commands.Paginator(prefix='', suffix='')
-            for msg in frozen_messages:
-                p.add_line(f"**{msg['id']}**")
-            for page in p.pages:
-                await ctx.send(page)
+            all_strings = []
+            for i, msg in enumerate(frozen_messages):
+                from_msg = f"**[{msg['id']}](https://discordapp.com/channels/{msg['guild_id']}/{msg['channel_id']}/{msg['id']}/)**\n"
+                all_strings.append(from_msg)
+
+            size = 5
+            grouped = [all_strings[i:i+size] for i in range(0, len(all_strings), size)]
+
+            all_embeds = []
+            for group in grouped:
+                embed = discord.Embed(color=bot_config.COLOR, title='Frozen Messages')
+                string = ""
+                for item in group:
+                    string += item
+                embed.description = string
+                all_embeds.append(embed)
+
+            paginator = BotEmbedPaginator(ctx, all_embeds)
+            await paginator.run()
+
 
     @commands.command(
         name='freeze', brief='Freezes a message',
