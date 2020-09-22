@@ -1,4 +1,5 @@
 import discord, functions, time
+from discord.errors import Forbidden
 from discord import utils
 
 
@@ -188,17 +189,21 @@ async def update_message(db, orig_message, orig_channel_id, sb_message, starboar
         plain_text = f"**{points} | <#{orig_channel_id}>{' | 🔒' if forced else ''}**"
         embed = await get_embed_from_message(orig_message) if orig_message is not None else None
         if add and embed is not None:
-            sb_message = await starboard.send(plain_text, embed=embed)
-            conn = await db.connect()
-            c = await conn.cursor()
-            async with db.lock:
-                await c.execute(db.q.create_message, [
-                    sb_message.id, sb_message.guild.id, orig_message.author.id,
-                    orig_message.id, starboard.id, False,
-                    orig_message.channel.is_nsfw()
-                ])
-                await conn.commit()
-                await conn.close()
+            try:
+                sb_message = await starboard.send(plain_text, embed=embed)
+            except Forbidden:
+                pass
+            else:
+                conn = await db.connect()
+                c = await conn.cursor()
+                async with db.lock:
+                    await c.execute(db.q.create_message, [
+                        sb_message.id, sb_message.guild.id, orig_message.author.id,
+                        orig_message.id, starboard.id, False,
+                        orig_message.channel.is_nsfw()
+                    ])
+                    await conn.commit()
+                    await conn.close()
         elif update and sb_message and link_edits:
             await sb_message.edit(
                 content=plain_text, embed=embed
