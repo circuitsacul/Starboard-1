@@ -7,6 +7,7 @@ import bot_config
 from events import starboard_events
 
 from database.database import Database
+from api import post_guild_count
 from cogs.starboard import Starboard
 from cogs.owner import Owner
 from cogs.utility import Utility
@@ -226,6 +227,7 @@ async def on_ready():
 async def main():
     await web_server.start()
     await db.open()
+    bot.loop.create_task(post_guild_count.loop_post(bot))
 
     bot.add_cog(Starboard(bot, db))
     bot.add_cog(Owner(bot, db))
