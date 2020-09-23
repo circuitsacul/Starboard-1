@@ -3,6 +3,8 @@ from discord.ext import commands
 #from flask.app import Flask
 from pretty_help import PrettyHelp
 
+dotenv.load_dotenv()
+
 import bot_config
 from events import starboard_events
 
@@ -13,8 +15,6 @@ from cogs.owner import Owner
 from cogs.utility import Utility
 from cogs.patron import PatronCommands, HttpWebHook
 #from cogs.patron import FlaskWebHook
-
-dotenv.load_dotenv()
 
 _TOKEN = os.getenv('TOKEN')
 _BETA_TOKEN = os.getenv('BETA_TOKEN')
