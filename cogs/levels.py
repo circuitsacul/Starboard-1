@@ -1,6 +1,7 @@
-import discord
+import discord, bot_config
 from discord.ext import commands
 from events import leveling
+from typing import Union
 
 
 class Levels(commands.Cog):
@@ -14,7 +15,8 @@ class Levels(commands.Cog):
         description='View rank card'
     )
     @commands.guild_only()
-    async def show_rank_card(self, ctx, user: discord.Member):
+    async def show_rank_card(self, ctx, user: Union[discord.Member, None]):
+        user = user if user else ctx.message.author
         get_member = \
             """SELECT * FROM members WHERE user_id=? and guild_id=?"""
 
@@ -29,7 +31,16 @@ class Levels(commands.Cog):
         xp = sql_member['xp']
         lvl = sql_member['lvl']
         needed_xp = await leveling.next_level_xp(lvl)
-        await ctx.send(f"Given: {given}\nReceived: {received}\nLevel: {lvl} ({xp}/{needed_xp})")
+
+        embed = discord.Embed(
+            title=str(user),
+            description=f"Rank: **#01**\nLevel: **{lvl}**\nXP: **{xp} / {needed_xp}**",
+            color=bot_config.COLOR
+        )
+        embed.set_thumbnail(url=user.avatar_url)
+        embed.set_footer(text=f"Total Received: {received}\nTotal Given: {given}")
+
+        await ctx.send(embed=embed)
 
     @commands.command(
         name='reset', brief='Resets XP and Levels for a user',
