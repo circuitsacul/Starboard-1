@@ -3,7 +3,7 @@ from discord.ext import commands
 
 
 async def next_level_xp(current_level):
-    return round((current_level**2)*0.6)
+    return round((current_level**2))
 
 
 async def is_starboard_emoji(db, guild_id, emoji):
@@ -27,7 +27,9 @@ async def is_starboard_emoji(db, guild_id, emoji):
     return emoji in all_emojis
 
 
-async def handle_reaction(db, reacter_id, receiver_id, guild_id, _emoji, is_add):
+async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
+    guild_id = guild.id
+    receiver_id = receiver.id
     #if reacter_id == receiver_id:
     #    return
     emoji = _emoji.id if _emoji.id is not None else _emoji.name
@@ -68,11 +70,16 @@ async def handle_reaction(db, reacter_id, receiver_id, guild_id, _emoji, is_add)
 
         next_xp = current_xp + points
         next_lvl = current_lvl
-        leveled_up = False
+        level_direction = 0
         if next_xp >= needed_xp:
             next_lvl += 1
             next_xp = next_xp-needed_xp
-            leveled_up = True
+            level_direction = 1
+        elif next_xp < 0:
+            next_lvl -= 1
+            next_lvl = 0 if next_lvl < 0 else next_lvl
+            next_xp = await next_level_xp(next_lvl)-1
+            level_direction = -1
 
         await c.execute(
             set_xp_level,
@@ -80,6 +87,9 @@ async def handle_reaction(db, reacter_id, receiver_id, guild_id, _emoji, is_add)
                 next_xp, next_lvl, sql_receiver['user_id'], guild_id
             ]
         )
+
+        if level_direction in [1]:
+            await receiver.send(f"Congragulations! You've leveled up in {guild.name}!\nYou are now level {next_lvl}.")
 
         await conn.commit()
         await conn.close()
