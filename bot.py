@@ -4,6 +4,8 @@ from typing import Union
 #from flask.app import Flask
 from pretty_help import PrettyHelp
 
+dotenv.load_dotenv()
+
 import bot_config
 from events import starboard_events
 from events import leveling
@@ -19,8 +21,6 @@ from cogs.utility import Utility
 from cogs.patron import PatronCommands, HttpWebHook
 from cogs.levels import Levels
 #from cogs.patron import FlaskWebHook
-
-dotenv.load_dotenv()
 
 MIGRATE = input('Migrate? (Y/n): ').lower().startswith('y')
 
