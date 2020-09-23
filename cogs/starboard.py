@@ -42,6 +42,7 @@ async def change_starboard_settings(
         await c.execute(get_starboard, [starboard_id])
         rows = await c.fetchall()
         if len(rows) == 0:
+            await conn.close()
             return None
         ssb = rows[0]
 
@@ -55,6 +56,7 @@ async def change_starboard_settings(
         s['rtl'] = rtl if rtl is not None else ssb['rtl']
 
         if s['r'] <= s['rtl']:
+            await conn.close()
             return False
 
         try:
@@ -64,6 +66,7 @@ async def change_starboard_settings(
             ])
         except Exception as e:
             print(e)
+            await conn.close()
             return False
         await conn.commit()
         await conn.close()
@@ -220,6 +223,7 @@ class Starboard(commands.Cog):
             existed = await functions.check_or_create_existence(self.db, c, self.bot, starboard_id=starboard.id, guild_id=ctx.guild.id, create_new=False)
             if existed['se'] == False:
                 await ctx.send("That is not a starboard!")
+                await conn.close()
                 return
             remove_starboard = """DELETE FROM starboards WHERE id=?"""
             await c.execute(remove_starboard, (starboard.id,))
