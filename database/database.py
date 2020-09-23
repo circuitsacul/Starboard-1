@@ -131,6 +131,14 @@ class Database:
                 user_id integer NOT NULL,
                 guild_id integer NOT NULL,
 
+                given int NOT NULL DEFAULT 0,
+                received int NOT NULL DEFAULT 0,
+                on_sb int NOT NULL DEFAULT 0,
+                on_lb bool NOT NULL DEFAULT 0,
+
+                xp int NOT NULL DEFAULT 0,
+                lvl int NOT NULL DEFAULT 0,
+
                 FOREIGN KEY (user_id) REFERENCES users (id)
                     ON DELETE CASCADE,
                 FOREIGN KEY (guild_id) REFERENCES guilds (id)
