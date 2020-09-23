@@ -203,8 +203,7 @@ class Utility(commands.Cog):
             await c.execute(force_message, [message.id])
             await conn.commit()
             await conn.close()
-        print('forced')
-        
+
         await starboard_events.handle_starboards(self.db, self.bot, message.id, message.channel, message)
 
     @commands.command(

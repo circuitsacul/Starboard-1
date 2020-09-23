@@ -1,20 +1,28 @@
 import discord, sys, asyncio, sys, os, asyncio, dotenv, functions
 from discord.ext import commands
+from typing import Union
 #from flask.app import Flask
 from pretty_help import PrettyHelp
 
 import bot_config
 from events import starboard_events
+from events import leveling
 
 from database.database import Database
+from database import migrations
 from api import post_guild_count
+
+from events import leveling
 from cogs.starboard import Starboard
 from cogs.owner import Owner
 from cogs.utility import Utility
 from cogs.patron import PatronCommands, HttpWebHook
+from cogs.levels import Levels
 #from cogs.patron import FlaskWebHook
 
 dotenv.load_dotenv()
+
+MIGRATE = input('Migrate? (Y/n): ').lower().startswith('y')
 
 _TOKEN = os.getenv('TOKEN')
 _BETA_TOKEN = os.getenv('BETA_TOKEN')
@@ -225,8 +233,11 @@ async def on_ready():
 
 
 async def main():
-    await web_server.start()
     await db.open()
+    if MIGRATE is True:
+        print("Migrating...")
+        await migrations.migrate(db)
+    await web_server.start()
     if not BETA:
         bot.loop.create_task(post_guild_count.loop_post(bot))
 
@@ -234,16 +245,17 @@ async def main():
     bot.add_cog(Owner(bot, db))
     bot.add_cog(Utility(bot, db))
     bot.add_cog(PatronCommands(bot, db))
+    bot.add_cog(Levels(bot, db))
     await bot.start(TOKEN)
 
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
-    try:
-        loop.run_until_complete(main())
-    except Exception as e:
-        print(type(e), e)
-    finally:
-        print("Logging out")
-        loop.run_until_complete(bot.logout())
-        loop.run_until_complete(web_server.close())
+    #try:
+    loop.run_until_complete(main())
+    #except Exception as e:
+    #    print(type(e), e)
+    #finally:
+    #    print("Logging out")
+    loop.run_until_complete(bot.logout())
+    loop.run_until_complete(web_server.close())
