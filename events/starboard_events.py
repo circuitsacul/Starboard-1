@@ -1,4 +1,4 @@
-import discord, functions
+import discord, functions, bot_config
 from discord.errors import Forbidden
 from discord import utils
 from events import leveling
@@ -233,7 +233,7 @@ async def update_message(db, orig_message, orig_channel_id, sb_message, starboar
 
 async def get_embed_from_message(message):
     nsfw = message.channel.is_nsfw()
-    embed = discord.Embed(title="NSFW" if nsfw else discord.Embed.Empty, colour=0xFCFF00)
+    embed = discord.Embed(title="NSFW" if nsfw else discord.Embed.Empty, colour=bot_config.COLOR)
     embed.set_author(name=message.author.name, icon_url=message.author.avatar_url)
     embed_text = ''
     msg_attachments = message.attachments
