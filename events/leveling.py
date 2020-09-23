@@ -88,8 +88,8 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
             ]
         )
 
-        if level_direction in [1]:
-            await receiver.send(f"Congragulations! You've leveled up in {guild.name}!\nYou are now level {next_lvl}.")
+        #if level_direction in [1]:
+        #    await receiver.send(f"Congragulations! You've leveled up in {guild.name}!\nYou are now level {next_lvl}.")
 
         await conn.commit()
         await conn.close()
