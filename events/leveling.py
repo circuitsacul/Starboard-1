@@ -102,4 +102,7 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
         embed.set_thumbnail(url="https://i.ibb.co/bvYZ8V8/dizzy-1f4ab.png")
         embed.set_footer(text=guild.name, icon_url=guild.icon_url)
         embed.timestamp = datetime.datetime.now()
-        await receiver.send(embed=embed)
+        try:
+            await receiver.send(embed=embed)
+        except discord.errors.HTTPException:
+            pass
