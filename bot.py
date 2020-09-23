@@ -156,6 +156,12 @@ async def on_message(message):
 
 
 @bot.event
+async def on_error(event, *args, **kwargs):
+    owner = bot.get_user(bot_config.OWNER_ID)
+    await owner.send(f"Error on event {event} with args {args} and kwargs {kwargs}")
+
+
+@bot.event
 async def on_command_error(ctx, error):
     if type(error) is discord.ext.commands.errors.CommandNotFound:
         return
