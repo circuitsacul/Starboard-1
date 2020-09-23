@@ -3,6 +3,8 @@
 poetry.lock
 pyproject.toml
 
+.vsls.json
+
 bot_config.py
 
 *.db
