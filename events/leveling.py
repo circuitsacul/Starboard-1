@@ -11,9 +11,9 @@ async def next_level_xp(current_level):
 async def is_starboard_emoji(db, guild_id, emoji):
     emoji = str(emoji)
     get_starboards = \
-        """SELECT * FROM starboards WHERE guild_id=?"""
+        """SELECT * FROM starboards WHERE guild_id=$1"""
     get_sbeemojis = \
-        """SELECT * FROM sbemojis WHERE starboard_id=?"""
+        """SELECT * FROM sbemojis WHERE starboard_id=$1"""
 
     conn = await db.connect()
     c = await conn.cursor()
@@ -40,16 +40,16 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
         return
 
     get_member = \
-        """SELECT * FROM members WHERE user_id=? AND guild_id=?"""
+        """SELECT * FROM members WHERE user_id=$1 AND guild_id=$2"""
     set_points = \
         """UPDATE members
-        SET {}=?
-        WHERE user_id=? AND guild_id=?"""
+        SET {}=$1
+        WHERE user_id=$2 AND guild_id=$3"""
     set_xp_level = \
         """UPDATE members
-        SET xp=?,
-        lvl=?
-        WHERE user_id=? AND guild_id=?"""
+        SET xp=$1,
+        lvl=$2
+        WHERE user_id=$3 AND guild_id=$4"""
 
     points = 1 if is_add is True else -1
 

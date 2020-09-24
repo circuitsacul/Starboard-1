@@ -14,17 +14,17 @@ async def change_starboard_settings(
 ):
 #async def change_starboard_setting(db, starboard_id, setting, value):
     get_starboard = \
-        """SELECT * FROM starboards WHERE id=?"""
+        """SELECT * FROM starboards WHERE id=$1"""
     update_starboard = \
         """UPDATE starboards
-        SET self_star=?,
-        link_edits=?,
-        link_deletes=?,
-        bots_react=?,
-        bots_on_sb=?,
-        required=?,
-        rtl=?
-        WHERE id=?"""
+        SET self_star=$1,
+        link_edits=$2,
+        link_deletes=$3,
+        bots_react=$4,
+        bots_on_sb=$5,
+        required=$6,
+        rtl=$7
+        WHERE id=$8"""
 
 #    values = {
 #        'selfstar': 'self_star',
@@ -97,8 +97,8 @@ class Starboard(commands.Cog):
     )
     @commands.guild_only()
     async def list_starboards(self, ctx):
-        get_starboards = """SELECT * FROM starboards WHERE guild_id=?"""
-        get_emojis = """SELECT * FROM sbemojis WHERE starboard_id=?"""
+        get_starboards = """SELECT * FROM starboards WHERE guild_id=$1"""
+        get_emojis = """SELECT * FROM sbemojis WHERE starboard_id=$1"""
 
         conn = await self.db.connect()
         c = await conn.cursor()
@@ -129,8 +129,8 @@ class Starboard(commands.Cog):
     )
     @commands.guild_only()
     async def get_starboard_settings(self, ctx, starboard: discord.TextChannel):
-        get_starboard = """SELECT * FROM starboards WHERE id=?"""
-        get_emojis = """SELECT * FROM sbemojis WHERE starboard_id=?"""
+        get_starboard = """SELECT * FROM starboards WHERE id=$1"""
+        get_emojis = """SELECT * FROM sbemojis WHERE starboard_id=$1"""
 
         conn = await self.db.connect()
         c = await conn.cursor()
@@ -172,7 +172,7 @@ class Starboard(commands.Cog):
         conn = await self.db.connect()
         c = await conn.cursor()
         get_starboards = \
-            """SELECT * FROM starboards WHERE guild_id=?"""
+            """SELECT * FROM starboards WHERE guild_id=$1"""
 
         limit = await functions.get_limit(self.db, 'starboards', ctx.guild)
 
@@ -225,7 +225,7 @@ class Starboard(commands.Cog):
                 await ctx.send("That is not a starboard!")
                 await conn.close()
                 return
-            remove_starboard = """DELETE FROM starboards WHERE id=?"""
+            remove_starboard = """DELETE FROM starboards WHERE id=$1"""
             await c.execute(remove_starboard, (starboard.id,))
             await conn.commit()
             await conn.close()
@@ -240,9 +240,9 @@ class Starboard(commands.Cog):
     @commands.has_permissions(manage_channels=True, manage_messages=True)
     async def add_starboard_emoji(self, ctx, starboard: discord.TextChannel, emoji: Union[discord.Emoji, str]):
         check_sbemoji = \
-            """SELECT * FROM sbemojis WHERE name=? AND starboard_id=?"""
+            """SELECT * FROM sbemojis WHERE name=$1 AND starboard_id=$2"""
         get_all_sbemoji = \
-            """SELECT * FROM sbemojis WHERE starboard_id=?"""
+            """SELECT * FROM sbemojis WHERE starboard_id=$3"""
         if not isinstance(emoji, discord.Emoji):
             if not functions.is_emoji(emoji):
                 await ctx.send("I don't recognize that emoji. Please make sure it is correct, and if it's a custom emoji it has to be in this server.")
@@ -290,9 +290,9 @@ class Starboard(commands.Cog):
     @commands.has_permissions(manage_channels=True, manage_messages=True)
     async def remove_starboard_emoji(self, ctx, starboard: discord.TextChannel, emoji: Union[discord.Emoji, str]):
         get_sbemoji = \
-            """SELECT * FROM sbemojis WHERE name=? AND starboard_id=?"""
+            """SELECT * FROM sbemojis WHERE name=$1 AND starboard_id=$2"""
         del_sbemoji = \
-            """DELETE FROM sbemojis WHERE id=?"""
+            """DELETE FROM sbemojis WHERE id=$3"""
         emoji_name = str(emoji.id) if isinstance(emoji, discord.Emoji) else emoji
         emoji_id = emoji.id if isinstance(emoji, discord.Emoji) else None
 

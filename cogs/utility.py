@@ -6,11 +6,11 @@ from disputils import BotEmbedPaginator
 
 async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
     check_message = \
-        """SELECT * FROM messages WHERE id=?"""
+        """SELECT * FROM messages WHERE id=$1"""
     trash_message = \
         """UPDATE messages
-        SET is_trashed=?
-        WHERE id=?"""
+        SET is_trashed=$1
+        WHERE id=$2"""
 
     status = True
 
@@ -55,7 +55,7 @@ class Utility(commands.Cog):
     async def list_frozen_messages(self, ctx):
         get_frozen = \
             """SELECT * FROM messages
-            WHERE is_frozen = 1 AND guild_id=?"""
+            WHERE is_frozen = 1 AND guild_id=$1"""
 
         conn = await self.db.connect()
         c = await conn.cursor()
@@ -96,11 +96,11 @@ class Utility(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     async def freeze_message(self, ctx, message: int):
         get_message = \
-            """SELECT * FROM messages WHERE id=? AND guild_id=?"""
+            """SELECT * FROM messages WHERE id=$1 AND guild_id=$2"""
         freeze_message = \
             """UPDATE messages
             SET is_frozen = 1
-            WHERE id=?"""
+            WHERE id=$1"""
 
         conn = await self.db.connect()
         c = await conn.cursor()
@@ -130,11 +130,11 @@ class Utility(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     async def unfreeze_message(self, ctx, message: int):
         get_message = \
-            """SELECT * FROM messages WHERE id=? AND guild_id=?"""
+            """SELECT * FROM messages WHERE id=$1 AND guild_id=$2"""
         freeze_message = \
             """UPDATE messages
             SET is_frozen = 0
-            WHERE id=?"""
+            WHERE id=$1"""
 
         conn = await self.db.connect()
         c = await conn.cursor()
@@ -164,11 +164,11 @@ class Utility(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     async def force_message(self, ctx, _message_id, _channel: discord.TextChannel = None):
         check_message = \
-            """SELECT * FROM messages WHERE id=?"""
+            """SELECT * FROM messages WHERE id=$1"""
         force_message = \
             """UPDATE messages
             SET is_forced=1
-            WHERE id=?"""
+            WHERE id=$1"""
 
         _channel = ctx.channel if _channel is None else _channel
 

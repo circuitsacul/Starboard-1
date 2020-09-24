@@ -13,16 +13,16 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
 
     check_reaction = \
         """SELECT * FROM reactions
-        WHERE message_id=?
-        AND user_id=?
-        AND name=?"""
+        WHERE message_id=$1
+        AND user_id=$2
+        AND name=$3"""
     remove_reaction = \
         """DELETE FROM reactions
-        WHERE message_id=?
-        AND user_id=?
-        AND name=?"""
+        WHERE message_id=$1
+        AND user_id=$2
+        AND name=$3"""
     get_message = \
-        """SELECT * FROM messages WHERE id=?"""
+        """SELECT * FROM messages WHERE id=1"""
 
     async with db.lock:
         message_id, orig_channel_id = await functions.orig_message_id(db, c, _message_id)
@@ -74,10 +74,10 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
 
 async def handle_starboards(db, bot, message_id, channel, message):
     get_message = \
-        """SELECT * FROM messages WHERE id=?"""
+        """SELECT * FROM messages WHERE id=$1"""
     get_starboards = \
         """SELECT * FROM starboards
-        WHERE guild_id=?
+        WHERE guild_id=$1
         AND locked=False"""
 
     conn = await db.connect()
@@ -101,11 +101,11 @@ async def handle_starboards(db, bot, message_id, channel, message):
 
 async def handle_starboard(db, bot, sql_message, message, sql_starboard):
     get_starboard_message = \
-        """SELECT * FROM messages WHERE orig_message_id=? AND channel_id=?"""
+        """SELECT * FROM messages WHERE orig_message_id=$1 AND channel_id=$2"""
     delete_starboard_message = \
-        """DELETE FROM messages WHERE orig_message_id=? and channel_id=?"""
+        """DELETE FROM messages WHERE orig_message_id=$1 and channel_id=$2"""
     get_author = \
-        """SELECT * FROM users WHERE id=?"""
+        """SELECT * FROM users WHERE id=$3"""
 
     starboard_id = sql_starboard['id']
     starboard = bot.get_channel(starboard_id)
@@ -302,11 +302,11 @@ async def get_embed_from_message(message):
 
 async def calculate_points(c, sql_message, sql_starboard):
     get_reactions = \
-        """SELECT * FROM reactions WHERE message_id=? AND name=?"""
+        """SELECT * FROM reactions WHERE message_id=$1 AND name=$2"""
     get_user = \
-        """SELECT * FROM users WHERE id=?"""
+        """SELECT * FROM users WHERE id=$1"""
     get_sbemojis = \
-        """SELECT * FROM sbemojis WHERE starboard_id=?"""
+        """SELECT * FROM sbemojis WHERE starboard_id=$1"""
 
     await c.execute(get_sbemojis, [sql_starboard['id']])
     emojis = await c.fetchall()

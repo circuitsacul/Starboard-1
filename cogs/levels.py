@@ -18,7 +18,7 @@ class Levels(commands.Cog):
     async def show_rank_card(self, ctx, user: Union[discord.Member, None]):
         user = user if user else ctx.message.author
         get_member = \
-            """SELECT * FROM members WHERE user_id=? and guild_id=?"""
+            """SELECT * FROM members WHERE user_id=$1 and guild_id=$2"""
 
         conn = await self.db.connect()
         c = await conn.cursor()
@@ -53,7 +53,7 @@ class Levels(commands.Cog):
             """UPDATE members
             SET xp=0,
             lvl=0
-            WHERE user_id=? AND guild_id=?"""
+            WHERE user_id=$1 AND guild_id=$2"""
 
         conn = await self.db.connect()
         c = await conn.cursor()

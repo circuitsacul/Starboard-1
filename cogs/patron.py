@@ -16,10 +16,10 @@ DONATEBOT_TOKEN = os.getenv("DONATEBOT_TOKEN")
 
 async def update_patron_for_user(bot, db, user_id, product_id, add: bool):
     check_patron = \
-        """SELECT * FROM patrons WHERE user_id=? AND product_id=?"""
+        """SELECT * FROM patrons WHERE user_id=$1 AND product_id=$2"""
     new_patron = db.q.create_patron
     del_patron = \
-        """DELETE FROM patrons WHERE id=?"""
+        """DELETE FROM patrons WHERE id=$3"""
 
     conn = await db.connect()
     c = await conn.cursor()

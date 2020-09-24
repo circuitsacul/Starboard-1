@@ -17,13 +17,13 @@ async def check_single_exists(c, sql, params):
 
 async def check_or_create_existence(db, c, bot, guild_id=None, user=None, starboard_id=None, do_member=False, create_new=True):
     check_guild = \
-        """SELECT * FROM guilds WHERE id=?"""
+        """SELECT * FROM guilds WHERE id=$1"""
     check_user = \
-        """SELECT * FROM users WHERE id=?"""
+        """SELECT * FROM users WHERE id=$1"""
     check_starboard = \
-        """SELECT * FROM starboards WHERE id=?"""
+        """SELECT * FROM starboards WHERE id=$1"""
     check_member = \
-        """SELECT * FROM members WHERE guild_id=? AND user_id=?"""
+        """SELECT * FROM members WHERE guild_id=$1 AND user_id=$2"""
 
     if guild_id is not None:
         gexists = await check_single_exists(c, check_guild, (guild_id,))
@@ -64,7 +64,7 @@ async def required_patron_level(db, user_id, level):
 
 async def get_patron_levels(db, user_id):
     get_patrons = \
-        """SELECT * FROM patrons WHERE user_id=?"""
+        """SELECT * FROM patrons WHERE user_id=$1"""
 
     conn = await db.connect()
     c = await conn.cursor()
@@ -128,7 +128,7 @@ async def confirm(bot, channel, text, user_id, embed=None, delete=True):
 
 async def orig_message_id(db, c, message_id):
     get_message = \
-        """SELECT * FROM messages WHERE id=?"""
+        """SELECT * FROM messages WHERE id=$1"""
 
     await c.execute(get_message, (message_id,))
     rows = await c.fetchall()
