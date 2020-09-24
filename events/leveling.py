@@ -30,14 +30,33 @@ async def is_starboard_emoji(db, guild_id, emoji):
 
 
 async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
+    if not is_add:
+        return
     guild_id = guild.id
     receiver_id = receiver.id
-    if reacter_id == receiver_id:
-        return
+    #if reacter_id == receiver_id:
+    #    return
     emoji = _emoji.id if _emoji.id is not None else _emoji.name
     is_sbemoji = await is_starboard_emoji(db, guild_id, emoji)
     if not is_sbemoji:
         return
+
+    now = datetime.datetime.now()
+    cooldown_end = now + datetime.timedelta(minutes=1)
+
+    cooldown_over = True
+    async with db.lock:
+        if guild_id not in db.cooldowns['giving_stars']:
+            db.cooldowns['giving_stars'][guild_id] = {}
+        if reacter_id in db.cooldowns['giving_stars'][guild_id]:
+            if now < db.cooldowns['giving_stars'][guild_id][reacter_id]:
+                cooldown_over = False
+        if cooldown_over:
+            db.cooldowns['giving_stars'][guild_id][reacter_id] = cooldown_end
+    if not cooldown_over:
+        print("Cooldown!")
+    else:
+        print("Not Cooldown")
 
     get_member = \
         """SELECT * FROM members WHERE user_id=? AND guild_id=?"""
@@ -53,6 +72,8 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
 
     points = 1 if is_add is True else -1
 
+    level_direction = 0
+
     conn = await db.connect()
     c = await conn.cursor()
     async with db.lock:
@@ -66,34 +87,34 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
         received = sql_receiver['received']+points
         await c.execute(set_points.format('received'), [received, receiver_id, guild_id])
 
-        current_lvl = sql_receiver['lvl']
-        current_xp = sql_receiver['xp']
-        needed_xp = await next_level_xp(current_lvl)
+        if cooldown_over:
+            current_lvl = sql_receiver['lvl']
+            current_xp = sql_receiver['xp']
+            needed_xp = await next_level_xp(current_lvl)
 
-        next_xp = current_xp + points
-        next_lvl = current_lvl
-        level_direction = 0
-        if next_xp >= needed_xp:
-            next_lvl += 1
-            next_xp = next_xp-needed_xp
-            level_direction = 1
-        elif next_xp < 0:
-            next_lvl -= 1
-            next_lvl = 0 if next_lvl < 0 else next_lvl
-            next_xp = await next_level_xp(next_lvl)-1
-            level_direction = -1
+            next_xp = current_xp + points
+            next_lvl = current_lvl
+            if next_xp >= needed_xp:
+                next_lvl += 1
+                next_xp = next_xp-needed_xp
+                level_direction = 1
+            #elif next_xp < 0:
+            #    next_lvl -= 1
+            #    next_lvl = 0 if next_lvl < 0 else next_lvl
+            #    next_xp = await next_level_xp(next_lvl)-1
+            #    level_direction = -1
 
-        await c.execute(
-            set_xp_level,
-            [
-                next_xp, next_lvl, sql_receiver['user_id'], guild_id
-            ]
-        )
+            await c.execute(
+                set_xp_level,
+                [
+                    next_xp, next_lvl, sql_receiver['user_id'], guild_id
+                ]
+            )
 
         await conn.commit()
         await conn.close()
 
-    if level_direction in [1]:
+    if level_direction == 1:
         embed = discord.Embed(
             title=f"Level Up!",
             description=f"You've reached a total of **{received} stars** and are now **level {next_lvl}**!",
