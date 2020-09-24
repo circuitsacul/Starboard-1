@@ -34,8 +34,8 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
         return
     guild_id = guild.id
     receiver_id = receiver.id
-    #if reacter_id == receiver_id:
-    #    return
+    if reacter_id == receiver_id:
+        return
     emoji = _emoji.id if _emoji.id is not None else _emoji.name
     is_sbemoji = await is_starboard_emoji(db, guild_id, emoji)
     if not is_sbemoji:
