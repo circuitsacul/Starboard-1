@@ -46,12 +46,13 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
             db, c, bot,
             guild_id=guild_id, user=user, do_member=True
         )
-        await c.execute(get_message, [message_id])
-        if len(await c.fetchall()) == 0:
-            await c.execute(db.q.create_message, [
-                message_id, guild_id, message.author.id, None, channel_id, True,
-                message.channel.is_nsfw()
-            ])
+        if message:
+            await c.execute(get_message, [message_id])
+            if len(await c.fetchall()) == 0:
+                await c.execute(db.q.create_message, [
+                    message_id, guild_id, message.author.id, None, channel_id, True,
+                    message.channel.is_nsfw()
+                ])
 
         await c.execute(check_reaction, [message_id, user_id, emoji_name])
         rows = await c.fetchall()
