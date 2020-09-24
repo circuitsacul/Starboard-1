@@ -4,9 +4,9 @@ from asyncio import Lock
 
 
 class aobject(object):
-    async def __new__(cls, *a, **kw):
+    async def __new__(cls, *args, **kwargs):
         instance = super().__new__(cls)
-        await instance.__init__(*a, **kw)
+        await instance.__init__(*args, **kwargs)
         return instance
 
     async def __init__(self):
@@ -17,44 +17,68 @@ class CommonSql(aobject):
     async def __init__(self):
         conn = await apg.connect()
         self.create_guild = \
-            await conn.prepare("""INSERT INTO guilds (id) VALUES($1)""")
+            await conn.prepare(
+                """INSERT INTO guilds (id) VALUES($1)"""
+            )
         self.create_user = \
-            await conn.prepare("""INSERT INTO users (id, is_bot)
-            VALUES($1, $2)""")
+            await conn.prepare(
+                """INSERT INTO users (id, is_bot)
+                VALUES($1, $2)"""
+            )
         self.create_patron = \
-            await conn.prepare("""INSERT INTO patrons (user_id, product_id)
-            VALUES($1, $2)""")
+            await conn.prepare(
+                """INSERT INTO patrons (user_id, product_id)
+                VALUES($1, $2)"""
+            )
         self.create_donation = \
-            await conn.prepare("""INSERT INTO donations
-            (txn_id, user_id, product_id, role_id, guild_id,
-            email, price, currency, recurring, status)
-            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)""")
+            await conn.prepare(
+                """INSERT INTO donations
+                (txn_id, user_id, product_id, role_id, guild_id,
+                email, price, currency, recurring, status)
+                VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)"""
+            )
         self.create_member = \
-            await conn.prepare("""INSERT INTO members (user_id, guild_id)
-            VALUES($1,$2)""")
+            await conn.prepare(
+                """INSERT INTO members (user_id, guild_id)
+                VALUES($1,$2)"""
+            )
         self.create_starboard = \
-            await conn.prepare("""INSERT INTO starboards (id, guild_id)
-            VALUES($1,$2)""")
+            await conn.prepare(
+                """INSERT INTO starboards (id, guild_id)
+                VALUES($1,$2)"""
+            )
         self.create_sbemoji = \
-            await conn.prepare("""INSERT INTO sbemojis (d_id, starboard_id, name, is_downvote)
-            VALUES($1,$2,$3,$4)""")
+            await conn.prepare(
+                """INSERT INTO sbemojis (d_id, starboard_id,
+                name, is_downvote)
+                VALUES($1,$2,$3,$4)"""
+            )
         self.create_message = \
-            await conn.prepare("""INSERT INTO messages (id, guild_id, user_id, orig_message_id, channel_id, is_orig, is_nsfw)
-            VALUES($1,$2,$3,$4,$5,$6,$7)""")
+            await conn.prepare(
+                """INSERT INTO messages (id, guild_id,
+                user_id, orig_message_id, channel_id,
+                is_orig, is_nsfw)
+                VALUES($1,$2,$3,$4,$5,$6,$7)"""
+            )
         self.create_reaction = \
-            await conn.prepare("""INSERT INTO reactions (d_id, guild_id, user_id, message_id, name)
-            VALUES ($1,$2,$3,$4,$5)""")
+            await conn.prepare(
+                """INSERT INTO reactions (d_id, guild_id,
+                user_id, message_id, name)
+                VALUES ($1,$2,$3,$4,$5)"""
+            )
 
         self.update_starboard = \
-            await conn.prepare("""UPDATE starboards
-            SET self_star=$1,
-            link_edits=$2,
-            link_deletes=$3,
-            bots_react=$4,
-            bots_on_sb=$5,
-            required=$6,
-            rtl=$7
-            WHERE id=$8""")
+            await conn.prepare(
+                """UPDATE starboards
+                SET self_star=$1,
+                link_edits=$2,
+                link_deletes=$3,
+                bots_react=$4,
+                bots_on_sb=$5,
+                required=$6,
+                rtl=$7
+                WHERE id=$8"""
+            )
 
 
 class Database:
@@ -70,9 +94,9 @@ class Database:
         conn = None
         try:
             conn = await apg.connect(host='localhost', database='starboarddb', user='starboard', password='password')
-#            await conn.execute(
-#                "PRAGMA foreign_keys=True"
-#            )
+            #await conn.execute(
+            #    "PRAGMA foreign_keys=True"
+            #)
             conn.row_factory = self._dict_factory
         except Error as e:
             print(f"Couldn't connect to database: {e}")
