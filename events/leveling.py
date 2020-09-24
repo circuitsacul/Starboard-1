@@ -30,8 +30,6 @@ async def is_starboard_emoji(db, guild_id, emoji):
 
 
 async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
-    if not is_add:
-        return
     guild_id = guild.id
     receiver_id = receiver.id
     if reacter_id == receiver_id:
@@ -87,7 +85,7 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
         received = sql_receiver['received']+points
         await c.execute(set_points.format('received'), [received, receiver_id, guild_id])
 
-        if cooldown_over:
+        if cooldown_over and is_add is True:
             current_lvl = sql_receiver['lvl']
             current_xp = sql_receiver['xp']
             needed_xp = await next_level_xp(current_lvl)
