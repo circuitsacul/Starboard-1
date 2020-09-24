@@ -11,7 +11,6 @@ from events import starboard_events
 from events import leveling
 
 from database.database import Database
-from database import migrations
 from api import post_guild_count
 
 from events import leveling
@@ -21,8 +20,6 @@ from cogs.utility import Utility
 from cogs.patron import PatronCommands, HttpWebHook
 from cogs.levels import Levels
 #from cogs.patron import FlaskWebHook
-
-MIGRATE = input('Migrate? (Y/n): ').lower().startswith('y')
 
 _TOKEN = os.getenv('TOKEN')
 _BETA_TOKEN = os.getenv('BETA_TOKEN')
@@ -240,9 +237,6 @@ async def on_ready():
 
 async def main():
     await db.open()
-    if MIGRATE is True:
-        print("Migrating...")
-        await migrations.migrate(db)
     await web_server.start()
     if not BETA:
         bot.loop.create_task(post_guild_count.loop_post(bot))
