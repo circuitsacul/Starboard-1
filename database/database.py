@@ -84,10 +84,11 @@ class CommonSql(aobject):
 class Database:
     def __init__(self, db_path):
         self.lock = Lock()
-        self.q = CommonSql()
+        #self.q = CommonSql()
         self._db_path = db_path
 
     async def open(self):
+        self.q = await CommonSql()
         await self._create_tables()
 
     async def connect(self):
