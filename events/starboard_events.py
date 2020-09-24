@@ -66,7 +66,7 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
         await conn.commit()
         await conn.close()
 
-    if message is not None and not user.bot:
+    if message is not None and user is not None and not user.bot:
         await leveling.handle_reaction(db, user.id, message.author, guild, _emoji, is_add)
 
     await handle_starboards(db, bot, message_id, channel, message)
