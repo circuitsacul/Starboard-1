@@ -1,4 +1,4 @@
-import discord, sys, asyncio, sys, os, asyncio, dotenv, functions
+import discord, sys, asyncio, sys, os, asyncio, dotenv, functions, logging, traceback
 from discord.ext import commands
 from typing import Union
 #from flask.app import Flask
@@ -166,7 +166,7 @@ async def on_message(message):
 @bot.event
 async def on_error(event, *args, **kwargs):
     owner = bot.get_user(bot_config.OWNER_ID)
-    await owner.send(f"Error on event {event} with args {args} and kwargs {kwargs}")
+    await owner.send(f"Error on event {event} with args {args} and kwargs {kwargs}\n\n```{traceback.format_exc()}```")
 
 
 @bot.event
