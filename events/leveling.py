@@ -1,9 +1,11 @@
-import discord, functions
+import discord, functions, bot_config
 from discord.ext import commands
+import datetime
 
 
 async def next_level_xp(current_level):
-    return round((current_level**2))
+    current_level += 1
+    return round(current_level**2)
 
 
 async def is_starboard_emoji(db, guild_id, emoji):
@@ -56,13 +58,13 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
     async with db.lock:
         await c.execute(get_member, [reacter_id, guild_id])
         sql_reacter = await c.fetchone()
-        current = sql_reacter['given']
-        await c.execute(set_points.format('given'), [current+points, reacter_id, guild_id])
+        given = sql_reacter['given']+points
+        await c.execute(set_points.format('given'), [given, reacter_id, guild_id])
 
         await c.execute(get_member, [receiver_id, guild_id])
         sql_receiver = await c.fetchone()
-        current = sql_receiver['received']
-        await c.execute(set_points.format('received'), [current+points, receiver_id, guild_id])
+        received = sql_receiver['received']+points
+        await c.execute(set_points.format('received'), [received, receiver_id, guild_id])
 
         current_lvl = sql_receiver['lvl']
         current_xp = sql_receiver['xp']
@@ -88,8 +90,19 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
             ]
         )
 
-        #if level_direction in [1]:
-        #    await receiver.send(f"Congragulations! You've leveled up in {guild.name}!\nYou are now level {next_lvl}.")
-
         await conn.commit()
         await conn.close()
+
+    if level_direction in [1]:
+        embed = discord.Embed(
+            title=f"Level Up!",
+            description=f"You've reached a total of **{received} stars** and are now **level {next_lvl}**!",
+            color=bot_config.COLOR
+        )
+        embed.set_thumbnail(url="https://i.ibb.co/bvYZ8V8/dizzy-1f4ab.png")
+        embed.set_footer(text=guild.name, icon_url=guild.icon_url)
+        embed.timestamp = datetime.datetime.now()
+        try:
+            await receiver.send(embed=embed)
+        except discord.errors.HTTPException:
+            pass
