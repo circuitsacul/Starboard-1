@@ -1,4 +1,4 @@
-import discord, sys, asyncio, sys, os, asyncio, dotenv, functions
+import discord, sys, asyncio, sys, os, asyncio, dotenv, functions, traceback
 from discord.ext import commands
 from typing import Union
 #from flask.app import Flask
@@ -56,6 +56,19 @@ web_server = HttpWebHook(bot, db)
 #    for item in cp_queue:
 #        print("New Donation Event")
 #        print(item)
+
+
+@bot.command()
+async def test(ctx):
+    conn = await db.connect()
+    async with conn.transaction():
+        stmt = """SELECT * FROM starboards WHERE guild_id=$1"""
+        all = []
+        async for row in conn.cursor(stmt, "725336160112738385"):
+            all.append(row)
+    await conn.close()
+    await ctx.send("Rows: " + str(all))
+
 
 
 # Info Commands
@@ -163,7 +176,7 @@ async def on_message(message):
 @bot.event
 async def on_error(event, *args, **kwargs):
     owner = bot.get_user(bot_config.OWNER_ID)
-    await owner.send(f"Error on event {event} with args {args} and kwargs {kwargs}")
+    await owner.send(f"Error on event {event} with args {args} and kwargs {kwargs}\n\n```{traceback.format_exc()}```")
 
 
 @bot.event
