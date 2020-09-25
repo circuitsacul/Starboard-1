@@ -54,15 +54,15 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
                     message.channel.is_nsfw()
                 ])
 
-        await c.execute(check_reaction, [message_id, user_id, emoji_name])
-        rows = await c.fetchall()
-        exists = len(rows) > 0
-        if not exists and is_add:
-            await c.execute(db.q.create_reaction, [
-                emoji_id, guild_id, user_id, message_id, emoji_name
-            ])
-        if exists and not is_add:
-            await c.execute(remove_reaction, (message_id, user_id, emoji_name))
+            await c.execute(check_reaction, [message_id, user_id, emoji_name])
+            rows = await c.fetchall()
+            exists = len(rows) > 0
+            if not exists and is_add:
+                await c.execute(db.q.create_reaction, [
+                    emoji_id, guild_id, user_id, message_id, emoji_name
+                ])
+            if exists and not is_add:
+                await c.execute(remove_reaction, (message_id, user_id, emoji_name))
 
         await conn.commit()
         await conn.close()
