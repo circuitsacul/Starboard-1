@@ -124,7 +124,7 @@ class Database:
     async def _create_tables(self):
         guilds_table = \
             """CREATE TABLE IF NOT EXISTS guilds (
-                id integer PRIMARY KEY,
+                id text PRIMARY KEY,
 
                 stars_given integer NOT NULL DEFAULT 0,
                 stars_recv integer NOT NULL DEFAULT 0,
@@ -133,14 +133,14 @@ class Database:
 
         users_table = \
             """CREATE TABLE IF NOT EXISTS users (
-                id integer PRIMARY KEY,
+                id text PRIMARY KEY,
                 is_bot bool NOT NULL
             )"""
 
         patrons_table = \
             """CREATE TABLE IF NOT EXISTS patrons (
                 id integer PRIMARY KEY,
-                user_id integer NOT NULL,
+                user_id text NOT NULL,
                 product_id text NOT NULL
             )"""
 
@@ -163,9 +163,9 @@ class Database:
 
         members_table = \
             """CREATE TABLE IF NOT EXISTS members (
-                id integer PRIMARY KEY,
-                user_id integer NOT NULL,
-                guild_id integer NOT NULL,
+                id text PRIMARY KEY,
+                user_id text NOT NULL,
+                guild_id text NOT NULL,
 
                 given int NOT NULL DEFAULT 0,
                 received int NOT NULL DEFAULT 0,
@@ -182,8 +182,8 @@ class Database:
 
         starboards_table = \
             """CREATE TABLE IF NOT EXISTS starboards (
-                id integer PRIMARY KEY,
-                guild_id integer NOT NULL,
+                id text PRIMARY KEY,
+                guild_id text NOT NULL,
 
                 required int NOT NULL DEFAULT 3,
                 rtl int NOT NULL DEFAULT 0,
@@ -204,8 +204,8 @@ class Database:
         sbemoijs_table = \
             """CREATE TABLE IF NOT EXISTS sbemojis (
                 id integer PRIMARY KEY,
-                d_id integer,
-                starboard_id integer NOT NULL,
+                d_id text,
+                starboard_id text NOT NULL,
 
                 name text NOT NULL,
                 is_downvote bool NOT NULL DEFAULT false,
@@ -216,11 +216,11 @@ class Database:
 
         messages_table = \
             """CREATE TABLE IF NOT EXISTS messages (
-                id integer PRIMARY KEY,
-                guild_id integer NOT NULL,
-                user_id integer NOT NULL,
-                orig_message_id integer DEFAULT NULL,
-                channel_id integer NOT NULL,
+                id text PRIMARY KEY,
+                guild_id text NOT NULL,
+                user_id text NOT NULL,
+                orig_message_id text DEFAULT NULL,
+                channel_id text NOT NULL,
 
                 is_orig bool NOT NULL,
                 is_nsfw bool NOT NULL,
@@ -238,10 +238,10 @@ class Database:
         reactions_table = \
             """CREATE TABLE IF NOT EXISTS reactions (
                 id integer PRIMARY KEY,
-                d_id integer,
-                guild_id integer NOT NULL,
-                user_id integer NOT NULL,
-                message_id integer NOT NULL,
+                d_id text,
+                guild_id text NOT NULL,
+                user_id text NOT NULL,
+                message_id text NOT NULL,
 
                 name text NOT NULL,
 
