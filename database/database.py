@@ -14,8 +14,7 @@ class aobject(object):
 
 
 class CommonSql(aobject):
-    async def __init__(self):
-        conn = await apg.connect()
+    async def __init__(self, conn):
         self.create_guild = \
             await conn.prepare(
                 """INSERT INTO guilds (id) VALUES($1)"""
@@ -88,17 +87,18 @@ class Database:
         self._db_path = db_path
 
     async def open(self):
-        self.q = await CommonSql()
+        #self.q = await CommonSql()
         await self._create_tables()
+        self.q = await CommonSql(await self.connect())
 
     async def connect(self):
         conn = None
         try:
-            conn = await apg.connect(host='localhost', database='starboarddb', user='starboard', password='password')
+            conn = await apg.connect(host='localhost', database='starboarddb', user='ld', password='password')
             #await conn.execute(
             #    "PRAGMA foreign_keys=True"
             #)
-            conn.row_factory = self._dict_factory
+            #conn.row_factory = self._dict_factory
         except Error as e:
             print(f"Couldn't connect to database: {e}")
             if conn:
@@ -112,11 +112,13 @@ class Database:
         return d
 
     async def _create_table(self, sql):
+        print("Creating table")
         #cursor = self.cursor()
         conn = await self.connect()
-        c = await conn.cursor()
-        await c.execute(sql)
-        await conn.commit()
+        await conn.execute(sql)
+        #c = await conn.cursor()
+        #await c.execute(sql)
+        #await conn.commit()
         await conn.close()
 
     async def _create_tables(self):
@@ -168,7 +170,6 @@ class Database:
                 given int NOT NULL DEFAULT 0,
                 received int NOT NULL DEFAULT 0,
                 on_sb int NOT NULL DEFAULT 0,
-                on_lb bool NOT NULL DEFAULT 0,
 
                 xp int NOT NULL DEFAULT 0,
                 lvl int NOT NULL DEFAULT 0,
@@ -187,14 +188,14 @@ class Database:
                 required int NOT NULL DEFAULT 3,
                 rtl int NOT NULL DEFAULT 0,
 
-                self_star bool NOT NULL DEFAULT 0,
-                link_edits bool NOT NULL DEFAULT 1,
-                link_deletes bool NOT NULL DEFAULT 0,
-                bots_react bool NOT NULL DEFAULT 0,
-                bots_on_sb bool NOT NULL DEFAULT 1,
+                self_star bool NOT NULL DEFAULT false,
+                link_edits bool NOT NULL DEFAULT true,
+                link_deletes bool NOT NULL DEFAULT false,
+                bots_react bool NOT NULL DEFAULT false,
+                bots_on_sb bool NOT NULL DEFAULT true,
 
-                locked bool NOT NULL DEFAULT 0,
-                is_archived bool NOT NULL DEFAULT 0,
+                locked bool NOT NULL DEFAULT false,
+                is_archived bool NOT NULL DEFAULT false,
 
                 FOREIGN KEY (guild_id) REFERENCES guilds (id)
                     ON DELETE CASCADE
@@ -207,7 +208,7 @@ class Database:
                 starboard_id integer NOT NULL,
 
                 name text NOT NULL,
-                is_downvote bool NOT NULL DEFAULT 0,
+                is_downvote bool NOT NULL DEFAULT false,
 
                 FOREIGN KEY (starboard_id) REFERENCES starboards (id)
                     ON DELETE CASCADE
@@ -223,9 +224,9 @@ class Database:
 
                 is_orig bool NOT NULL,
                 is_nsfw bool NOT NULL,
-                is_trashed bool NOT NULL DEFAULT 0,
-                is_frozen bool NOT NULL DEFAULT 0,
-                is_forced bool NOT NULL DEFAULT 0,
+                is_trashed bool NOT NULL DEFAULT false,
+                is_frozen bool NOT NULL DEFAULT false,
+                is_forced bool NOT NULL DEFAULT false,
 
                 FOREIGN KEY (guild_id) REFERENCES guilds (id)
                     ON DELETE CASCADE,
