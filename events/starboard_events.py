@@ -2,6 +2,7 @@ import discord, functions, bot_config
 from discord.errors import Forbidden
 from discord import utils
 from events import leveling
+from aiosqlite import Error
 
 
 async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, _emoji, is_add):
@@ -54,6 +55,7 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
                     message.channel.is_nsfw()
                 ])
 
+        try:
             await c.execute(check_reaction, [message_id, user_id, emoji_name])
             rows = await c.fetchall()
             exists = len(rows) > 0
@@ -63,6 +65,8 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
                 ])
             if exists and not is_add:
                 await c.execute(remove_reaction, (message_id, user_id, emoji_name))
+        except Error as e:
+            pass
 
         await conn.commit()
         await conn.close()
@@ -85,8 +89,11 @@ async def handle_starboards(db, bot, message_id, channel, message):
     c = await conn.cursor()
     async with db.lock:
         await c.execute(get_message, [message_id])
-        rows = await c.fetchall()
-        sql_message = rows[0]
+        sql_message = await c.fetchone()
+
+    if sql_message is None:
+        await conn.close()
+        return
 
     #if channel is None:
     #    return
