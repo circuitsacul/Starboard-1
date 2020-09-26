@@ -127,8 +127,7 @@ class Database:
                 id text PRIMARY KEY,
 
                 stars_given integer NOT NULL DEFAULT 0,
-                stars_recv integer NOT NULL DEFAULT 0,
-                on_sb integer NOT NULL DEFAULT 0
+                stars_recv integer NOT NULL DEFAULT 0
             )"""
 
         users_table = \
@@ -139,14 +138,14 @@ class Database:
 
         patrons_table = \
             """CREATE TABLE IF NOT EXISTS patrons (
-                id integer PRIMARY KEY,
+                id SERIAL PRIMARY KEY,
                 user_id text NOT NULL,
                 product_id text NOT NULL
             )"""
 
         donations_table = \
             """CREATE TABLE IF NOT EXISTS donations (
-                id integer PRIMARY KEY,
+                id SERIAL PRIMARY KEY,
                 txn_id integer NOT NULL,
                 user_id integer NOT NULL,
                 product_id text DEFAULT NULL,
@@ -163,13 +162,12 @@ class Database:
 
         members_table = \
             """CREATE TABLE IF NOT EXISTS members (
-                id text PRIMARY KEY,
+                id SERIAL PRIMARY KEY,
                 user_id text NOT NULL,
                 guild_id text NOT NULL,
 
                 given int NOT NULL DEFAULT 0,
                 received int NOT NULL DEFAULT 0,
-                on_sb int NOT NULL DEFAULT 0,
 
                 xp int NOT NULL DEFAULT 0,
                 lvl int NOT NULL DEFAULT 0,
@@ -203,7 +201,7 @@ class Database:
 
         sbemoijs_table = \
             """CREATE TABLE IF NOT EXISTS sbemojis (
-                id integer PRIMARY KEY,
+                id SERIAL PRIMARY KEY,
                 d_id text,
                 starboard_id text NOT NULL,
 
@@ -237,7 +235,7 @@ class Database:
 
         reactions_table = \
             """CREATE TABLE IF NOT EXISTS reactions (
-                id integer PRIMARY KEY,
+                id SERIAL PRIMARY KEY,
                 d_id text,
                 guild_id text NOT NULL,
                 user_id text NOT NULL,

@@ -7,15 +7,14 @@ def is_emoji(string):
     return string in emoji.UNICODE_EMOJI
 
 
-async def check_single_exists(c, sql, params):
-    await c.execute(sql, params)
-    rows = await c.fetchall()
+async def check_single_exists(conn, sql, params):
+    rows = await conn.fetch(sql, *params)
     if len(rows) > 0:
         return True
     return False
 
 
-async def check_or_create_existence(db, c, bot, guild_id=None, user=None, starboard_id=None, do_member=False, create_new=True):
+async def check_or_create_existence(db, conn, bot, guild_id=None, user=None, starboard_id=None, do_member=False, create_new=True):
     check_guild = \
         """SELECT * FROM guilds WHERE id=$1"""
     check_user = \
@@ -26,27 +25,31 @@ async def check_or_create_existence(db, c, bot, guild_id=None, user=None, starbo
         """SELECT * FROM members WHERE guild_id=$1 AND user_id=$2"""
 
     if guild_id is not None:
-        gexists = await check_single_exists(c, check_guild, (guild_id,))
+        gexists = await check_single_exists(conn, check_guild, (guild_id,))
         if not gexists and create_new:
-            await c.execute(db.q.create_guild, (guild_id,))
+            #await conn.execute(db.q.create_guild, guild_id)
+            await db.q.create_guild.fetch(guild_id)
     else:
         gexists = None
     if user is not None:
-        uexists = await check_single_exists(c, check_user, (user.id,))
+        uexists = await check_single_exists(conn, check_user, (str(user.id),))
         if not uexists and create_new:
-            await c.execute(db.q.create_user, (user.id, user.bot,))
+            #await conn.execute(db.q.create_user, str(user.id), user.bot,)
+            await db.q.create_user.fetch(str(user.id), user.bot)
     else:
         uexists = None
     if starboard_id is not None and guild_id is not None:
-        s_exists = await check_single_exists(c, check_starboard, (starboard_id,))
+        s_exists = await check_single_exists(conn, check_starboard, (starboard_id,))
         if not s_exists and create_new:
-            await c.execute(db.q.create_starboard, (starboard_id, guild_id,))
+            #await conn.execute(db.q.create_starboard, starboard_id, guild_id,)
+            await db.q.create_starboard.fetch(starboard_id, guild_id)
     else:
         s_exists = None
     if do_member and user is not None and guild_id is not None:
-        mexists = await check_single_exists(c, check_member, (guild_id, user.id,))
+        mexists = await check_single_exists(conn, check_member, (guild_id, str(user.id),))
         if not mexists and create_new:
-            await c.execute(db.q.create_member, (user.id, guild_id,))
+            #await conn.execute(db.q.create_member, str(user.id), guild_id,)
+            await db.q.create_member.fetch(str(user.id), guild_id)
     else:
         mexists = None
 
@@ -67,10 +70,8 @@ async def get_patron_levels(db, user_id):
         """SELECT * FROM patrons WHERE user_id=$1"""
 
     conn = await db.connect()
-    c = await conn.cursor()
-    async with db.lock:
-        await c.execute(get_patrons, [user_id])
-        rows = await c.fetchall()
+    async with db.lock and conn.transaction():
+        rows = await conn.fetch(get_patrons, user_id)
     await conn.close()
     return rows
 
@@ -88,7 +89,7 @@ async def handle_role(bot, db, user_id, guild_id, role_id, add):
 async def get_limit(db, item, guild):
     owner = guild.owner
     max_of_item = bot_config.DEFAULT_LEVEL[item]
-    levels = await get_patron_levels(db, owner.id)
+    levels = await get_patron_levels(db, str(owner.id))
     for _patron in levels:
         product_id = _patron['product_id']
         temp_max = bot_config.PATRON_LEVELS[product_id]['perks'][item]
@@ -126,19 +127,17 @@ async def confirm(bot, channel, text, user_id, embed=None, delete=True):
         return False
 
 
-async def orig_message_id(db, c, message_id):
+async def orig_message_id(db, conn, message_id):
     get_message = \
         """SELECT * FROM messages WHERE id=$1"""
 
-    await c.execute(get_message, (message_id,))
-    rows = await c.fetchall()
+    rows = await conn.fetch(get_message, str(message_id))
     if len(rows) == 0:
         return message_id, None
     sql_message = rows[0]
     if sql_message['is_orig'] == True:
         return message_id, sql_message['channel_id']
     orig_messsage_id = sql_message['orig_message_id']
-    await c.execute(get_message, [orig_messsage_id])
-    rows = await c.fetchall()
+    rows = await conn.fetch(get_message, str(orig_messsage_id))
     sql_orig_message = rows[0]
-    return orig_messsage_id, sql_orig_message['channel_id']
+    return int(orig_messsage_id), int(sql_orig_message['channel_id'])

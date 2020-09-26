@@ -6,10 +6,9 @@ from events import leveling
 
 async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, _emoji, is_add):
     emoji_id = _emoji.id
-    emoji_name = _emoji.name if _emoji.id is None else _emoji.id
+    emoji_name = _emoji.name if _emoji.id != 'None' else _emoji.id
 
     conn = await db.connect()
-    c = await conn.cursor()
 
     check_reaction = \
         """SELECT * FROM reactions
@@ -22,54 +21,56 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
         AND user_id=$2
         AND name=$3"""
     get_message = \
-        """SELECT * FROM messages WHERE id=1"""
+        """SELECT * FROM messages WHERE id=$1"""
 
-    async with db.lock:
-        message_id, orig_channel_id = await functions.orig_message_id(db, c, _message_id)
+    async with db.lock and conn.transaction():
+        message_id, orig_channel_id = await functions.orig_message_id(db, conn, _message_id)
     channel_id = orig_channel_id if orig_channel_id is not None else _channel_id
 
     guild = bot.get_guild(guild_id)
-    channel = utils.get(guild.channels, id=channel_id)
+    channel = utils.get(guild.channels, id=int(channel_id))
     user = utils.get(guild.members, id=user_id)
 
     try:
-        message = await channel.fetch_message(message_id)
+        message = await channel.fetch_message(int(message_id))
     except (discord.errors.NotFound, discord.errors.Forbidden, AttributeError):
         message = None
 
-    async with db.lock:
+    async with db.lock and conn.transaction():
         if message:
             await functions.check_or_create_existence(
-                db, c, bot, guild_id=guild_id, user=message.author, do_member=True
+                db, conn, bot, guild_id=str(guild_id),
+                user=message.author, do_member=True
             )
         await functions.check_or_create_existence(
-            db, c, bot,
-            guild_id=guild_id, user=user, do_member=True
+            db, conn, bot,
+            guild_id=str(guild_id), user=user, do_member=True
         )
-        await c.execute(get_message, [message_id])
-        if len(await c.fetchall()) == 0:
-            await c.execute(db.q.create_message, [
-                message_id, guild_id, message.author.id, None, channel_id, True,
+        rows = await conn.fetch(get_message, str(message_id))
+        if len(rows) == 0:
+            await db.q.create_message.fetch(
+                str(message_id), str(guild_id),
+                str(message.author.id), None,
+                str(channel_id), True,
                 message.channel.is_nsfw()
-            ])
+            )
 
-        await c.execute(check_reaction, [message_id, user_id, emoji_name])
-        rows = await c.fetchall()
+        rows = await conn.fetch(check_reaction, str(message_id), str(user_id), emoji_name)
         exists = len(rows) > 0
         if not exists and is_add:
-            await c.execute(db.q.create_reaction, [
-                emoji_id, guild_id, user_id, message_id, emoji_name
-            ])
+            await db.q.create_reaction.fetch(
+                str(emoji_id), str(guild_id), str(user_id),
+                str(message_id), emoji_name
+            )
         if exists and not is_add:
-            await c.execute(remove_reaction, (message_id, user_id, emoji_name))
+            await conn.execute(remove_reaction, str(message_id), str(user_id), emoji_name)
 
-        await conn.commit()
-        await conn.close()
+    await conn.close()
 
     if message is not None and not user.bot:
-        await leveling.handle_reaction(db, user.id, message.author, guild, _emoji, is_add)
+        await leveling.handle_reaction(db, str(user.id), message.author, guild, _emoji, is_add)
 
-    await handle_starboards(db, bot, message_id, channel, message)
+    await handle_starboards(db, bot, str(message_id), channel, message)
 
 
 async def handle_starboards(db, bot, message_id, channel, message):
@@ -81,18 +82,15 @@ async def handle_starboards(db, bot, message_id, channel, message):
         AND locked=False"""
 
     conn = await db.connect()
-    c = await conn.cursor()
-    async with db.lock:
-        await c.execute(get_message, [message_id])
-        rows = await c.fetchall()
+    async with db.lock and conn.transaction():
+        rows = await conn.fetch(get_message, str(message_id))
         sql_message = rows[0]
 
     #if channel is None:
     #    return
 
     async with db.lock:
-        await c.execute(get_starboards, [sql_message['guild_id']])
-        sql_starboards = await c.fetchall()
+        sql_starboards = await conn.fetch(get_starboards, sql_message['guild_id'])
         await conn.close()
 
     for sql_starboard in sql_starboards:
@@ -105,18 +103,15 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
     delete_starboard_message = \
         """DELETE FROM messages WHERE orig_message_id=$1 and channel_id=$2"""
     get_author = \
-        """SELECT * FROM users WHERE id=$3"""
+        """SELECT * FROM users WHERE id=$1"""
 
     starboard_id = sql_starboard['id']
-    starboard = bot.get_channel(starboard_id)
+    starboard = bot.get_channel(int(starboard_id))
 
     conn = await db.connect()
-    c = await conn.cursor()
-    async with db.lock:
-        await c.execute(get_author, [sql_message['user_id']])
-        sql_author = await c.fetchone()
-        await c.execute(get_starboard_message, (sql_message['id'], sql_starboard['id']))
-        rows = await c.fetchall()
+    async with db.lock and conn.transaction():
+        sql_author = await conn.fetchrow(get_author, sql_message['user_id'])
+        rows = await conn.fetch(get_starboard_message, sql_message['id'], sql_starboard['id'])
 
     delete = False
     if len(rows) == 0:
@@ -126,20 +121,19 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
         starboard_message_id = sql_starboard_message['id']
         if starboard is not None:
             try:
-                starboard_message = await starboard.fetch_message(starboard_message_id)
+                starboard_message = await starboard.fetch_message(int(starboard_message_id))
             except discord.errors.NotFound:
                 starboard_message = None
-                await c.execute(delete_starboard_message, [sql_message['id'], sql_starboard['id']])
+                await conn.execute(delete_starboard_message, sql_message['id'], sql_starboard['id'])
         else:
             starboard_message = None
             delete = True
 
     async with db.lock:
         if delete:
-            await c.execute(delete_starboard_message, [sql_message['id'], sql_starboard['id']])
-        points, emojis = await calculate_points(c, sql_message, sql_starboard)
-        await conn.commit()
-        await conn.close()
+            await conn.execute(delete_starboard_message, sql_message['id'], sql_starboard['id'])
+        points, emojis = await calculate_points(conn, sql_message, sql_starboard)
+    await conn.close()
 
     deleted = message is None
     on_starboard = starboard_message is not None
@@ -200,15 +194,14 @@ async def update_message(db, orig_message, orig_channel_id, sb_message, starboar
                 pass
             else:
                 conn = await db.connect()
-                c = await conn.cursor()
-                async with db.lock:
-                    await c.execute(db.q.create_message, [
-                        sb_message.id, sb_message.guild.id, orig_message.author.id,
-                        orig_message.id, starboard.id, False,
+                async with db.lock and conn.transaction():
+                    await db.q.create_message.fetch(
+                        str(sb_message.id), str(sb_message.guild.id),
+                        str(orig_message.author.id), str(orig_message.id),
+                        str(starboard.id), False,
                         orig_message.channel.is_nsfw()
-                    ])
-                    await conn.commit()
-                    await conn.close()
+                    )
+                await conn.close()
         elif update and sb_message and link_edits:
             await sb_message.edit(
                 content=plain_text, embed=embed
@@ -219,7 +212,7 @@ async def update_message(db, orig_message, orig_channel_id, sb_message, starboar
             )
     if sb_message is not None and not remove and add:
         for _emoji in emojis:
-            if _emoji['d_id'] is not None:
+            if _emoji['d_id'] != 'None':
                 emoji = utils.get(starboard.guild.emojis, id=int(_emoji['d_id']))
                 if emoji is None:
                     continue
@@ -300,7 +293,7 @@ async def get_embed_from_message(message):
     return embed
 
 
-async def calculate_points(c, sql_message, sql_starboard):
+async def calculate_points(conn, sql_message, sql_starboard):
     get_reactions = \
         """SELECT * FROM reactions WHERE message_id=$1 AND name=$2"""
     get_user = \
@@ -308,8 +301,7 @@ async def calculate_points(c, sql_message, sql_starboard):
     get_sbemojis = \
         """SELECT * FROM sbemojis WHERE starboard_id=$1"""
 
-    await c.execute(get_sbemojis, [sql_starboard['id']])
-    emojis = await c.fetchall()
+    emojis = await conn.fetch(get_sbemojis, sql_starboard['id'])
     message_id = sql_message['id']
     self_star = sql_starboard['self_star']
     bots_react = sql_starboard['bots_react']
@@ -318,10 +310,12 @@ async def calculate_points(c, sql_message, sql_starboard):
 
     total_points = 0
     for emoji in emojis:
-        emoji_id = int(emoji['d_id']) if emoji['d_id'] is not None else None
+        emoji_id = int(emoji['d_id']) if emoji['d_id'] != 'None' else None
         emoji_name = None if emoji_id is not None else emoji['name']
-        await c.execute(get_reactions, [message_id, emoji_name if emoji_id is None else emoji_id])
-        reactions = await c.fetchall()
+        reactions = await conn.fetch(
+            get_reactions, message_id,
+            emoji_name if emoji_id is None else emoji_id
+        )
         for sql_reaction in reactions:
             user_id = sql_reaction['user_id']
             if user_id in used_users:
@@ -329,8 +323,7 @@ async def calculate_points(c, sql_message, sql_starboard):
             used_users.add(user_id)
             if user_id == sql_message['user_id'] and self_star == False:
                 continue
-            await c.execute(get_user, [user_id])
-            rows = await c.fetchall()
+            rows = await conn.fetch(get_user, user_id)
             sql_user = rows[0]
             if sql_user['is_bot'] == True and bots_react == False:
                 continue
