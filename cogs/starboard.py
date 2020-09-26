@@ -12,71 +12,59 @@ async def change_starboard_settings(
     link_deletes=None, bots_react=None, bots_on_sb=None,
     required=None, rtl=None
 ):
-#async def change_starboard_setting(db, starboard_id, setting, value):
+    starboard_id = str(starboard_id)
     get_starboard = \
-        """SELECT * FROM starboards WHERE id=?"""
+        """SELECT * FROM starboards WHERE id=$1"""
     update_starboard = \
         """UPDATE starboards
-        SET self_star=?,
-        link_edits=?,
-        link_deletes=?,
-        bots_react=?,
-        bots_on_sb=?,
-        required=?,
-        rtl=?
-        WHERE id=?"""
+        SET self_star=$1,
+        link_edits=$2,
+        link_deletes=$3,
+        bots_react=$4,
+        bots_on_sb=$5,
+        required=$6,
+        rtl=$7
+        WHERE id=$8"""
 
-#    values = {
-#        'selfstar': 'self_star',
-#        'linkedits': 'link_edits',
-#        'linkdeletes': 'link_deletes',
-#        'botsreact': 'bots_react',
-#        'botsonsb': 'bots_on_sb',
-#        'required': 'required',
-#        'requiredtolose': 'rtl'
-#    }
+    conn = await db.connect()
 
-    async with db.lock:
-        conn = await db.connect()
-        c = await conn.cursor()
-        await c.execute(get_starboard, [starboard_id])
-        rows = await c.fetchall()
+    status = True
+
+    async with db.lock and conn.transaction():
+        rows = await conn.fetch(get_starboard, starboard_id)
         if len(rows) == 0:
-            await conn.close()
-            return None
-        ssb = rows[0]
+            status = None
+        else:
+            ssb = rows[0]
 
-        s = {}
-        s['ss'] = self_star if self_star is not None else ssb['self_star']
-        s['le'] = link_edits if link_edits is not None else ssb['link_edits']
-        s['ld'] = link_deletes if link_deletes is not None else ssb['link_deletes']
-        s['br'] = bots_react if bots_react is not None else ssb['bots_react']
-        s['bos'] = bots_on_sb if bots_on_sb is not None else ssb['bots_on_sb']
-        s['r'] = required if required is not None else ssb['required']
-        s['rtl'] = rtl if rtl is not None else ssb['rtl']
+            s = {}
+            s['ss'] = self_star if self_star is not None else ssb['self_star']
+            s['le'] = link_edits if link_edits is not None else ssb['link_edits']
+            s['ld'] = link_deletes if link_deletes is not None else ssb['link_deletes']
+            s['br'] = bots_react if bots_react is not None else ssb['bots_react']
+            s['bos'] = bots_on_sb if bots_on_sb is not None else ssb['bots_on_sb']
+            s['r'] = required if required is not None else ssb['required']
+            s['rtl'] = rtl if rtl is not None else ssb['rtl']
 
-        if s['r'] <= s['rtl']:
-            await conn.close()
-            return False
-
-        try:
-            await c.execute(update_starboard, [
-                s['ss'], s['le'], s['ld'], s['br'], s['bos'], s['r'], s['rtl'],
-                starboard_id
-            ])
-        except Exception as e:
-            print(e)
-            await conn.close()
-            return False
-        await conn.commit()
-        await conn.close()
-    return True
+            if s['r'] <= s['rtl']:
+                status = False
+            else:
+                try:
+                    await conn.execute(update_starboard,
+                        s['ss'], s['le'], s['ld'], s['br'], s['bos'], s['r'], s['rtl'],
+                        starboard_id
+                    )
+                except Exception as e:
+                    print(e)
+                    status = False
+    await conn.close()
+    return status
 
 
 async def pretty_emoji_string(emojis, guild):
     string = ""
     for emoji in emojis:
-        is_custom = emoji['d_id'] is not None
+        is_custom = emoji['d_id'] != 'None'
         if is_custom:
             emoji_string = str(discord.utils.get(guild.emojis, id=int(emoji['d_id'])))
         else:
@@ -97,15 +85,16 @@ class Starboard(commands.Cog):
     )
     @commands.guild_only()
     async def list_starboards(self, ctx):
-        get_starboards = """SELECT * FROM starboards WHERE guild_id=?"""
-        get_emojis = """SELECT * FROM sbemojis WHERE starboard_id=?"""
+        get_starboards = """SELECT * FROM starboards WHERE guild_id=$1"""
+        get_emojis = """SELECT * FROM sbemojis WHERE starboard_id=$1"""
 
         conn = await self.db.connect()
-        c = await conn.cursor()
-        async with self.db.lock:
-            _ = await functions.check_or_create_existence(self.db, c, self.bot, guild_id=ctx.guild.id, user=ctx.message.author, do_member=True)
-            await c.execute(get_starboards, (ctx.guild.id,))
-            rows = await c.fetchall()
+        async with self.db.lock and conn.transaction():
+            _ = await functions.check_or_create_existence(
+                self.db, conn, self.bot, guild_id=str(ctx.guild.id),
+                user=ctx.message.author, do_member=True
+            )
+            rows = await conn.fetch(get_starboards, str(ctx.guild.id))
 
             if len(rows) == 0:
                 await ctx.send("You don't have any starboards")
@@ -113,14 +102,12 @@ class Starboard(commands.Cog):
                 msg = f'Starboards: {len(rows)}\n'
                 for row in rows:
                     sb_id = row['id']
-                    await c.execute(get_emojis, [sb_id])
-                    emojis = await c.fetchall()
+                    emojis = await conn.fetch(get_emojis, sb_id)
                     emoji_string = await pretty_emoji_string(emojis, ctx.guild)
                     msg += f"--<#{row['id']}>: {emoji_string}\n"
                 await ctx.send(msg)
 
-            await conn.commit()
-            await conn.close()
+        await conn.close()
 
     @commands.command(
         name='settings', aliases=['s'],
@@ -129,15 +116,16 @@ class Starboard(commands.Cog):
     )
     @commands.guild_only()
     async def get_starboard_settings(self, ctx, starboard: discord.TextChannel):
-        get_starboard = """SELECT * FROM starboards WHERE id=?"""
-        get_emojis = """SELECT * FROM sbemojis WHERE starboard_id=?"""
+        get_starboard = """SELECT * FROM starboards WHERE id=$1"""
+        get_emojis = """SELECT * FROM sbemojis WHERE starboard_id=$1"""
 
         conn = await self.db.connect()
-        c = await conn.cursor()
-        async with self.db.lock:
-            await functions.check_or_create_existence(self.db, c, self.bot, guild_id=ctx.guild.id, user=ctx.message.author, do_member=True)
-            await c.execute(get_starboard, [starboard.id])
-            sql_starboard = await c.fetchone()
+        async with self.db.lock and conn.transaction():
+            await functions.check_or_create_existence(
+                self.db, conn, self.bot, guild_id=str(ctx.guild.id),
+                user=ctx.message.author, do_member=True
+            )
+            sql_starboard = await conn.fetchrow(get_starboard, str(starboard.id))
             if sql_starboard is None:
                 await ctx.send("That is not a starboard!")
             else:
@@ -152,7 +140,7 @@ class Starboard(commands.Cog):
                 string += f"\n--locked: {bool(sql_starboard['locked'])}"
                 string += f"\n--archived: {bool(sql_starboard['is_archived'])}**"
                 await ctx.send(string)
-            await conn.close()
+        await conn.close()
 
     @commands.command(
         name='add', aliases=['a'],
@@ -170,29 +158,32 @@ class Starboard(commands.Cog):
             await ctx.send("I can't add reactions to messages there. If you want me to automatically add reactions, please enable this setting.")
 
         conn = await self.db.connect()
-        c = await conn.cursor()
         get_starboards = \
-            """SELECT * FROM starboards WHERE guild_id=?"""
+            """SELECT * FROM starboards WHERE guild_id=$1"""
 
         limit = await functions.get_limit(self.db, 'starboards', ctx.guild)
 
-        async with self.db.lock:
-            await functions.check_or_create_existence(self.db, c, self.bot, guild_id=ctx.guild.id, user=ctx.message.author, do_member=True)
-            await c.execute(get_starboards, [ctx.guild.id])
-            rows = await c.fetchall()
+        async with self.db.lock and conn.transaction():
+            await functions.check_or_create_existence(
+                self.db, conn, self.bot, guild_id=str(ctx.guild.id),
+                user=ctx.message.author, do_member=True
+            )
+            rows = await conn.fetch(get_starboards, str(ctx.guild.id))
             num_starboards = len(rows)
 
             if num_starboards >= limit:
                 await ctx.send("You have reached your limit for starboards. Please upgrade by becoming a patron.")
             else:
-                exists = await functions.check_or_create_existence(self.db, c, self.bot, guild_id=ctx.guild.id, starboard_id=starboard.id)
+                exists = await functions.check_or_create_existence(
+                    self.db, conn, self.bot, guild_id=str(ctx.guild.id),
+                    starboard_id=str(starboard.id)
+                )
                 if exists['se']:
                     await ctx.send("That is already a starboard!")
                 else:
                     await ctx.send(f"Added starboard {starboard.mention}")
 
-            await conn.commit()
-            await conn.close()
+        await conn.close()
         #if existed['se'] == True:
         #    await ctx.send("That is already a starboard!")
         #else:
@@ -217,19 +208,25 @@ class Starboard(commands.Cog):
             return
 
         conn = await self.db.connect()
-        c = await conn.cursor()
-        async with self.db.lock:
-            await functions.check_or_create_existence(self.db, c, self.bot, guild_id=ctx.guild.id, user=ctx.message.author, do_member=True)
-            existed = await functions.check_or_create_existence(self.db, c, self.bot, starboard_id=starboard.id, guild_id=ctx.guild.id, create_new=False)
+        exists = True
+        async with self.db.lock and conn.transaction():
+            await functions.check_or_create_existence(
+                self.db, conn, self.bot, guild_id=str(ctx.guild.id),
+                user=ctx.message.author, do_member=True
+            )
+            existed = await functions.check_or_create_existence(
+                self.db, conn, self.bot, starboard_id=str(starboard.id),
+                guild_id=str(ctx.guild.id), create_new=False
+            )
             if existed['se'] == False:
                 await ctx.send("That is not a starboard!")
-                await conn.close()
-                return
-            remove_starboard = """DELETE FROM starboards WHERE id=?"""
-            await c.execute(remove_starboard, (starboard.id,))
-            await conn.commit()
-            await conn.close()
-        await ctx.send("Removed starboard")
+                exists = False
+            else:
+                remove_starboard = """DELETE FROM starboards WHERE id=$1"""
+                await conn.execute(remove_starboard, str(starboard.id))
+        await conn.close()
+        if exists:
+            await ctx.send("Removed starboard")
 
     @commands.command(
         name='addEmoji', aliases=['ae'],
@@ -240,44 +237,48 @@ class Starboard(commands.Cog):
     @commands.has_permissions(manage_channels=True, manage_messages=True)
     async def add_starboard_emoji(self, ctx, starboard: discord.TextChannel, emoji: Union[discord.Emoji, str]):
         check_sbemoji = \
-            """SELECT * FROM sbemojis WHERE name=? AND starboard_id=?"""
+            """SELECT * FROM sbemojis WHERE name=$1 AND starboard_id=$2"""
         get_all_sbemoji = \
-            """SELECT * FROM sbemojis WHERE starboard_id=?"""
+            """SELECT * FROM sbemojis WHERE starboard_id=$1"""
         if not isinstance(emoji, discord.Emoji):
             if not functions.is_emoji(emoji):
                 await ctx.send("I don't recognize that emoji. Please make sure it is correct, and if it's a custom emoji it has to be in this server.")
                 return
-        emoji_name = str(emoji.id) if isinstance(emoji, discord.Emoji) else emoji
+        emoji_name = str(emoji.id) if isinstance(emoji, discord.Emoji) else str(emoji)
         emoji_id = emoji.id if isinstance(emoji, discord.Emoji) else None
 
         limit = await functions.get_limit(self.db, 'emojis', ctx.guild)
 
         conn = await self.db.connect()
-        c = await conn.cursor()
         added = False
-        async with self.db.lock:
+        async with self.db.lock and conn.transaction():
             await functions.check_or_create_existence(
-                self.db, c, self.bot, guild_id=ctx.guild.id, user=ctx.message.author, do_member=True
+                self.db, conn, self.bot, guild_id=str(ctx.guild.id),
+                user=ctx.message.author, do_member=True
             )
-            exists = await functions.check_or_create_existence(self.db, c, self.bot, starboard_id=starboard.id, guild_id=ctx.guild.id, create_new=False)
+            exists = await functions.check_or_create_existence(
+                self.db, conn, self.bot, starboard_id=str(starboard.id),
+                guild_id=str(ctx.guild.id), create_new=False
+            )
             if not exists['se']:
                 await ctx.send("That is not a starboard!")
             else:
-                await c.execute(get_all_sbemoji, [starboard.id])
-                rows = await c.fetchall()
-                if len(rows) >= limit:
-                    await ctx.send("You have reached your limit for emojis on this starboard. Please upgrade by becoming a patron.")
+                rows = await conn.fetch(check_sbemoji, emoji_name, str(starboard.id))
+                exists = len(rows) > 0
+                if exists:
+                    await ctx.send("That emoji is already on that starboard!")
                 else:
-                    await c.execute(check_sbemoji, [emoji_name, starboard.id])
-                    exists = len(await c.fetchall()) > 0
-                    if exists:
-                        await ctx.send("That emoji is already on that starboard!")
+                    rows = await conn.fetch(get_all_sbemoji, str(starboard.id))
+                    if len(rows) >= limit:
+                        await ctx.send("You have reached your limit for emojis on this starboard. Please upgrade by becoming a patron.")
                     else:
-                        await c.execute(self.db.q.create_sbemoji, [emoji_id, starboard.id, emoji_name, False])
+                        await self.db.q.create_sbemoji.fetch(
+                            str(emoji_id),
+                            str(starboard.id), emoji_name, False
+                        )
                         added = True
 
-            await conn.commit()
-            await conn.close()
+        await conn.close()
         if added:
             await ctx.send(f"Added {emoji} to {starboard.mention}")
 
@@ -290,38 +291,36 @@ class Starboard(commands.Cog):
     @commands.has_permissions(manage_channels=True, manage_messages=True)
     async def remove_starboard_emoji(self, ctx, starboard: discord.TextChannel, emoji: Union[discord.Emoji, str]):
         get_sbemoji = \
-            """SELECT * FROM sbemojis WHERE name=? AND starboard_id=?"""
+            """SELECT * FROM sbemojis WHERE name=$1 AND starboard_id=$2"""
         del_sbemoji = \
-            """DELETE FROM sbemojis WHERE id=?"""
+            """DELETE FROM sbemojis WHERE id=$1"""
         emoji_name = str(emoji.id) if isinstance(emoji, discord.Emoji) else emoji
         emoji_id = emoji.id if isinstance(emoji, discord.Emoji) else None
 
         conn = await self.db.connect()
-        c = await conn.cursor()
-        async with self.db.lock:
+        removed = False
+        async with self.db.lock and conn.transaction():
             await functions.check_or_create_existence(
-                self.db, c, self.bot, guild_id=ctx.guild.id, user=ctx.message.author, do_member=True
+                self.db, conn, self.bot, guild_id=str(ctx.guild.id),
+                user=ctx.message.author, do_member=True
             )
             exists = await functions.check_or_create_existence(
-                self.db, c, self.bot, starboard_id=starboard.id, guild_id=ctx.guild.id, create_new=False
+                self.db, conn, self.bot, starboard_id=str(starboard.id),
+                guild_id=str(ctx.guild.id), create_new=False
             )
             if not exists['se']:
                 await ctx.send("That is not a starboard!")
-                await conn.commit()
-                await conn.close()
-                return
-            await c.execute(get_sbemoji, [emoji_name, starboard.id])
-            rows = await c.fetchall()
-            if len(rows) == 0:
-                await ctx.send("That is not a starboard emoji!")
-                await conn.commit()
-                await conn.close()
-                return
-            sbemoji_id = rows[0]['id']
-            await c.execute(del_sbemoji, [sbemoji_id])
-            await conn.commit()
-            await conn.close()
-        await ctx.send(f"Removed {emoji} from {starboard.mention}")
+            else:
+                rows = await conn.fetch(get_sbemoji, emoji_name, str(starboard.id))
+                if len(rows) == 0:
+                    await ctx.send("That is not a starboard emoji!")
+                else:
+                    sbemoji_id = rows[0]['id']
+                    await conn.execute(del_sbemoji, sbemoji_id)
+                    removed = True
+        await conn.close()
+        if removed:
+            await ctx.send(f"Removed {emoji} from {starboard.mention}")
 
     @commands.command(
         name='requiredStars', aliases=['rs', 'required'],

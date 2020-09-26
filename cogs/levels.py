@@ -18,14 +18,12 @@ class Levels(commands.Cog):
     async def show_rank_card(self, ctx, user: Union[discord.Member, None]):
         user = user if user else ctx.message.author
         get_member = \
-            """SELECT * FROM members WHERE user_id=? and guild_id=?"""
+            """SELECT * FROM members WHERE user_id=$1 and guild_id=$2"""
 
         conn = await self.db.connect()
-        c = await conn.cursor()
-        async with self.db.lock:
-            await c.execute(get_member, [user.id, ctx.guild.id])
-            sql_member = await c.fetchone()
-            await conn.close()
+        async with self.db.lock and conn.transaction():
+            sql_member = await conn.fetchrow(get_member, str(user.id), str(ctx.guild.id))
+        await conn.close()
         given = sql_member['given']
         received = sql_member['received']
         xp = sql_member['xp']
@@ -53,12 +51,10 @@ class Levels(commands.Cog):
             """UPDATE members
             SET xp=0,
             lvl=0
-            WHERE user_id=? AND guild_id=?"""
+            WHERE user_id=$1 AND guild_id=$2"""
 
         conn = await self.db.connect()
-        c = await conn.cursor()
-        async with self.db.lock:
-            await c.execute(set_points, [user.id, ctx.guild.id])
-            await conn.commit()
-            await conn.close()
+        async with self.db.lock and conn.transaction():
+            await conn.execute(set_points, str(user.id), str(ctx.guild.id))
+        await conn.close()
         await ctx.send(f"Reset {user.name}'s levels and xp.")

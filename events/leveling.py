@@ -1,3 +1,4 @@
+from inspect import Attribute
 import discord, functions, bot_config
 from discord.ext import commands
 import datetime
@@ -11,28 +12,25 @@ async def next_level_xp(current_level):
 async def is_starboard_emoji(db, guild_id, emoji):
     emoji = str(emoji)
     get_starboards = \
-        """SELECT * FROM starboards WHERE guild_id=?"""
+        """SELECT * FROM starboards WHERE guild_id=$1"""
     get_sbeemojis = \
-        """SELECT * FROM sbemojis WHERE starboard_id=?"""
+        """SELECT * FROM sbemojis WHERE starboard_id=$1"""
 
     conn = await db.connect()
-    c = await conn.cursor()
-    async with db.lock:
-        await c.execute(get_starboards, [guild_id])
-        starboards = await c.fetchall()
+    async with db.lock and conn.transaction():
+        starboards = await conn.fetch(get_starboards, str(guild_id))
         all_emojis = []
         for starboard in starboards:
-            await c.execute(get_sbeemojis, [starboard['id']])
-            emojis = await c.fetchall()
-            all_emojis += [str(e['name']) if e['d_id'] is None else str(e['d_id']) for e in emojis]
-        await conn.close()
+            emojis = await conn.fetch(get_sbeemojis, starboard['id'])
+            all_emojis += [str(e['name']) if e['d_id'] in [None, 'None'] else str(e['d_id']) for e in emojis]
+    await conn.close()
     return emoji in all_emojis
 
 
 async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
     guild_id = guild.id
     receiver_id = receiver.id
-    if reacter_id == receiver_id:
+    if str(reacter_id) == str(receiver_id):
         return
     emoji = _emoji.id if _emoji.id is not None else _emoji.name
     is_sbemoji = await is_starboard_emoji(db, guild_id, emoji)
@@ -57,33 +55,30 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
         print("Not Cooldown")
 
     get_member = \
-        """SELECT * FROM members WHERE user_id=? AND guild_id=?"""
+        """SELECT * FROM members WHERE user_id=$1 AND guild_id=$2"""
     set_points = \
         """UPDATE members
-        SET {}=?
-        WHERE user_id=? AND guild_id=?"""
+        SET {}=$1
+        WHERE user_id=$2 AND guild_id=$3"""
     set_xp_level = \
         """UPDATE members
-        SET xp=?,
-        lvl=?
-        WHERE user_id=? AND guild_id=?"""
+        SET xp=$1,
+        lvl=$2
+        WHERE user_id=$3 AND guild_id=$4"""
 
     points = 1 if is_add is True else -1
 
     level_direction = 0
 
     conn = await db.connect()
-    c = await conn.cursor()
-    async with db.lock:
-        await c.execute(get_member, [reacter_id, guild_id])
-        sql_reacter = await c.fetchone()
+    async with db.lock and conn.transaction():
+        sql_reacter = await conn.fetchrow(get_member, str(reacter_id), str(guild_id))
         given = sql_reacter['given']+points
-        await c.execute(set_points.format('given'), [given, reacter_id, guild_id])
+        await conn.execute(set_points.format('given'), given, str(reacter_id), str(guild_id))
 
-        await c.execute(get_member, [receiver_id, guild_id])
-        sql_receiver = await c.fetchone()
+        sql_receiver = await conn.fetchrow(get_member, str(receiver_id), str(guild_id))
         received = sql_receiver['received']+points
-        await c.execute(set_points.format('received'), [received, receiver_id, guild_id])
+        await conn.execute(set_points.format('received'), received, str(receiver_id), str(guild_id))
 
         if cooldown_over and is_add is True:
             current_lvl = sql_receiver['lvl']
@@ -92,6 +87,7 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
 
             next_xp = current_xp + points
             next_lvl = current_lvl
+            level_direction = 0
             if next_xp >= needed_xp:
                 next_lvl += 1
                 next_xp = next_xp-needed_xp
@@ -102,15 +98,12 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
             #    next_xp = await next_level_xp(next_lvl)-1
             #    level_direction = -1
 
-            await c.execute(
-                set_xp_level,
-                [
-                    next_xp, next_lvl, sql_receiver['user_id'], guild_id
-                ]
+            await conn.execute(
+                set_xp_level, next_xp, next_lvl,
+                sql_receiver['user_id'], str(guild_id)
             )
 
-        await conn.commit()
-        await conn.close()
+    await conn.close()
 
     if level_direction == 1:
         embed = discord.Embed(
@@ -124,5 +117,5 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
         try:
             #await receiver.send(embed=embed)
             pass
-        except discord.errors.HTTPException:
+        except (discord.errors.HTTPException, AttributeError):
             pass

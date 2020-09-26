@@ -16,26 +16,23 @@ DONATEBOT_TOKEN = os.getenv("DONATEBOT_TOKEN")
 
 async def update_patron_for_user(bot, db, user_id, product_id, add: bool):
     check_patron = \
-        """SELECT * FROM patrons WHERE user_id=? AND product_id=?"""
+        """SELECT * FROM patrons WHERE user_id=$1 AND product_id=$2"""
     new_patron = db.q.create_patron
     del_patron = \
-        """DELETE FROM patrons WHERE id=?"""
+        """DELETE FROM patrons WHERE id=$1"""
 
     conn = await db.connect()
-    c = await conn.cursor()
-    async with db.lock:
-        await c.execute(check_patron, [user_id, product_id])
-        rows = await c.fetchall()
+    async with db.lock and conn.transaction():
+        rows = await conn.fetch(check_patron, str(user_id), product_id)
         if len(rows) == 0:
             sql_patron = None
         else:
             sql_patron = rows[0]
         if add and not sql_patron:
-            await c.execute(new_patron, [user_id, product_id])
+            await new_patron.fetch(str(user_id), product_id)
         if not add and sql_patron:
-            await c.execute(del_patron, [sql_patron['id']])
-        await conn.commit()
-        await conn.close()
+            await conn.execute(del_patron, sql_patron['id'])
+    await conn.close()
 
     give_role = PATRON_LEVELS[product_id]['gives_role']
     if give_role:
@@ -54,11 +51,9 @@ class PatronCommands(commands.Cog):
     @commands.is_owner()
     async def list_donation_events(self, ctx):
         conn = await self.db.connect()
-        c = await conn.cursor()
-        async with self.db.lock:
-            await c.execute("SELECT * FROM donations")
-            donations = await c.fetchall()
-            await conn.close()
+        async with self.db.lock and conn.transaction():
+            donations = await conn.fetch("SELECT * FROM donations")
+        await conn.close()
         string = None
         if len(donations) == 0:
             string = "No Donations Yet"
@@ -94,7 +89,7 @@ class PatronCommands(commands.Cog):
     async def show_patron_info(self, ctx, user: discord.Member=None):
         user = user if user else ctx.message.author
         user_id = user.id
-        levels = await functions.get_patron_levels(self.db, user_id)
+        levels = await functions.get_patron_levels(self.db, str(user_id))
         level_ids = [lvl['product_id'] for lvl in levels]
         string = f"Current Patron Levels for **{user}**:"
         for lvl_id, lvl in PATRON_LEVELS.items():
@@ -166,17 +161,13 @@ class HttpWebHook():
         product_id = None if 'product_id' not in data else data['product_id']
         role_id = None if 'role_id' not in data else data['role_id']
         conn = await self.db.connect()
-        c = await conn.cursor()
-        async with self.db.lock:
-            await c.execute(
+        async with self.db.lock and conn.transaction():
+            await conn.execute(
                 self.db.q.create_donation,
-                [
-                    data['txn_id'], data['buyer_id'], product_id, role_id,
-                    data['guild_id'], data['buyer_email'], data['price'],
-                    data['currency'], data['recurring'], data['status']
-                ]
+                data['txn_id'], data['buyer_id'], product_id, role_id,
+                data['guild_id'], data['buyer_email'], data['price'],
+                data['currency'], data['recurring'], data['status']
             )
-        await conn.commit()
         await conn.close()
 
         if 'product_id' not in data:

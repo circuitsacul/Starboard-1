@@ -11,7 +11,6 @@ from events import starboard_events
 from events import leveling
 
 from database.database import Database
-from database import migrations
 from api import post_guild_count
 
 from events import leveling
@@ -21,8 +20,6 @@ from cogs.utility import Utility
 from cogs.patron import PatronCommands, HttpWebHook
 from cogs.levels import Levels
 #from cogs.patron import FlaskWebHook
-
-MIGRATE = input('Migrate? (Y/n): ').lower().startswith('y')
 
 _TOKEN = os.getenv('TOKEN')
 _BETA_TOKEN = os.getenv('BETA_TOKEN')
@@ -59,6 +56,19 @@ web_server = HttpWebHook(bot, db)
 #    for item in cp_queue:
 #        print("New Donation Event")
 #        print(item)
+
+
+@bot.command()
+async def test(ctx):
+    conn = await db.connect()
+    async with conn.transaction():
+        stmt = """SELECT * FROM starboards WHERE guild_id=$1"""
+        all = []
+        async for row in conn.cursor(stmt, "725336160112738385"):
+            all.append(row)
+    await conn.close()
+    await ctx.send("Rows: " + str(all))
+
 
 
 # Info Commands
@@ -240,9 +250,6 @@ async def on_ready():
 
 async def main():
     await db.open()
-    if MIGRATE is True:
-        print("Migrating...")
-        await migrations.migrate(db)
     await web_server.start()
     if not BETA:
         bot.loop.create_task(post_guild_count.loop_post(bot))

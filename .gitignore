@@ -5,6 +5,9 @@ pyproject.toml
 
 .vsls.json
 
+pg_database
+logfile
+
 bot_config.py
 
 *.db
