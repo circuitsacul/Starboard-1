@@ -180,7 +180,7 @@ class Utility(commands.Cog):
         async with self.db.lock and conn.transaction():
             sql_message = await conn.fetchrow(check_message, str(message_id))
             if sql_message is None:
-                self.db.q.create_message.fetch(
+                await self.db.q.create_message.fetch(
                     str(message.id), str(ctx.guild.id), str(message.author.id),
                     None, str(message.channel.id), True, message.channel.is_nsfw()
                 )
