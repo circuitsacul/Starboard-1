@@ -2,6 +2,7 @@ import discord, functions, bot_config
 from discord.errors import Forbidden
 from discord import utils
 from events import leveling
+from aiosqlite import Error
 
 
 async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, _emoji, is_add):
@@ -46,28 +47,32 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
             db, conn, bot,
             guild_id=str(guild_id), user=user, do_member=True
         )
-        rows = await conn.fetch(get_message, str(message_id))
-        if len(rows) == 0:
-            await db.q.create_message.fetch(
-                str(message_id), str(guild_id),
-                str(message.author.id), None,
-                str(channel_id), True,
-                message.channel.is_nsfw()
-            )
 
-        rows = await conn.fetch(check_reaction, str(message_id), str(user_id), emoji_name)
-        exists = len(rows) > 0
-        if not exists and is_add:
-            await db.q.create_reaction.fetch(
-                str(emoji_id), str(guild_id), str(user_id),
-                str(message_id), emoji_name
-            )
-        if exists and not is_add:
-            await conn.execute(remove_reaction, str(message_id), str(user_id), emoji_name)
+        rows = await conn.fetch(get_message, str(message_id))
+        if message:
+            if len(rows) == 0:
+                await db.q.create_message.fetch(
+                    str(message_id), str(guild_id),
+                    str(message.author.id), None,
+                    str(channel_id), True,
+                    message.channel.is_nsfw()
+                )
+        try:
+            rows = await conn.fetch(check_reaction, str(message_id), str(user_id), emoji_name)
+            exists = len(rows) > 0
+            if not exists and is_add:
+                await db.q.create_reaction.fetch(
+                    str(emoji_id), str(guild_id), str(user_id),
+                    str(message_id), emoji_name
+                )
+            if exists and not is_add:
+                await conn.execute(remove_reaction, str(message_id), str(user_id), emoji_name)
+        except Error as e:
+            pass
 
     await conn.close()
 
-    if message is not None and not user.bot:
+    if message is not None and user is not None and not user.bot:
         await leveling.handle_reaction(db, str(user.id), message.author, guild, _emoji, is_add)
 
     await handle_starboards(db, bot, str(message_id), channel, message)
@@ -82,9 +87,13 @@ async def handle_starboards(db, bot, message_id, channel, message):
         AND locked=False"""
 
     conn = await db.connect()
+
     async with db.lock and conn.transaction():
-        rows = await conn.fetch(get_message, str(message_id))
-        sql_message = rows[0]
+        sql_message = await conn.fetchrow(get_message, str(message_id))
+        
+    if sql_message is None:
+        await conn.close()
+        return
 
     #if channel is None:
     #    return

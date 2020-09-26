@@ -1,4 +1,4 @@
-import discord, sys, asyncio, sys, os, asyncio, dotenv, functions, traceback
+import discord, sys, asyncio, sys, os, asyncio, dotenv, functions, logging, traceback
 from discord.ext import commands
 from typing import Union
 #from flask.app import Flask

@@ -85,6 +85,9 @@ class Database:
         self.lock = Lock()
         #self.q = CommonSql()
         self._db_path = db_path
+        self.cooldowns = {
+            'giving_stars': {} # {user_id: cooldown_end_datetime}
+        }
 
     async def open(self):
         #self.q = await CommonSql()
