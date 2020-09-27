@@ -57,6 +57,20 @@ web_server = HttpWebHook(bot, db)
 #        print("New Donation Event")
 #        print(item)
 
+
+@bot.command()
+async def test(ctx):
+    conn = await db.connect()
+    async with conn.transaction():
+        stmt = """SELECT * FROM starboards WHERE guild_id=$1"""
+        all = []
+        async for row in conn.cursor(stmt, "725336160112738385"):
+            all.append(row)
+    await conn.close()
+    await ctx.send("Rows: " + str(all))
+
+
+
 # Info Commands
 @bot.command(
     name='links', aliases=['invite', 'support'],
@@ -110,7 +124,7 @@ async def about_starbot(ctx):
     brief='Get bot latency'
     )
 async def ping(ctx):
-    await ctx.send('Pong! {0} ms'.format(round(bot.latency*1000, 3)))
+    await ctx.send('Pong! {0} ms'.format(int(bot.latency*1000)))
 
 
 @bot.command(name='stats', aliases=['botstats'], description='Bot stats', brief='Bot stats')
@@ -120,7 +134,7 @@ async def stats_for_bot(ctx):
         description = f"""
         **Guilds:** {len(bot.guilds)}
         **Users:** {len(bot.users)}
-        **Ping:** {round(bot.latency*1000, 3)} ms
+        **Ping:** {int(bot.latency*1000)} ms
         """
         )
     await ctx.send(embed=embed)
