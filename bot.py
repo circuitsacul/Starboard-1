@@ -57,6 +57,20 @@ web_server = HttpWebHook(bot, db)
 #        print("New Donation Event")
 #        print(item)
 
+
+@bot.command()
+async def test(ctx):
+    conn = await db.connect()
+    async with conn.transaction():
+        stmt = """SELECT * FROM starboards WHERE guild_id=$1"""
+        all = []
+        async for row in conn.cursor(stmt, "725336160112738385"):
+            all.append(row)
+    await conn.close()
+    await ctx.send("Rows: " + str(all))
+
+
+
 # Info Commands
 @bot.command(
     name='links', aliases=['invite', 'support'],
