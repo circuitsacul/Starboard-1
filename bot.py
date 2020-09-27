@@ -110,7 +110,7 @@ async def about_starbot(ctx):
     brief='Get bot latency'
     )
 async def ping(ctx):
-    await ctx.send('Pong! {0} ms'.format(round(bot.latency*1000, 3)))
+    await ctx.send('Pong! {0} ms'.format(int(bot.latency*1000)))
 
 
 @bot.command(name='stats', aliases=['botstats'], description='Bot stats', brief='Bot stats')
@@ -120,7 +120,7 @@ async def stats_for_bot(ctx):
         description = f"""
         **Guilds:** {len(bot.guilds)}
         **Users:** {len(bot.users)}
-        **Ping:** {round(bot.latency*1000, 3)} ms
+        **Ping:** {int(bot.latency*1000)} ms
         """
         )
     await ctx.send(embed=embed)
