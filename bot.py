@@ -19,6 +19,7 @@ from cogs.owner import Owner
 from cogs.utility import Utility
 from cogs.patron import PatronCommands, HttpWebHook
 from cogs.levels import Levels
+from cogs.settings import Settings
 #from cogs.patron import FlaskWebHook
 
 _TOKEN = os.getenv('TOKEN')
@@ -245,6 +246,7 @@ async def main():
     bot.add_cog(Utility(bot, db))
     bot.add_cog(PatronCommands(bot, db))
     bot.add_cog(Levels(bot, db))
+    bot.add_cog(Settings(bot, db))
     await bot.start(TOKEN)
 
 

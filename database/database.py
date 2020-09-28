@@ -136,7 +136,9 @@ class Database:
         users_table = \
             """CREATE TABLE IF NOT EXISTS users (
                 id text PRIMARY KEY,
-                is_bot bool NOT NULL
+                is_bot bool NOT NULL,
+
+                lvl_up_msgs bool DEFAULT True
             )"""
 
         patrons_table = \
