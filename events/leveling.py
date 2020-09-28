@@ -92,11 +92,11 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
                 next_lvl += 1
                 next_xp = next_xp-needed_xp
                 level_direction = 1
-            #elif next_xp < 0:
-            #    next_lvl -= 1
-            #    next_lvl = 0 if next_lvl < 0 else next_lvl
-            #    next_xp = await next_level_xp(next_lvl)-1
-            #    level_direction = -1
+            elif next_xp < 0:
+                next_lvl -= 1
+                next_lvl = 0 if next_lvl < 0 else next_lvl
+                next_xp = await next_level_xp(next_lvl)-1
+                level_direction = -1
 
             await conn.execute(
                 set_xp_level, next_xp, next_lvl,
