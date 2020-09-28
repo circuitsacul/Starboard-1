@@ -196,7 +196,6 @@ class Database:
                 bots_on_sb bool NOT NULL DEFAULT true,
 
                 locked bool NOT NULL DEFAULT false,
-                is_archived bool NOT NULL DEFAULT false,
 
                 FOREIGN KEY (guild_id) REFERENCES guilds (id)
                     ON DELETE CASCADE
