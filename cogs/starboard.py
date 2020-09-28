@@ -1,6 +1,3 @@
-# TODO: Allow user to set botsReact, but also need to make it still ignore starboards reactions
-
-
 import discord, functions
 from discord.embeds import Embed
 from discord.ext import commands
@@ -419,3 +416,20 @@ class Starboard(commands.Cog):
             await ctx.send("Invalid Setting")
         else:
             await ctx.send(f"Set botsOnStarboard to {value} for {starboard.mention}")
+
+
+    @commands.command(
+        name='botsReact', aliases=['br'],
+        description='Wether or not a bot\'s reaction counts towards message points. Still excludes Starboards reactions.',
+        brief='Wether or not to allow bot reactions.'
+    )
+    @commands.guild_only()
+    @commands.has_permissions(manage_channels=True, manage_messages=True)
+    async def set_bots_react(self, ctx, starboard: discord.TextChannel, value: bool):
+        status = await change_starboard_settings(self.db, starboard.id, bots_react=value)
+        if status is None:
+            await ctx.send("That is not a starboard!")
+        elif status is False:
+            await ctx.send("Invalid Setting")
+        else:
+            await ctx.send(f"Set botsReact to {value} for {starboard.mention}")

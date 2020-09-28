@@ -141,7 +141,7 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
     async with db.lock:
         if delete:
             await conn.execute(delete_starboard_message, sql_message['id'], sql_starboard['id'])
-        points, emojis = await calculate_points(conn, sql_message, sql_starboard)
+        points, emojis = await calculate_points(conn, sql_message, sql_starboard, bot)
     await conn.close()
 
     deleted = message is None
@@ -302,7 +302,7 @@ async def get_embed_from_message(message):
     return embed
 
 
-async def calculate_points(conn, sql_message, sql_starboard):
+async def calculate_points(conn, sql_message, sql_starboard, bot):
     get_reactions = \
         """SELECT * FROM reactions WHERE message_id=$1 AND name=$2"""
     get_user = \
@@ -335,6 +335,8 @@ async def calculate_points(conn, sql_message, sql_starboard):
             rows = await conn.fetch(get_user, user_id)
             sql_user = rows[0]
             if sql_user['is_bot'] == True and bots_react == False:
+                continue
+            if int(sql_user['id']) == bot.user.id:
                 continue
             total_points += 1
 
