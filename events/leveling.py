@@ -30,8 +30,8 @@ async def is_starboard_emoji(db, guild_id, emoji):
 async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
     guild_id = guild.id
     receiver_id = receiver.id
-    #if str(reacter_id) == str(receiver_id):
-    #    return
+    if str(reacter_id) == str(receiver_id):
+        return
     emoji = _emoji.id if _emoji.id is not None else _emoji.name
     is_sbemoji = await is_starboard_emoji(db, guild_id, emoji)
     if not is_sbemoji:
@@ -56,6 +56,8 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
 
     get_member = \
         """SELECT * FROM members WHERE user_id=$1 AND guild_id=$2"""
+    get_user = \
+        """SELECT * FROM users WHERE id=$1"""
     set_points = \
         """UPDATE members
         SET {}=$1
@@ -79,6 +81,9 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
         sql_receiver = await conn.fetchrow(get_member, str(receiver_id), str(guild_id))
         received = sql_receiver['received']+points
         await conn.execute(set_points.format('received'), received, str(receiver_id), str(guild_id))
+
+        sql_receiver_user = await conn.fetchrow(get_user, str(receiver_id))
+        send_lvl_msgs = sql_receiver_user['lvl_up_msgs']
 
         current_lvl = sql_receiver['lvl']
         current_xp = sql_receiver['xp']
@@ -113,7 +118,7 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
 
     await conn.close()
 
-    if leveled_up:
+    if leveled_up and send_lvl_msgs:
         embed = discord.Embed(
             title=f"Level Up!",
             description=f"You've reached **{new_xp} XP** and are now **level {new_lvl}**!",
