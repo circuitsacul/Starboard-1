@@ -30,8 +30,8 @@ async def is_starboard_emoji(db, guild_id, emoji):
 async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
     guild_id = guild.id
     receiver_id = receiver.id
-    if str(reacter_id) == str(receiver_id):
-        return
+    #if str(reacter_id) == str(receiver_id):
+    #    return
     emoji = _emoji.id if _emoji.id is not None else _emoji.name
     is_sbemoji = await is_starboard_emoji(db, guild_id, emoji)
     if not is_sbemoji:
@@ -68,7 +68,7 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
 
     points = 1 if is_add is True else -1
 
-    level_direction = 0
+    leveled_up = False
 
     conn = await db.connect()
     async with db.lock and conn.transaction():
@@ -80,42 +80,50 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
         received = sql_receiver['received']+points
         await conn.execute(set_points.format('received'), received, str(receiver_id), str(guild_id))
 
-        if cooldown_over and is_add is True:
-            current_lvl = sql_receiver['lvl']
-            current_xp = sql_receiver['xp']
-            needed_xp = await next_level_xp(current_lvl)
+        current_lvl = sql_receiver['lvl']
+        current_xp = sql_receiver['xp']
+        needed_xp = await next_level_xp(current_lvl)
+        
+        new_xp = current_xp + points
+        new_xp = 0 if new_xp < 0 else new_xp
+        new_lvl = current_lvl + 1 if new_xp >= needed_xp else current_lvl
+        leveled_up = new_lvl > current_lvl if cooldown_over else False
 
-            next_xp = current_xp + points
-            next_lvl = current_lvl
-            level_direction = 0
-            if next_xp >= needed_xp:
-                next_lvl += 1
-                next_xp = next_xp-needed_xp
-                level_direction = 1
-            #elif next_xp < 0:
-            #    next_lvl -= 1
-            #    next_lvl = 0 if next_lvl < 0 else next_lvl
-            #    next_xp = await next_level_xp(next_lvl)-1
-            #    level_direction = -1
+
+        if cooldown_over:
+        #    current_lvl = sql_receiver['lvl']
+        #    current_xp = sql_receiver['xp']
+        #    needed_xp = await next_level_xp(current_lvl)
+
+        #    next_xp = current_xp + points
+        #    next_lvl = current_lvl
+        #    if next_xp >= needed_xp:
+        #       next_lvl += 1
+        #       leveled_up = True
+        #    #elif next_xp < 0:
+        #    #    next_lvl -= 1
+        #    #    next_lvl = 0 if next_lvl < 0 else next_lvl
+        #    #    next_xp = await next_level_xp(next_lvl)-1
+        #    #    level_direction = -1
 
             await conn.execute(
-                set_xp_level, next_xp, next_lvl,
+                set_xp_level, new_xp, new_lvl,
                 sql_receiver['user_id'], str(guild_id)
             )
 
     await conn.close()
 
-    if level_direction == 1:
+    if leveled_up:
         embed = discord.Embed(
             title=f"Level Up!",
-            description=f"You've reached a total of **{received} stars** and are now **level {next_lvl}**!",
+            description=f"You've reached **{new_xp} XP** and are now **level {new_lvl}**!",
             color=bot_config.COLOR
         )
         embed.set_thumbnail(url="https://i.ibb.co/bvYZ8V8/dizzy-1f4ab.png")
         embed.set_footer(text=guild.name, icon_url=guild.icon_url)
         embed.timestamp = datetime.datetime.now()
         try:
-            #await receiver.send(embed=embed)
+            await receiver.send(embed=embed)
             pass
         except (discord.errors.HTTPException, AttributeError):
             pass
