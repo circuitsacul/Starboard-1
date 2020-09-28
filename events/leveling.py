@@ -6,7 +6,7 @@ import datetime
 
 async def next_level_xp(current_level):
     current_level += 1
-    return round(current_level**2)
+    return int(current_level**2)
 
 
 async def is_starboard_emoji(db, guild_id, emoji):
