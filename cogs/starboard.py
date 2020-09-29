@@ -1,6 +1,4 @@
 import discord, functions, bot_config
-from discord.channel import TextChannel
-from discord.embeds import Embed
 from discord.ext import commands
 from typing import Union
 
