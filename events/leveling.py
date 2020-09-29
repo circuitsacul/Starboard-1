@@ -42,17 +42,15 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
 
     cooldown_over = True
     async with db.lock:
-        if guild_id not in db.cooldowns['giving_stars']:
-            db.cooldowns['giving_stars'][guild_id] = {}
-        if reacter_id in db.cooldowns['giving_stars'][guild_id]:
-            if now < db.cooldowns['giving_stars'][guild_id][reacter_id]:
-                cooldown_over = False
+        db_stars = db.cooldowns['giving_stars']
+        db_stars.setdefault(guild_id, {})
+        if now < db_stars[guild_id].get(reacter_id, 2147483647): # Y2038
+            cooldown_over = False
         if cooldown_over:
-            db.cooldowns['giving_stars'][guild_id][reacter_id] = cooldown_end
+            db_stars[guild_id][reacter_id] = cooldown_end
+            print("Not Cooldown")
     if not cooldown_over:
         print("Cooldown!")
-    else:
-        print("Not Cooldown")
 
     get_member = \
         """SELECT * FROM members WHERE user_id=$1 AND guild_id=$2"""
