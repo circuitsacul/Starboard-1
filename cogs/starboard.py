@@ -1,4 +1,5 @@
 import discord, functions, bot_config
+from discord.channel import TextChannel
 from discord.embeds import Embed
 from discord.ext import commands
 from typing import Union
@@ -100,9 +101,11 @@ class Starboard(commands.Cog):
                 msg = ''
                 for row in rows:
                     sb_id = row['id']
+                    starboard = self.bot.get_channel(int(sb_id))
+                    sb_title = starboard.mention if starboard else f"Deleted Channel {sb_id}"
                     emojis = await conn.fetch(get_emojis, sb_id)
                     emoji_string = await pretty_emoji_string(emojis, ctx.guild)
-                    msg += f"<#{row['id']}>: {emoji_string}\n"
+                    msg += f"{sb_title}: {emoji_string}\n"
 
                 embed = discord.Embed(title=title, description=msg, color=bot_config.COLOR)
                 await ctx.send(embed=embed)
@@ -201,7 +204,8 @@ class Starboard(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
-    async def remove_starboard(self, ctx, starboard: discord.TextChannel):
+    async def remove_starboard(self, ctx, starboard: Union[discord.TextChannel, int]):
+        starboard_id = starboard.id if isinstance(starboard, discord.TextChannel) else int(starboard)
         confirmed = await functions.confirm(
             self.bot, ctx.channel,
             "Are you sure? All starboard messages will be lost forever.",
@@ -220,7 +224,7 @@ class Starboard(commands.Cog):
                 user=ctx.message.author, do_member=True
             )
             existed = await functions.check_or_create_existence(
-                self.db, conn, self.bot, starboard_id=str(starboard.id),
+                self.db, conn, self.bot, starboard_id=str(starboard_id),
                 guild_id=str(ctx.guild.id), create_new=False
             )
             if existed['se'] == False:
@@ -228,7 +232,7 @@ class Starboard(commands.Cog):
                 exists = False
             else:
                 remove_starboard = """DELETE FROM starboards WHERE id=$1"""
-                await conn.execute(remove_starboard, str(starboard.id))
+                await conn.execute(remove_starboard, str(starboard_id))
         await conn.close()
         if exists:
             await ctx.send("Removed starboard")
