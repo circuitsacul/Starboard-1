@@ -38,16 +38,17 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
         return
 
     now = datetime.datetime.now()
+    timestamp = now.timestamp()
     cooldown_end = now + datetime.timedelta(minutes=1)
 
     cooldown_over = True
     async with db.lock:
         db_stars = db.cooldowns['giving_stars']
         db_stars.setdefault(guild_id, {})
-        if now.timestamp() < db_stars[guild_id].get(reacter_id, 2147483647): # Y2038
+        if timestamp < db_stars[guild_id].get(reacter_id, 0): # Y2038 (was 2147483647)
             cooldown_over = False
         if cooldown_over:
-            db_stars[guild_id][reacter_id] = cooldown_end
+            db_stars[guild_id][reacter_id] = cooldown_end.timestamp()
             print("Not Cooldown")
     if not cooldown_over:
         print("Cooldown!")
