@@ -130,8 +130,10 @@ class Starboard(commands.Cog):
                 await ctx.send("That is not a starboard!")
             else:
                 starboard = self.bot.get_channel(starboard.id)
+                emojis = await conn.fetch(get_emojis, str(starboard.id))
+                pretty_emojis = await pretty_emoji_string(emojis, ctx.guild)
                 title = f"Settings for {starboard.name}:"
-                string = ''
+                string = f"**emojis: {pretty_emojis}**"
                 string += f"\n**requiredStars: {sql_starboard['required']}**"
                 string += f"\n**requiredToLose: {sql_starboard['rtl']}**"
                 string += f"\n**selfStar: {bool(sql_starboard['self_star'])}**"
