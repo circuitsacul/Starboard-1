@@ -18,11 +18,11 @@ async def is_starboard_emoji(db, guild_id, emoji):
 
     conn = await db.connect()
     async with db.lock and conn.transaction():
-        starboards = await conn.fetch(get_starboards, str(guild_id))
+        starboards = await conn.fetch(get_starboards, guild_id)
         all_emojis = []
         for starboard in starboards:
             emojis = await conn.fetch(get_sbeemojis, starboard['id'])
-            all_emojis += [str(e['name']) if e['d_id'] in [None, 'None'] else str(e['d_id']) for e in emojis]
+            all_emojis += [str(e['name']) if e['d_id'] is None else e['d_id'] for e in emojis]
     await conn.close()
     return emoji in all_emojis
 
@@ -30,7 +30,7 @@ async def is_starboard_emoji(db, guild_id, emoji):
 async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
     guild_id = guild.id
     receiver_id = receiver.id
-    if str(reacter_id) == str(receiver_id):
+    if reacter_id == receiver_id:
         return
     emoji = _emoji.id if _emoji.id is not None else _emoji.name
     is_sbemoji = await is_starboard_emoji(db, guild_id, emoji)
@@ -73,15 +73,15 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
 
     conn = await db.connect()
     async with db.lock and conn.transaction():
-        sql_reacter = await conn.fetchrow(get_member, str(reacter_id), str(guild_id))
+        sql_reacter = await conn.fetchrow(get_member, reacter_id, guild_id)
         given = sql_reacter['given']+points
-        await conn.execute(set_points.format('given'), given, str(reacter_id), str(guild_id))
+        await conn.execute(set_points.format('given'), given, reacter_id, guild_id)
 
-        sql_receiver = await conn.fetchrow(get_member, str(receiver_id), str(guild_id))
+        sql_receiver = await conn.fetchrow(get_member, receiver_id, guild_id)
         received = sql_receiver['received']+points
-        await conn.execute(set_points.format('received'), received, str(receiver_id), str(guild_id))
+        await conn.execute(set_points.format('received'), received, receiver_id, guild_id)
 
-        sql_receiver_user = await conn.fetchrow(get_user, str(receiver_id))
+        sql_receiver_user = await conn.fetchrow(get_user, receiver_id)
         send_lvl_msgs = sql_receiver_user['lvl_up_msgs']
 
         current_lvl = sql_receiver['lvl']
@@ -112,7 +112,7 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
 
             await conn.execute(
                 set_xp_level, new_xp, new_lvl,
-                sql_receiver['user_id'], str(guild_id)
+                sql_receiver['user_id'], guild_id
             )
 
     await conn.close()

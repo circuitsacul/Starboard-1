@@ -2,7 +2,7 @@ import discord, functions, bot_config
 from discord.ext import commands
 
 
-async def change_user_setting(db, user_id: str, lvl_up_msgs: bool=None):
+async def change_user_setting(db, user_id: int, lvl_up_msgs: bool=None):
     get_user = \
         """SELECT * FROM users WHERE id=$1"""
     update_user = \
@@ -12,13 +12,13 @@ async def change_user_setting(db, user_id: str, lvl_up_msgs: bool=None):
 
     conn = await db.connect()
     async with db.lock and conn.transaction():
-        sql_user = await conn.fetchrow(get_user, str(user_id))
+        sql_user = await conn.fetchrow(get_user, user_id)
 
         if sql_user is None:
             status = None
         else:
             lum = lvl_up_msgs if lvl_up_msgs is not None else sql_user['lvl_up_msgs']
-            await conn.execute(update_user, lum, str(user_id))
+            await conn.execute(update_user, lum, user_id)
             status = True
 
     await conn.close()
@@ -43,10 +43,10 @@ class Settings(commands.Cog):
         conn = await self.db.connect()
         async with self.db.lock and conn.transaction():
             await functions.check_or_create_existence(
-                self.db, conn, self.bot, guild_id=str(ctx.guild.id),
+                self.db, conn, self.bot, guild_id=ctx.guild.id,
                 user=ctx.message.author, do_member=True
             )
-            sql_user = await conn.fetchrow(get_user, str(ctx.message.author.id))
+            sql_user = await conn.fetchrow(get_user, ctx.message.author.id)
         await conn.close()
 
         settings_str = ""
@@ -66,7 +66,7 @@ class Settings(commands.Cog):
         description='Wether or not to send you level up messages'
     )
     async def set_user_lvl_up_msgs(self, ctx, value: bool):
-        status = await change_user_setting(self.db, str(ctx.message.author.id), lvl_up_msgs=value)
+        status = await change_user_setting(self.db, ctx.message.author.id, lvl_up_msgs=value)
         if status is not True:
             await ctx.send("Somthing went wrong.")
         else:

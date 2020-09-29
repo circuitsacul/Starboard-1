@@ -1,6 +1,8 @@
-import asyncpg as apg
+import asyncpg as apg, os
 from aiosqlite import Error
 from asyncio import Lock
+
+db_pwd = os.getenv('DB_PWD')
 
 
 class aobject(object):
@@ -97,7 +99,7 @@ class Database:
     async def connect(self):
         conn = None
         try:
-            conn = await apg.connect(host='localhost', database='starboarddb', user='ld', password='password')
+            conn = await apg.connect(host='localhost', database='starboard', user='starboard', password=db_pwd)
             #await conn.execute(
             #    "PRAGMA foreign_keys=True"
             #)
@@ -127,7 +129,7 @@ class Database:
     async def _create_tables(self):
         guilds_table = \
             """CREATE TABLE IF NOT EXISTS guilds (
-                id text PRIMARY KEY,
+                id numeric PRIMARY KEY,
 
                 stars_given integer NOT NULL DEFAULT 0,
                 stars_recv integer NOT NULL DEFAULT 0
@@ -135,7 +137,7 @@ class Database:
 
         users_table = \
             """CREATE TABLE IF NOT EXISTS users (
-                id text PRIMARY KEY,
+                id numeric PRIMARY KEY,
                 is_bot bool NOT NULL,
 
                 lvl_up_msgs bool DEFAULT True
@@ -144,7 +146,7 @@ class Database:
         patrons_table = \
             """CREATE TABLE IF NOT EXISTS patrons (
                 id SERIAL PRIMARY KEY,
-                user_id text NOT NULL,
+                user_id numeric NOT NULL,
                 product_id text NOT NULL
             )"""
 
@@ -154,7 +156,7 @@ class Database:
                 txn_id integer NOT NULL,
                 user_id integer NOT NULL,
                 product_id text DEFAULT NULL,
-                role_id text DEFAULT NULL,
+                role_id numeric DEFAULT NULL,
                 guild_id integer NOT NULL,
 
                 email text NOT NULL,
@@ -168,8 +170,8 @@ class Database:
         members_table = \
             """CREATE TABLE IF NOT EXISTS members (
                 id SERIAL PRIMARY KEY,
-                user_id text NOT NULL,
-                guild_id text NOT NULL,
+                user_id numeric NOT NULL,
+                guild_id numeric NOT NULL,
 
                 given int NOT NULL DEFAULT 0,
                 received int NOT NULL DEFAULT 0,
@@ -185,8 +187,8 @@ class Database:
 
         starboards_table = \
             """CREATE TABLE IF NOT EXISTS starboards (
-                id text PRIMARY KEY,
-                guild_id text NOT NULL,
+                id numeric PRIMARY KEY,
+                guild_id numeric NOT NULL,
 
                 required int NOT NULL DEFAULT 3,
                 rtl int NOT NULL DEFAULT 0,
@@ -206,8 +208,8 @@ class Database:
         sbemoijs_table = \
             """CREATE TABLE IF NOT EXISTS sbemojis (
                 id SERIAL PRIMARY KEY,
-                d_id text,
-                starboard_id text NOT NULL,
+                d_id numeric,
+                starboard_id numeric NOT NULL,
 
                 name text NOT NULL,
                 is_downvote bool NOT NULL DEFAULT false,
@@ -218,11 +220,11 @@ class Database:
 
         messages_table = \
             """CREATE TABLE IF NOT EXISTS messages (
-                id text PRIMARY KEY,
-                guild_id text NOT NULL,
-                user_id text NOT NULL,
-                orig_message_id text DEFAULT NULL,
-                channel_id text NOT NULL,
+                id numeric PRIMARY KEY,
+                guild_id numeric NOT NULL,
+                user_id numeric NOT NULL,
+                orig_message_id numeric DEFAULT NULL,
+                channel_id numeric NOT NULL,
 
                 is_orig bool NOT NULL,
                 is_nsfw bool NOT NULL,
@@ -240,10 +242,10 @@ class Database:
         reactions_table = \
             """CREATE TABLE IF NOT EXISTS reactions (
                 id SERIAL PRIMARY KEY,
-                d_id text,
-                guild_id text NOT NULL,
-                user_id text NOT NULL,
-                message_id text NOT NULL,
+                d_id numeric,
+                guild_id numeric NOT NULL,
+                user_id numeric NOT NULL,
+                message_id numeric NOT NULL,
 
                 name text NOT NULL,
 

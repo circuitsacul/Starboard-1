@@ -7,7 +7,7 @@ from aiosqlite import Error
 
 async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, _emoji, is_add):
     emoji_id = _emoji.id
-    emoji_name = _emoji.name if _emoji.id != 'None' else _emoji.id
+    emoji_name = _emoji.name if _emoji.id is None else _emoji.id
 
     conn = await db.connect()
 
@@ -40,42 +40,42 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
     async with db.lock and conn.transaction():
         if message:
             await functions.check_or_create_existence(
-                db, conn, bot, guild_id=str(guild_id),
+                db, conn, bot, guild_id=guild_id,
                 user=message.author, do_member=True
             )
         await functions.check_or_create_existence(
             db, conn, bot,
-            guild_id=str(guild_id), user=user, do_member=True
+            guild_id=guild_id, user=user, do_member=True
         )
 
-        rows = await conn.fetch(get_message, str(message_id))
+        rows = await conn.fetch(get_message, message_id)
         if message:
             if len(rows) == 0:
                 await db.q.create_message.fetch(
-                    str(message_id), str(guild_id),
-                    str(message.author.id), None,
-                    str(channel_id), True,
+                    message_id, guild_id,
+                    message.author.id, None,
+                    channel_id, True,
                     message.channel.is_nsfw()
                 )
         try:
-            rows = await conn.fetch(check_reaction, str(message_id), str(user_id), emoji_name)
+            rows = await conn.fetch(check_reaction, message_id, user_id, emoji_name)
             exists = len(rows) > 0
             if not exists and is_add:
                 await db.q.create_reaction.fetch(
-                    str(emoji_id), str(guild_id), str(user_id),
-                    str(message_id), emoji_name
+                    emoji_id, guild_id, user_id,
+                    message_id, emoji_name
                 )
             if exists and not is_add:
-                await conn.execute(remove_reaction, str(message_id), str(user_id), emoji_name)
+                await conn.execute(remove_reaction, message_id, user_id, emoji_name)
         except Error as e:
             pass
 
     await conn.close()
 
     if message is not None and user is not None and not user.bot:
-        await leveling.handle_reaction(db, str(user.id), message.author, guild, _emoji, is_add)
+        await leveling.handle_reaction(db, user.id, message.author, guild, _emoji, is_add)
 
-    await handle_starboards(db, bot, str(message_id), channel, message)
+    await handle_starboards(db, bot, message_id, channel, message)
 
 
 async def handle_starboards(db, bot, message_id, channel, message):
@@ -89,7 +89,7 @@ async def handle_starboards(db, bot, message_id, channel, message):
     conn = await db.connect()
 
     async with db.lock and conn.transaction():
-        sql_message = await conn.fetchrow(get_message, str(message_id))
+        sql_message = await conn.fetchrow(get_message, message_id)
         
     if sql_message is None:
         await conn.close()
@@ -205,9 +205,9 @@ async def update_message(db, orig_message, orig_channel_id, sb_message, starboar
                 conn = await db.connect()
                 async with db.lock and conn.transaction():
                     await db.q.create_message.fetch(
-                        str(sb_message.id), str(sb_message.guild.id),
-                        str(orig_message.author.id), str(orig_message.id),
-                        str(starboard.id), False,
+                        sb_message.id, sb_message.guild.id,
+                        orig_message.author.id, orig_message.id,
+                        starboard.id, False,
                         orig_message.channel.is_nsfw()
                     )
                 await conn.close()
@@ -221,7 +221,7 @@ async def update_message(db, orig_message, orig_channel_id, sb_message, starboar
             )
     if sb_message is not None and not remove and add:
         for _emoji in emojis:
-            if _emoji['d_id'] != 'None':
+            if _emoji['d_id'] is not None:
                 emoji = utils.get(starboard.guild.emojis, id=int(_emoji['d_id']))
                 if emoji is None:
                     continue
@@ -319,7 +319,7 @@ async def calculate_points(conn, sql_message, sql_starboard, bot):
 
     total_points = 0
     for emoji in emojis:
-        emoji_id = int(emoji['d_id']) if emoji['d_id'] != 'None' else None
+        emoji_id = int(emoji['d_id']) if emoji['d_id'] is not None else None
         emoji_name = None if emoji_id is not None else emoji['name']
         reactions = await conn.fetch(
             get_reactions, message_id,

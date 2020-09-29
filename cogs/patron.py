@@ -23,13 +23,13 @@ async def update_patron_for_user(bot, db, user_id, product_id, add: bool):
 
     conn = await db.connect()
     async with db.lock and conn.transaction():
-        rows = await conn.fetch(check_patron, str(user_id), product_id)
+        rows = await conn.fetch(check_patron, user_id, product_id)
         if len(rows) == 0:
             sql_patron = None
         else:
             sql_patron = rows[0]
         if add and not sql_patron:
-            await new_patron.fetch(str(user_id), product_id)
+            await new_patron.fetch(user_id, product_id)
         if not add and sql_patron:
             await conn.execute(del_patron, sql_patron['id'])
     await conn.close()
@@ -89,7 +89,7 @@ class PatronCommands(commands.Cog):
     async def show_patron_info(self, ctx, user: discord.Member=None):
         user = user if user else ctx.message.author
         user_id = user.id
-        levels = await functions.get_patron_levels(self.db, str(user_id))
+        levels = await functions.get_patron_levels(self.db, user_id)
         level_ids = [lvl['product_id'] for lvl in levels]
         title = f"Current Patron Levels for **{user}**:"
         string = ''

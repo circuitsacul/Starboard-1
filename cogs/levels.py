@@ -22,7 +22,7 @@ class Levels(commands.Cog):
 
         conn = await self.db.connect()
         async with self.db.lock and conn.transaction():
-            sql_member = await conn.fetchrow(get_member, str(user.id), str(ctx.guild.id))
+            sql_member = await conn.fetchrow(get_member, user.id, ctx.guild.id)
         await conn.close()
         given = sql_member['given']
         received = sql_member['received']
@@ -55,6 +55,6 @@ class Levels(commands.Cog):
 
         conn = await self.db.connect()
         async with self.db.lock and conn.transaction():
-            await conn.execute(set_points, str(user.id), str(ctx.guild.id))
+            await conn.execute(set_points, user.id, ctx.guild.id)
         await conn.close()
         await ctx.send(f"Reset {user.name}'s levels and xp.")

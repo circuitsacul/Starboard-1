@@ -18,12 +18,12 @@ async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
     async with db.lock and conn.transaction():
         message_id, channel_id = await functions.orig_message_id(db, conn, _message_id)
 
-        sql_message = await conn.fetchrow(check_message, str(message_id))
+        sql_message = await conn.fetchrow(check_message, message_id)
         if sql_message is None:
             await ctx.send("That message either has no reactions or does not exist")
             status = False
         else:
-            await conn.execute(trash_message, trash, str(message_id))
+            await conn.execute(trash_message, trash, message_id)
     await conn.close()
 
     channel = bot.get_channel(int(channel_id))
@@ -33,7 +33,7 @@ async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
         message = None
 
     if status is True:
-        await starboard_events.handle_starboards(db, bot, str(message_id), channel, message)
+        await starboard_events.handle_starboards(db, bot, message_id, channel, message)
     return status
 
 
@@ -56,7 +56,7 @@ class Utility(commands.Cog):
 
         conn = await self.db.connect()
         async with self.db.lock and conn.transaction():
-            frozen_messages = await conn.fetch(get_frozen, str(ctx.guild.id))
+            frozen_messages = await conn.fetch(get_frozen, ctx.guild.id)
         await conn.close()
 
         if len(frozen_messages) == 0:
@@ -100,14 +100,14 @@ class Utility(commands.Cog):
         conn = await self.db.connect()
         async with self.db.lock and conn.transaction():
             message_id, _orig_channel_id = await functions.orig_message_id(self.db, conn, message)
-            sql_message = await conn.fetchrow(get_message, str(message_id), str(ctx.guild.id))
+            sql_message = await conn.fetchrow(get_message, message_id, ctx.guild.id)
         
         if not sql_message:
             await ctx.send("That message either has no reactions or does not exist")
 
         else:
             async with self.db.lock and conn.transaction():
-                await conn.execute(freeze_message, str(message_id))
+                await conn.execute(freeze_message, message_id)
 
             await ctx.send(f"Message **{message_id}** is now frozen")
 
@@ -131,14 +131,14 @@ class Utility(commands.Cog):
         conn = await self.db.connect()
         async with self.db.lock and conn.transaction():
             message_id, _orig_channel_id = await functions.orig_message_id(self.db, conn, message)
-            sql_message = await conn.fetchrow(get_message, str(message_id), str(ctx.guild.id))
+            sql_message = await conn.fetchrow(get_message, message_id, ctx.guild.id)
 
         if not sql_message:
             await ctx.send("That message either has not reactions or does not exist")
 
         else:
             async with self.db.lock:
-                await conn.execute(freeze_message, str(message_id))
+                await conn.execute(freeze_message, message_id)
 
             await ctx.send(f"Message **{message_id}** is now unfrozen")
 
@@ -174,22 +174,22 @@ class Utility(commands.Cog):
         async with self.db.lock and conn.transaction():
             message_id, channel_id = await functions.orig_message_id(self.db, conn, _message_id)
 
-        channel = self.bot.get_channel(int(channel_id)) if channel_id not in [None, 'None'] else ctx.channel
+        channel = self.bot.get_channel(int(channel_id)) if channel_id is not None else ctx.channel
         message = await channel.fetch_message(int(message_id))
 
         async with self.db.lock and conn.transaction():
-            sql_message = await conn.fetchrow(check_message, str(message_id))
+            sql_message = await conn.fetchrow(check_message, message_id)
             if sql_message is None:
                 await self.db.q.create_message.fetch(
-                    str(message.id), str(ctx.guild.id), str(message.author.id),
-                    None, str(message.channel.id), True, message.channel.is_nsfw()
+                    message.id, ctx.guild.id, message.author.id,
+                    None, message.channel.id, True, message.channel.is_nsfw()
                 )
-            await conn.execute(force_message, str(message.id))
+            await conn.execute(force_message, message.id)
         await conn.close()
 
         await ctx.send("Message forced.")
 
-        await starboard_events.handle_starboards(self.db, self.bot, str(message.id), message.channel, message)
+        await starboard_events.handle_starboards(self.db, self.bot, message.id, message.channel, message)
 
     @commands.command(
         name='trash',
