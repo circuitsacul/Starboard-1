@@ -1,4 +1,4 @@
-import discord,functions, os, dotenv
+import discord,functions, os, dotenv, bot_config
 
 #import flask
 #from flask import Response
@@ -91,10 +91,13 @@ class PatronCommands(commands.Cog):
         user_id = user.id
         levels = await functions.get_patron_levels(self.db, str(user_id))
         level_ids = [lvl['product_id'] for lvl in levels]
-        string = f"Current Patron Levels for **{user}**:"
+        title = f"Current Patron Levels for **{user}**:"
+        string = ''
         for lvl_id, lvl in PATRON_LEVELS.items():
-            string += f"\n**--{lvl['display']['title']}: {'Yes' if lvl_id in level_ids else 'No'}**"
-        await ctx.send(string)
+            string += f"\n**{lvl['display']['title']}: {'Yes' if lvl_id in level_ids else 'No'}**"
+
+        embed = discord.Embed(title=title, description=string, color=bot_config.COLOR)
+        await ctx.send(embed=embed)
 
     @commands.command(
         name='handlePremium', aliases=['hp']
@@ -113,9 +116,9 @@ class PatronCommands(commands.Cog):
         else:
             await update_patron_for_user(self.bot, self.db, user.id, product_id, add=is_add)
             if is_add:
-                await ctx.send(f"Gave product **{product_id}** to user")
+                await ctx.send(f"Gave product **{product_id}** to {user}")
             else:
-                await ctx.send(f"Removed product **{product_id}** from user")
+                await ctx.send(f"Removed product **{product_id}** from {user}")
 
 
 class HttpWebHook():

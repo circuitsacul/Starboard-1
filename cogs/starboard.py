@@ -1,4 +1,4 @@
-import discord, functions
+import discord, functions, bot_config
 from discord.embeds import Embed
 from discord.ext import commands
 from typing import Union
@@ -96,13 +96,16 @@ class Starboard(commands.Cog):
             if len(rows) == 0:
                 await ctx.send("You don't have any starboards")
             else:
-                msg = f'Starboards: {len(rows)}\n'
+                title = f'Starboards: {len(rows)}\n'
+                msg = ''
                 for row in rows:
                     sb_id = row['id']
                     emojis = await conn.fetch(get_emojis, sb_id)
                     emoji_string = await pretty_emoji_string(emojis, ctx.guild)
-                    msg += f"--<#{row['id']}>: {emoji_string}\n"
-                await ctx.send(msg)
+                    msg += f"<#{row['id']}>: {emoji_string}\n"
+
+                embed = discord.Embed(title=title, description=msg, color=bot_config.COLOR)
+                await ctx.send(embed=embed)
 
         await conn.close()
 
@@ -126,17 +129,20 @@ class Starboard(commands.Cog):
             if sql_starboard is None:
                 await ctx.send("That is not a starboard!")
             else:
-                string = f"<#{starboard.id}>:**"
-                string += f"\n--requiredStars: {sql_starboard['required']}"
-                string += f"\n--requiredToLose: {sql_starboard['rtl']}"
-                string += f"\n--selfStar: {bool(sql_starboard['self_star'])}"
-                string += f"\n--linkEdits: {bool(sql_starboard['link_edits'])}"
-                string += f"\n--linkDeletes: {bool(sql_starboard['link_deletes'])}"
-                string += f"\n--botsReact: {bool(sql_starboard['bots_react'])}"
-                string += f"\n--botsOnStarboard: {bool(sql_starboard['bots_on_sb'])}"
-                string += f"\n--locked: {bool(sql_starboard['locked'])}"
-                string += f"\n--archived: {bool(sql_starboard['is_archived'])}**"
-                await ctx.send(string)
+                starboard = self.bot.get_channel(starboard.id)
+                title = f"Settings for {starboard.name}:"
+                string = ''
+                string += f"\n**requiredStars: {sql_starboard['required']}**"
+                string += f"\n**requiredToLose: {sql_starboard['rtl']}**"
+                string += f"\n**selfStar: {bool(sql_starboard['self_star'])}**"
+                string += f"\n**linkEdits: {bool(sql_starboard['link_edits'])}**"
+                string += f"\n**linkDeletes: {bool(sql_starboard['link_deletes'])}**"
+                string += f"\n**botsReact: {bool(sql_starboard['bots_react'])}**"
+                string += f"\n**botsOnStarboard: {bool(sql_starboard['bots_on_sb'])}**"
+                string += f"\n**locked: {bool(sql_starboard['locked'])}**"
+                
+                embed = discord.Embed(title=title, description=string, color=bot_config.COLOR)
+                await ctx.send(embed=embed)
         await conn.close()
 
     @commands.command(
