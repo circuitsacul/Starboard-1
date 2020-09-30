@@ -302,7 +302,7 @@ async def get_embed_from_message(message):
                 current += 1
         embed.add_field(name='Attachments', value=url_string, inline=False)
 
-    embed.set_footer(text=f"{message.id}")
+    embed.set_footer(text=f"ID: {message.id}")
     embed.timestamp = message.created_at
 
     return embed
