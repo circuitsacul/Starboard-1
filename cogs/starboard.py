@@ -5,7 +5,7 @@ from typing import Union
 
 async def change_starboard_settings(
     db, starboard_id, self_star=None, link_edits=None,
-    link_deletes=None, bots_react=None, bots_on_sb=None,
+    link_deletes=None, bots_on_sb=None,
     required=None, rtl=None
 ):
     get_starboard = \
@@ -15,11 +15,10 @@ async def change_starboard_settings(
         SET self_star=$1,
         link_edits=$2,
         link_deletes=$3,
-        bots_react=$4,
-        bots_on_sb=$5,
-        required=$6,
-        rtl=$7
-        WHERE id=$8"""
+        bots_on_sb=$4,
+        required=$5,
+        rtl=$6
+        WHERE id=$7"""
 
     conn = await db.connect()
 
@@ -36,7 +35,6 @@ async def change_starboard_settings(
             s['ss'] = self_star if self_star is not None else ssb['self_star']
             s['le'] = link_edits if link_edits is not None else ssb['link_edits']
             s['ld'] = link_deletes if link_deletes is not None else ssb['link_deletes']
-            s['br'] = bots_react if bots_react is not None else ssb['bots_react']
             s['bos'] = bots_on_sb if bots_on_sb is not None else ssb['bots_on_sb']
             s['r'] = required if required is not None else ssb['required']
             s['rtl'] = rtl if rtl is not None else ssb['rtl']
@@ -46,7 +44,7 @@ async def change_starboard_settings(
             else:
                 try:
                     await conn.execute(update_starboard,
-                        s['ss'], s['le'], s['ld'], s['br'], s['bos'], s['r'], s['rtl'],
+                        s['ss'], s['le'], s['ld'], s['bos'], s['r'], s['rtl'],
                         starboard_id
                     )
                 except Exception as e:
@@ -105,6 +103,7 @@ class Starboard(commands.Cog):
                     msg += f"{sb_title}: {emoji_string}\n"
 
                 embed = discord.Embed(title=title, description=msg, color=bot_config.COLOR)
+                embed.set_footer(text='Do `sb!settings <channel>`\nto view starboard settings.')
                 await ctx.send(embed=embed)
 
         await conn.close()
@@ -139,7 +138,6 @@ class Starboard(commands.Cog):
                 string += f"\n**selfStar: {bool(sql_starboard['self_star'])}**"
                 string += f"\n**linkEdits: {bool(sql_starboard['link_edits'])}**"
                 string += f"\n**linkDeletes: {bool(sql_starboard['link_deletes'])}**"
-                string += f"\n**botsReact: {bool(sql_starboard['bots_react'])}**"
                 string += f"\n**botsOnStarboard: {bool(sql_starboard['bots_on_sb'])}**"
                 string += f"\n**locked: {bool(sql_starboard['locked'])}**"
                 
@@ -425,20 +423,3 @@ class Starboard(commands.Cog):
             await ctx.send("Invalid Setting")
         else:
             await ctx.send(f"Set botsOnStarboard to {value} for {starboard.mention}")
-
-
-    @commands.command(
-        name='botsReact', aliases=['br'],
-        description='Wether or not a bot\'s reaction counts towards message points. Still excludes Starboards reactions.',
-        brief='Wether or not to allow bot reactions.'
-    )
-    @commands.guild_only()
-    @commands.has_permissions(manage_channels=True, manage_messages=True)
-    async def set_bots_react(self, ctx, starboard: discord.TextChannel, value: bool):
-        status = await change_starboard_settings(self.db, starboard.id, bots_react=value)
-        if status is None:
-            await ctx.send("That is not a starboard!")
-        elif status is False:
-            await ctx.send("Invalid Setting")
-        else:
-            await ctx.send(f"Set botsReact to {value} for {starboard.mention}")

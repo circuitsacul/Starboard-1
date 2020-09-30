@@ -52,7 +52,7 @@ class Utility(commands.Cog):
     async def list_frozen_messages(self, ctx):
         get_frozen = \
             """SELECT * FROM messages
-            WHERE is_frozen = 1 AND guild_id=$1"""
+            WHERE is_frozen = True AND guild_id=$1"""
 
         conn = await self.db.connect()
         async with self.db.lock and conn.transaction():
@@ -67,7 +67,7 @@ class Utility(commands.Cog):
                 from_msg = f"**[{msg['id']}](https://discordapp.com/channels/{msg['guild_id']}/{msg['channel_id']}/{msg['id']}/)**\n"
                 all_strings.append(from_msg)
 
-            size = 5
+            size = 10
             grouped = [all_strings[i:i+size] for i in range(0, len(all_strings), size)]
 
             all_embeds = []

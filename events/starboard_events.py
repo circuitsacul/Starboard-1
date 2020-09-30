@@ -190,9 +190,15 @@ async def update_message(db, orig_message, orig_channel_id, sb_message, starboar
         if sb_message is not None:
             embed = discord.Embed(title='Trashed Message')
             embed.description = "This message was trashed by a moderator."
-            await sb_message.edit(embed=embed)
+            try:
+                await sb_message.edit(embed=embed)
+            except discord.errors.NotFound:
+                pass
     elif remove:
-        await sb_message.delete()
+        try:
+            await sb_message.delete()
+        except discord.errors.NotFound:
+            pass
     else:
         plain_text = f"**{points} | <#{orig_channel_id}>{' | 🔒' if forced else ''}**"
         embed = await get_embed_from_message(orig_message) if orig_message is not None else None
@@ -313,7 +319,6 @@ async def calculate_points(conn, sql_message, sql_starboard, bot):
     emojis = await conn.fetch(get_sbemojis, sql_starboard['id'])
     message_id = sql_message['id']
     self_star = sql_starboard['self_star']
-    bots_react = sql_starboard['bots_react']
 
     used_users = set()
 
@@ -334,10 +339,10 @@ async def calculate_points(conn, sql_message, sql_starboard, bot):
                 continue
             rows = await conn.fetch(get_user, user_id)
             sql_user = rows[0]
-            if sql_user['is_bot'] == True and bots_react == False:
+            if sql_user['is_bot'] == True:
                 continue
-            if int(sql_user['id']) == bot.user.id:
-                continue
+            #if int(sql_user['id']) == bot.user.id:
+            #    continue
             total_points += 1
 
     return total_points, emojis

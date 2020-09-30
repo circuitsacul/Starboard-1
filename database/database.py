@@ -74,11 +74,10 @@ class CommonSql(aobject):
                 SET self_star=$1,
                 link_edits=$2,
                 link_deletes=$3,
-                bots_react=$4,
-                bots_on_sb=$5,
-                required=$6,
-                rtl=$7
-                WHERE id=$8"""
+                bots_on_sb=$4,
+                required=$5,
+                rtl=$6
+                WHERE id=$7"""
             )
 
 
@@ -196,7 +195,6 @@ class Database:
                 self_star bool NOT NULL DEFAULT false,
                 link_edits bool NOT NULL DEFAULT true,
                 link_deletes bool NOT NULL DEFAULT false,
-                bots_react bool NOT NULL DEFAULT false,
                 bots_on_sb bool NOT NULL DEFAULT true,
 
                 locked bool NOT NULL DEFAULT false,
