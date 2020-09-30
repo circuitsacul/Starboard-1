@@ -29,14 +29,22 @@ _BETA_TOKEN = os.getenv('BETA_TOKEN')
 BETA = True if len(sys.argv) > 1 and sys.argv[1] == 'beta' else False
 TOKEN = _BETA_TOKEN if BETA and _BETA_TOKEN is not None else _TOKEN
 DB_PATH = bot_config.BETA_DB_PATH if BETA else bot_config.DB_PATH
-PREFIX = commands.when_mentioned_or('sb!', 'Sb!')
+#PREFIX = commands.when_mentioned_or(bot_config.DEFAULT_PREFIX)
 
 db = Database(DB_PATH)
 
 emojis = bot_config.PAGINATOR_EMOJIS
 navigation = pretty_help.Navigation(page_left=emojis[0], page_right=emojis[1], remove=emojis[2])
 
-bot = commands.Bot(PREFIX,
+
+class Bot(commands.Bot):
+    def __init__(self, db, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.db = db
+
+
+bot = Bot(
+    db, command_prefix=functions._prefix_callable,
     help_command=PrettyHelp(
         color=bot_config.COLOR, no_category="Info", active=30,
         navigation=navigation
@@ -161,7 +169,16 @@ async def on_message(message):
     if message.author.bot:
         return
     elif message.content.replace('!', '') == bot.user.mention:
-        await message.channel.send("My prefix is `sb!`. You can call `sb!help` or `sb!links` for help.")
+        conn = await db.connect()
+
+        async with db.lock and conn.transaction():
+            await functions.check_or_create_existence(
+                db, conn, bot, message.guild.id, message.author,
+                do_member=True
+            )
+        p = await functions.get_one_prefix(bot, message.guild.id)
+        await message.channel.send(f"Some useful commands are `{p}help` and `{p}links`\nYou can see all my prefixes with `{p}prefixes`")
+        await conn.close()
     else:
         await bot.process_commands(message)
 

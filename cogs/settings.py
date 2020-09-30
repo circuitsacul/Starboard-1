@@ -57,7 +57,8 @@ class Settings(commands.Cog):
             description=settings_str,
             color=bot_config.COLOR
         )
-        embed.set_footer(text="Use `sb!profile <setting> <value>` to change a setting.")
+        p = await functions.get_one_prefix(self.bot, ctx.guild.id)
+        embed.set_footer(text=f"Use {p}profile <setting> <value> to change a setting.")
         await ctx.send(embed=embed)
 
     @user_settings.command(
@@ -71,3 +72,53 @@ class Settings(commands.Cog):
             await ctx.send("Somthing went wrong.")
         else:
             await ctx.send(f"Set LevelUpMessages to {value}")
+
+    @commands.group(
+        name='prefixes', aliases=['prefix'],
+        description='List, add, remove and clear prefixes',
+        brief='Manage prefixes',
+        invoke_without_command=True
+    )
+    async def guild_prefixes(self, ctx):
+        prefixes = await functions.list_prefixes(self.bot, ctx.guild.id)
+
+        msg = f"**-** {ctx.guild.me.mention}"
+        for prefix in prefixes:
+            msg += f"\n**-** `{prefix}`"
+
+        embed = discord.Embed(
+            title=f"Prefixes for {ctx.guild.name}",
+            description=msg,
+            color=bot_config.COLOR
+        )
+        await ctx.send(embed=embed)
+
+    @guild_prefixes.command(
+        name='add', aliases=['a'],
+        description='Add a prefix',
+        brief='Add a prefix'
+    )
+    @commands.guild_only()
+    @commands.has_permissions(manage_messages=True)
+    async def add_prefix(self, ctx, prefix: str):
+        if len(prefix) > 8:
+            await ctx.send("That prefix is too long! It must be under 9 characters.")
+            return
+        
+        status, status_msg = await functions.add_prefix(self.bot, ctx.guild.id, prefix)
+        if status is True:
+            await ctx.send(f"Added prefix `{prefix}`")
+        else:
+            await ctx.send(status_msg)
+
+    @guild_prefixes.command(
+        name='remove', aliases=['delete', 'd', 'r']
+    )
+    @commands.guild_only()
+    @commands.has_permissions(manage_messages=True)
+    async def remove_prefix(self, ctx, prefix: str):
+        status, status_msg = await functions.remove_prefix(self.bot, ctx.guild.id, prefix)
+        if status is True:
+            await ctx.send(f"Removed prefix `{prefix}`")
+        else:
+            await ctx.send(status_msg)

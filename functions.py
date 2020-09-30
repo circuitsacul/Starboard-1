@@ -1,9 +1,63 @@
 from discord import utils
-from bot_config import PATRON_LEVELS
-import bot_config, emoji
+from discord.ext import commands
+from bot_config import PATRON_LEVELS, DEFAULT_PREFIX
+from typing import Tuple, List
+import bot_config, emoji, bot_config
 
 
-def is_emoji(string):
+async def _prefix_callable(bot, message):
+    if not message.guild:
+        return commands.when_mentioned_or(bot_config.DEFAULT_PREFIX)(bot, message)
+    prefixes = await list_prefixes(bot, message.guild.id)
+    return commands.when_mentioned_or(*prefixes)(bot, message)
+
+
+async def get_one_prefix(bot, guild_id: int):
+    prefixes = await list_prefixes(bot, guild_id)
+    return prefixes[0] if len(prefixes) > 0 else '@' + bot.user.name + ' '
+
+
+async def list_prefixes(bot, guild_id: int):
+    get_prefixes = \
+        """SELECT * FROM prefixes WHERE guild_id=$1"""
+
+    conn = await bot.db.connect()
+    async with bot.db.lock and conn.transaction():
+        prefixes = await conn.fetch(get_prefixes, guild_id)
+    await conn.close()
+
+    return [p['prefix'] for p in prefixes]
+
+
+async def add_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
+    current_prefixes = await list_prefixes(bot, guild_id)
+    if prefix in current_prefixes:
+        return False, "That prefix already exists"
+    if len(prefix) > 8:
+        return False, "That prefix is too long. It must be less than 9 characters."
+    conn = await bot.db.connect()
+    async with bot.db.lock and conn.transaction():
+        await bot.db.q.create_prefix.fetch(guild_id, prefix)
+    await conn.close()
+    return True, ''
+
+
+async def remove_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
+    current_prefixes = await list_prefixes(bot, guild_id)
+    if prefix not in current_prefixes:
+        return False, "That prefix does not exist"
+
+    del_prefix = \
+        """DELETE FROM prefixes WHERE prefix=$1 AND guild_id=$2"""
+
+    conn = await bot.db.connect()
+    async with bot.db.lock and conn.transaction():
+        await conn.execute(del_prefix, prefix, guild_id)
+
+    return True, ''
+
+
+def is_emoji(string) -> bool:
     return string in emoji.UNICODE_EMOJI
 
 
@@ -29,6 +83,9 @@ async def check_or_create_existence(db, conn, bot, guild_id=None, user=None, sta
         if not gexists and create_new:
             #await conn.execute(db.q.create_guild, guild_id)
             await db.q.create_guild.fetch(guild_id)
+            prefixes = await list_prefixes(bot, guild_id)
+            if len(prefixes) == 0:
+                await add_prefix(bot, guild_id, DEFAULT_PREFIX)
     else:
         gexists = None
     if user is not None:

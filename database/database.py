@@ -21,6 +21,11 @@ class CommonSql(aobject):
             await conn.prepare(
                 """INSERT INTO guilds (id) VALUES($1)"""
             )
+        self.create_prefix = \
+            await conn.prepare(
+                """INSERT INTO prefixes (guild_id, prefix)
+                VALUES($1, $2)"""
+            )
         self.create_user = \
             await conn.prepare(
                 """INSERT INTO users (id, is_bot)
@@ -132,6 +137,16 @@ class Database:
 
                 stars_given integer NOT NULL DEFAULT 0,
                 stars_recv integer NOT NULL DEFAULT 0
+            )"""
+
+        prefixes_table = \
+            """CREATE TABLE IF NOT EXISTS prefixes (
+                id SERIAL PRIMARY KEY,
+                guild_id numeric NOT NULL,
+                prefix VARCHAR(8),
+
+                FOREIGN KEY (guild_id) REFERENCES guilds (id)
+                    ON DELETE CASCADE
             )"""
 
         users_table = \
@@ -256,6 +271,7 @@ class Database:
 
         await self.lock.acquire()
         await self._create_table(guilds_table)
+        await self._create_table(prefixes_table)
         await self._create_table(users_table)
         await self._create_table(patrons_table)
         await self._create_table(donations_table)

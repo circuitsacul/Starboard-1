@@ -102,8 +102,9 @@ class Starboard(commands.Cog):
                     emoji_string = await pretty_emoji_string(emojis, ctx.guild)
                     msg += f"{sb_title} {emoji_string}\n"
 
+                p = await functions.get_one_prefix(self.bot, ctx.guild.id)
                 embed = discord.Embed(title=title, description=msg, color=bot_config.COLOR)
-                embed.set_footer(text='Do sb!settings <channel>\nto view starboard settings.')
+                embed.set_footer(text=f'Do {p}settings <channel>\nto view starboard settings.')
                 await ctx.send(embed=embed)
 
         await conn.close()
