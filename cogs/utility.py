@@ -134,7 +134,7 @@ class Utility(commands.Cog):
             sql_message = await conn.fetchrow(get_message, message_id, ctx.guild.id)
 
         if not sql_message:
-            await ctx.send("That message either has not reactions or does not exist")
+            await ctx.send("That message either has no reactions or does not exist")
 
         else:
             async with self.db.lock:
