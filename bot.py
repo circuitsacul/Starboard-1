@@ -1,4 +1,5 @@
 import discord, sys, asyncio, sys, os, asyncio, dotenv, functions, logging, traceback
+import pretty_help
 from discord.ext import commands
 from typing import Union
 #from flask.app import Flask
@@ -31,9 +32,14 @@ DB_PATH = bot_config.BETA_DB_PATH if BETA else bot_config.DB_PATH
 PREFIX = commands.when_mentioned_or('sb!', 'Sb!')
 
 db = Database(DB_PATH)
+
+emojis = bot_config.PAGINATOR_EMOJIS
+navigation = pretty_help.Navigation(page_left=emojis[0], page_right=emojis[1], remove=emojis[2])
+
 bot = commands.Bot(PREFIX,
     help_command=PrettyHelp(
-        color=bot_config.COLOR, no_category="Info", active=30
+        color=bot_config.COLOR, no_category="Info", active=30,
+        navigation=navigation
     ),
     case_insensitive=True
 )

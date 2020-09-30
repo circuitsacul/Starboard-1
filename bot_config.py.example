@@ -9,6 +9,8 @@ ISSUES_PAGE = "link to github issues page"
 
 SUPPORT_SERVER_ID = 0 #your-server-id
 
+PAGINATOR_EMOJIS = ('◀', '▶', '⏹')
+
 COLOR = 0xfffb00 # hex
 MISTAKE_COLOR = 0xffaa00 # hex
 ERROR_COLOR = 0xff0000 # hex
