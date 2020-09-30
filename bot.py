@@ -259,7 +259,7 @@ async def on_ready():
 
 
 async def main():
-    await db.open()
+    await db.open(bot)
     await web_server.start()
     if not BETA:
         bot.loop.create_task(post_guild_count.loop_post(bot))

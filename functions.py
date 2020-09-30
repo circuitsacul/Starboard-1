@@ -1,8 +1,28 @@
 from discord import utils
 from discord.ext import commands
 from bot_config import PATRON_LEVELS, DEFAULT_PREFIX
-from typing import Tuple, List
-import bot_config, emoji, bot_config
+from typing import Tuple, List, Union
+import bot_config, emoji, bot_config, discord
+
+
+
+async def fetch(bot, msg_id: int, channel: Union[discord.TextChannel, int]):
+    msg = await bot.db.cache.get(id=msg_id)
+    if msg is not None:
+        print("Found in cache")
+        return msg
+    print("Not in cache")
+
+    if isinstance(channel, int):
+        channel = await bot.get_channel(int(channel))
+    if channel is None:
+        return None
+    msg = await channel.fetch_message(msg_id)
+    if msg is None:
+        return None
+
+    await bot.db.cache.push(msg)
+    return msg
 
 
 async def _prefix_callable(bot, message):

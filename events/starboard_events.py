@@ -33,7 +33,8 @@ async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, 
     user = utils.get(guild.members, id=user_id)
 
     try:
-        message = await channel.fetch_message(int(message_id))
+        #message = await channel.fetch_message(int(message_id))
+        message = await functions.fetch(bot, int(message_id), channel)
     except (discord.errors.NotFound, discord.errors.Forbidden, AttributeError):
         message = None
 
@@ -130,7 +131,8 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
         starboard_message_id = sql_starboard_message['id']
         if starboard is not None:
             try:
-                starboard_message = await starboard.fetch_message(int(starboard_message_id))
+                #starboard_message = await starboard.fetch_message(int(starboard_message_id))
+                starboard_message = await functions.fetch(bot, int(starboard_message_id), starboard)
             except discord.errors.NotFound:
                 starboard_message = None
                 await conn.execute(delete_starboard_message, sql_message['id'], sql_starboard['id'])

@@ -1,6 +1,7 @@
 import asyncpg as apg, os
 from aiosqlite import Error
 from asyncio import Lock
+from discord import utils
 
 db_pwd = os.getenv('DB_PWD')
 
@@ -13,6 +14,47 @@ class aobject(object):
 
     async def __init__(self):
         pass
+
+
+class BotCache(aobject):
+    async def __init__(self, event, limit=1000):
+        self._messages = []
+        self.limit = limit
+        self.lock = Lock()
+        await self.set_listeners(event)
+
+    async def push(self, item):
+        async with self.lock:
+            self._messages.append(item)
+            if len(self._messages) > self.limit:
+                self._messages.pop(0)
+
+    async def get(self, **kwargs):
+        async with self.lock:
+            return utils.get(self._messages, **kwargs)
+
+    async def remove(self, msg_id):
+        status = False
+        async with self.lock:
+            remove_index = None
+            for x, msg in enumerate(self._messages):
+                if msg.id == msg_id:
+                    remove_index = x
+            if remove_index is not None:
+                self._messages.pop(remove_index)
+                status = True
+        return status
+
+    async def set_listeners(self, event):
+        @event
+        async def on_raw_message_delete(payload):
+            await self.remove(payload.message_id)
+
+        @event
+        async def on_message_edit(before, after):
+            status = await self.remove(before.id)
+            if status is True:
+                await self.push(after)
 
 
 class CommonSql(aobject):
@@ -89,16 +131,16 @@ class CommonSql(aobject):
 class Database:
     def __init__(self, db_path):
         self.lock = Lock()
-        #self.q = CommonSql()
         self._db_path = db_path
         self.cooldowns = {
             'giving_stars': {} # {user_id: cooldown_end_datetime}
         }
 
-    async def open(self):
+    async def open(self, bot):
         #self.q = await CommonSql()
         await self._create_tables()
         self.q = await CommonSql(await self.connect())
+        self.cache = await BotCache(bot.event)
 
     async def connect(self):
         conn = None

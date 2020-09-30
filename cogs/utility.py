@@ -28,7 +28,8 @@ async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
 
     channel = bot.get_channel(int(channel_id))
     try:
-        message = await channel.fetch_message(int(message_id)) if channel is not None else None
+        #message = await channel.fetch_message(int(message_id)) if channel is not None else None
+        message = await functions.fetch(bot, message_id, channel)
     except discord.errors.NotFound:
         message = None
 
@@ -162,7 +163,8 @@ class Utility(commands.Cog):
         _channel = ctx.channel if _channel is None else _channel
 
         try:
-            _message = await _channel.fetch_message(int(_message_id))
+            #_message = await _channel.fetch_message(int(_message_id))
+            _message = await functions.fetch(self.bot, int(_message_id), _channel)
         except discord.errors.NotFound:
             await ctx.send("I couldn't find that message.")
             return
@@ -175,7 +177,8 @@ class Utility(commands.Cog):
             message_id, channel_id = await functions.orig_message_id(self.db, conn, _message_id)
 
         channel = self.bot.get_channel(int(channel_id)) if channel_id is not None else ctx.channel
-        message = await channel.fetch_message(int(message_id))
+        #message = await channel.fetch_message(int(message_id))
+        message = await functions.fetch(self.bot, int(message_id), channel)
 
         async with self.db.lock and conn.transaction():
             sql_message = await conn.fetchrow(check_message, message_id)
