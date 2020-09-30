@@ -100,10 +100,10 @@ class Starboard(commands.Cog):
                     sb_title = starboard.mention if starboard else f"Deleted Channel {sb_id}"
                     emojis = await conn.fetch(get_emojis, sb_id)
                     emoji_string = await pretty_emoji_string(emojis, ctx.guild)
-                    msg += f"{sb_title}: {emoji_string}\n"
+                    msg += f"{sb_title} {emoji_string}\n"
 
                 embed = discord.Embed(title=title, description=msg, color=bot_config.COLOR)
-                embed.set_footer(text='Do `sb!settings <channel>`\nto view starboard settings.')
+                embed.set_footer(text='Do sb!settings <channel>\nto view starboard settings.')
                 await ctx.send(embed=embed)
 
         await conn.close()
