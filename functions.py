@@ -7,7 +7,7 @@ import bot_config, emoji, bot_config, discord
 
 
 async def fetch(bot, msg_id: int, channel: Union[discord.TextChannel, int]):
-    msg = await bot.db.cache.get(id=msg_id)
+    msg = await bot.db.cache.get(channel.id, id=msg_id)
     if msg is not None:
         return msg
 
@@ -19,7 +19,7 @@ async def fetch(bot, msg_id: int, channel: Union[discord.TextChannel, int]):
     if msg is None:
         return None
 
-    await bot.db.cache.push(msg)
+    await bot.db.cache.push(msg, channel.id)
     return msg
 
 

@@ -17,50 +17,51 @@ class aobject(object):
 
 
 class BotCache(aobject):
-    async def __init__(self, event, limit=1000):
-        self._messages = []
+    async def __init__(self, event, limit=10):
+        self._messages = {}
         self.limit = limit
         self.lock = Lock()
         await self.set_listeners(event)
 
-    async def push(self, item):
+    async def push(self, item, channel: int):
         async with self.lock:
-            self._messages.append(item)
+            self._messages.setdefault(channel, [])
+            self._messages[channel].append(item)
             if len(self._messages) > self.limit:
-                self._messages.pop(0)
+                self._messages[channel].pop(0)
 
-    async def get(self, **kwargs):
+    async def get(self, channel: int, **kwargs):
         async with self.lock:
-            return utils.get(self._messages, **kwargs)
+            return utils.get(self._messages.get(channel, []), **kwargs)
 
-    async def remove(self, msg_id):
+    async def remove(self, msg_id: int, channel: int):
         status = False
         async with self.lock:
             remove_index = None
-            for x, msg in enumerate(self._messages):
+            for x, msg in enumerate(self._messages.get(channel, [])):
                 if msg.id == msg_id:
                     remove_index = x
             if remove_index is not None:
-                self._messages.pop(remove_index)
+                self._messages[channel].pop(remove_index)
                 status = True
         return status
 
     async def set_listeners(self, event):
         @event
         async def on_raw_message_delete(payload):
-            await self.remove(payload.message_id)
+            await self.remove(payload.message_id, payload.channel_id)
 
         @event
         async def on_message_edit(before, after):
-            status = await self.remove(before.id)
+            status = await self.remove(before.id, before.channel.id)
             if status is True:
-                await self.push(after)
+                await self.push(after, after.channel.id)
 
         @event
         async def on_raw_bulk_message_delete(payload):
             ids = payload.message_ids
             for id in ids:
-                await self.remove(id)
+                await self.remove(id, payload.channel_id)
 
 
 class CommonSql(aobject):
