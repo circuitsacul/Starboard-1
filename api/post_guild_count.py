@@ -17,6 +17,5 @@ def post_bod(bot):
 async def loop_post(bot):
     await bot.wait_until_ready()
     while True:
-        print("Posting")
         post_bod(bot)
         await asyncio.sleep(60*10)

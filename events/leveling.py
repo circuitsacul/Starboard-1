@@ -49,9 +49,6 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
             cooldown_over = False
         if cooldown_over:
             db_stars[guild_id][reacter_id] = cooldown_end.timestamp()
-            print("Not Cooldown")
-    if not cooldown_over:
-        print("Cooldown!")
 
     get_member = \
         """SELECT * FROM members WHERE user_id=$1 AND guild_id=$2"""

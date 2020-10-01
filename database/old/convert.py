@@ -62,7 +62,6 @@ async def convert():
         for channel_id, message_id in data['guilds'][guild_id]['messages']:
             total_len += 1
             if message_id in used_message_ids:
-                print("duplicate")
                 continue
             used_message_ids.append(message_id)
 
@@ -88,7 +87,6 @@ async def convert():
                     dict_reaction = dict_msg['emojis'][_emoji]
                     emoji = get_emoji(_emoji)
                     if emoji is None:
-                        print(f"Skipped {_emoji}")
 
                     for user_id in dict_reaction:
                         try:

@@ -174,10 +174,9 @@ class HttpWebHook():
         await conn.close()
 
         if 'product_id' not in data:
-            print("Role Purchase Ignored")
+            pass
         else:
             add = True if data['status'] == 'completed' else False
-            print(f"Add: {add}")
             update_patron_for_user(self.bot, self.db, data['buyer_id'], data['product_id'], add)
 
 

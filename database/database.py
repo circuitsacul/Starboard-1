@@ -163,7 +163,6 @@ class Database:
         return d
 
     async def _create_table(self, sql):
-        print("Creating table")
         #cursor = self.cursor()
         conn = await self.connect()
         await conn.execute(sql)

@@ -9,9 +9,7 @@ import bot_config, emoji, bot_config, discord
 async def fetch(bot, msg_id: int, channel: Union[discord.TextChannel, int]):
     msg = await bot.db.cache.get(id=msg_id)
     if msg is not None:
-        print("Found in cache")
         return msg
-    print("Not in cache")
 
     if isinstance(channel, int):
         channel = await bot.get_channel(int(channel))
