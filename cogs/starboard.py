@@ -249,7 +249,7 @@ class Starboard(commands.Cog):
             if not functions.is_emoji(emoji):
                 await ctx.send("I don't recognize that emoji. Please make sure it is correct, and if it's a custom emoji it has to be in this server.")
                 return
-        emoji_name = emoji.id if isinstance(emoji, discord.Emoji) else str(emoji)
+        emoji_name = str(emoji.id) if isinstance(emoji, discord.Emoji) else str(emoji)
         emoji_id = emoji.id if isinstance(emoji, discord.Emoji) else None
 
         limit = await functions.get_limit(self.db, 'emojis', ctx.guild)

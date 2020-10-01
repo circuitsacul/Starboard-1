@@ -7,7 +7,7 @@ from aiosqlite import Error
 
 async def handle_reaction(db, bot, guild_id, _channel_id, user_id, _message_id, _emoji, is_add):
     emoji_id = _emoji.id
-    emoji_name = _emoji.name if _emoji.id is None else _emoji.id
+    emoji_name = _emoji.name if _emoji.id is None else str(_emoji.id)
 
     conn = await db.connect()
 
@@ -330,7 +330,7 @@ async def calculate_points(conn, sql_message, sql_starboard, bot):
         emoji_name = None if emoji_id is not None else emoji['name']
         reactions = await conn.fetch(
             get_reactions, message_id,
-            emoji_name if emoji_id is None else emoji_id
+            emoji_name if emoji_id is None else str(emoji_id)
         )
         for sql_reaction in reactions:
             user_id = sql_reaction['user_id']
