@@ -56,6 +56,12 @@ class BotCache(aobject):
             if status is True:
                 await self.push(after)
 
+        @event
+        async def on_raw_bulk_message_delete(payload):
+            ids = payload.message_ids
+            for id in ids:
+                await self.remove(id)
+
 
 class CommonSql(aobject):
     async def __init__(self, conn):
