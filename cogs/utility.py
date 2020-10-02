@@ -217,3 +217,17 @@ class Utility(commands.Cog):
         status = await handle_trashing(self.db, self.bot, ctx, _message_id, False)
         if status is True:
             await ctx.send("Message untrashed")
+
+    @commands.command(
+        name='clearCache', aliases=['cc', 'clearC'],
+        brief='Clear message cache',
+        description="You don't really need to worry about this. This is just in case something goes wrong with the message caching.",
+        hidden=True
+    )
+    @commands.guild_only()
+    @commands.has_permissions(manage_messages=True)
+    async def clear_guild_cache(self, ctx):
+        cache = self.bot.db.cache
+        async with cache.lock:
+            cache._messages[ctx.guild.id] = []
+        await ctx.send("Message cache cleared")
