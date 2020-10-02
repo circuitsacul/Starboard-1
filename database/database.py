@@ -17,51 +17,51 @@ class aobject(object):
 
 
 class BotCache(aobject):
-    async def __init__(self, event, limit=10):
+    async def __init__(self, event, limit=100):
         self._messages = {}
         self.limit = limit
         self.lock = Lock()
         await self.set_listeners(event)
 
-    async def push(self, item, channel: int):
+    async def push(self, item, guild: int):
         async with self.lock:
-            self._messages.setdefault(channel, [])
-            self._messages[channel].append(item)
+            self._messages.setdefault(guild, [])
+            self._messages[guild].append(item)
             if len(self._messages) > self.limit:
-                self._messages[channel].pop(0)
+                self._messages[guild].pop(0)
 
-    async def get(self, channel: int, **kwargs):
+    async def get(self, guild: int, **kwargs):
         async with self.lock:
-            return utils.get(self._messages.get(channel, []), **kwargs)
+            return utils.get(self._messages.get(guild, []), **kwargs)
 
-    async def remove(self, msg_id: int, channel: int):
+    async def remove(self, msg_id: int, guild: int):
         status = False
         async with self.lock:
             remove_index = None
-            for x, msg in enumerate(self._messages.get(channel, [])):
+            for x, msg in enumerate(self._messages.get(guild, [])):
                 if msg.id == msg_id:
                     remove_index = x
             if remove_index is not None:
-                self._messages[channel].pop(remove_index)
+                self._messages[guild].pop(remove_index)
                 status = True
         return status
 
     async def set_listeners(self, event):
         @event
         async def on_raw_message_delete(payload):
-            await self.remove(payload.message_id, payload.channel_id)
+            await self.remove(payload.message_id, payload.guild_id)
 
         @event
         async def on_message_edit(before, after):
-            status = await self.remove(before.id, before.channel.id)
+            status = await self.remove(before.id, before.guild.id)
             if status is True:
-                await self.push(after, after.channel.id)
+                await self.push(after, after.guild.id)
 
         @event
         async def on_raw_bulk_message_delete(payload):
             ids = payload.message_ids
             for id in ids:
-                await self.remove(id, payload.channel_id)
+                await self.remove(id, payload.guild_id)
 
 
 class CommonSql(aobject):

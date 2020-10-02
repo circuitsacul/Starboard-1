@@ -7,19 +7,19 @@ import bot_config, emoji, bot_config, discord
 
 
 async def fetch(bot, msg_id: int, channel: Union[discord.TextChannel, int]):
-    msg = await bot.db.cache.get(channel.id, id=msg_id)
-    if msg is not None:
-        return msg
-
     if isinstance(channel, int):
         channel = await bot.get_channel(int(channel))
     if channel is None:
-        return None
+        return
+
+    msg = await bot.db.cache.get(channel.guild.id, id=msg_id)
+    if msg is not None:
+        return msg
     msg = await channel.fetch_message(msg_id)
     if msg is None:
         return None
 
-    await bot.db.cache.push(msg, channel.id)
+    await bot.db.cache.push(msg, channel.guild.id)
     return msg
 
 
