@@ -1,6 +1,6 @@
 ![Starboard Splash Image](https://i.ibb.co/m6X2wnP/starboard-splash.png)
 
-# About Starboard
+## About Starboard
 Starboard is an advanced, reliable, and highly customizable starboard bot. This documentation gives you a quick start to using the bot. If you see a problem, please let me know. You can use the bots `suggest` command, or you can join the support server. My discord username is `@Circuit#5585`.
 
 [Click here for a demonstration](https://drive.google.com/file/d/1hIeeL8Y_PweQIovyAzsXJX4_-gZiqstU/view?usp=sharing)
