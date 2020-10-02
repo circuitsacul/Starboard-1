@@ -17,7 +17,7 @@ class aobject(object):
 
 
 class BotCache(aobject):
-    async def __init__(self, event, limit=100):
+    async def __init__(self, event, limit=20):
         self._messages = {}
         self.limit = limit
         self.lock = Lock()
