@@ -62,7 +62,7 @@ class Settings(commands.Cog):
         await ctx.send(embed=embed)
 
     @user_settings.command(
-        name='LvlUpMsgs', aliases=['LevelUpMessages', 'lum'],
+        name='LevelUpMessages', aliases=['LvlUpMsgs', 'lum'],
         brief='Wether or not to send you level up messages',
         description='Wether or not to send you level up messages'
     )
