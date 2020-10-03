@@ -190,7 +190,7 @@ async def on_error(event, *args, **kwargs):
 
 
 @bot.event
-async def on_command_error_fake(ctx, error):
+async def on_command_error(ctx, error):
     if type(error) is discord.ext.commands.errors.CommandNotFound:
         return
     elif type(error) is discord.ext.commands.errors.BadArgument:
