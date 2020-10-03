@@ -1,7 +1,39 @@
-import discord, bot_config, disputils
+import discord, bot_config, disputils, functions
 from discord.ext import commands
 from events import leveling
 from typing import Union
+from pprint import pprint
+
+
+async def get_leaderboard(bot, guild):
+    get_members = \
+        """SELECT * FROM members WHERE xp != 0 AND guild_id=$1 ORDER BY xp DESC"""
+
+    conn = await bot.db.connect()
+    async with bot.db.lock and conn.transaction():
+        members = await conn.fetch(get_members, guild.id)
+    await conn.close()
+    ordered = []
+    for m in members:
+        mobject = discord.utils.get(guild.members, id=m['user_id'])
+        if mobject is None or mobject.bot:
+            continue
+        else:
+            username = mobject.name
+            user_id = mobject.id
+        ordered.append({'name': username, 'user_id': user_id, 'd': m})
+
+    return ordered
+
+
+async def get_rank(bot, user_id: int, guild):
+    lb = await get_leaderboard(bot, guild)
+    rank = None
+    for i, dict in enumerate(lb):
+        if dict['user_id'] == user_id:
+            rank = i
+            break
+    return rank
 
 
 class Levels(commands.Cog):
@@ -22,6 +54,10 @@ class Levels(commands.Cog):
 
         conn = await self.db.connect()
         async with self.db.lock and conn.transaction():
+            await functions.check_or_create_existence(
+                self.bot.db, conn, self.bot, guild_id=ctx.guild.id, user=user,
+                do_member=True
+            )
             sql_member = await conn.fetchrow(get_member, user.id, ctx.guild.id)
         await conn.close()
         given = sql_member['given']
@@ -30,9 +66,12 @@ class Levels(commands.Cog):
         lvl = sql_member['lvl']
         needed_xp = await leveling.next_level_xp(lvl)
 
+        rank = await get_rank(self.bot, user.id, ctx.guild)
+        rank = rank + 1 if rank is not None else rank
+
         embed = discord.Embed(
             title=str(user),
-            description=f"Rank: **#01**\nLevel: **{lvl}**\nXP: **{xp} / {needed_xp}**",
+            description=f"Rank: **#{rank}**\nLevel: **{lvl}**\nXP: **{xp} / {needed_xp}**",
             color=bot_config.COLOR
         )
         embed.set_thumbnail(url=user.avatar_url)
@@ -47,21 +86,7 @@ class Levels(commands.Cog):
     )
     @commands.guild_only()
     async def show_leaderboard(self, ctx):
-        get_members = \
-            """SELECT * FROM members WHERE xp != 0 AND guild_id=$1 ORDER BY xp DESC"""
-
-        conn = await self.bot.db.connect()
-        async with self.bot.db.lock and conn.transaction():
-            members = await conn.fetch(get_members, ctx.guild.id)
-        await conn.close()
-        ordered = []
-        for m in members:
-            mobject = discord.utils.get(ctx.guild.members, id=m['user_id'])
-            if mobject is None or mobject.bot:
-                continue
-            else:
-                username = mobject.name
-            ordered.append({'name': username, 'd': m})
+        ordered = await get_leaderboard(self.bot, ctx.guild)
 
         stringed = [
             f"__**{m['name']}**__: **Level {m['d']['lvl']} | XP {m['d']['xp']}**\n"
@@ -79,6 +104,10 @@ class Levels(commands.Cog):
                 string += m
             embed.description = string
             embeds.append(embed)
+
+        if len(embeds) == 0:
+            await ctx.send("There isn't anyone on the leaderboard yet.")
+            return
 
         paginator = disputils.BotEmbedPaginator(ctx, embeds)
         await paginator.run()

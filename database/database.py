@@ -49,16 +49,22 @@ class BotCache(aobject):
     async def set_listeners(self, event):
         @event
         async def on_raw_message_delete(payload):
+            if payload.guild_id is None:
+                return
             await self.remove(payload.message_id, payload.guild_id)
 
         @event
         async def on_message_edit(before, after):
+            if before.guild is None:
+                return
             status = await self.remove(before.id, before.guild.id)
             if status is True:
                 await self.push(after, after.guild.id)
 
         @event
         async def on_raw_bulk_message_delete(payload):
+            if payload.guild_id is None:
+                return
             ids = payload.message_ids
             for id in ids:
                 await self.remove(id, payload.guild_id)
