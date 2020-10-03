@@ -48,15 +48,14 @@ class Levels(commands.Cog):
     @commands.guild_only()
     async def show_leaderboard(self, ctx):
         get_members = \
-            """SELECT * FROM members WHERE xp != 0 AND guild_id=$1"""
+            """SELECT * FROM members WHERE xp != 0 AND guild_id=$1 ORDER BY xp DESC"""
 
         conn = await self.bot.db.connect()
         async with self.bot.db.lock and conn.transaction():
             members = await conn.fetch(get_members, ctx.guild.id)
         await conn.close()
-        _ordered = sorted(members, key=lambda m: m['xp'], reverse=True)
         ordered = []
-        for m in _ordered:
+        for m in members:
             mobject = discord.utils.get(ctx.guild.members, id=m['user_id'])
             if mobject is None or mobject.bot:
                 continue
