@@ -35,7 +35,9 @@ DB_PATH = bot_config.BETA_DB_PATH if BETA else bot_config.DB_PATH
 db = Database(DB_PATH)
 
 emojis = bot_config.PAGINATOR_EMOJIS
-navigation = pretty_help.Navigation(page_left=emojis[0], page_right=emojis[1], remove=emojis[2])
+navigation = pretty_help.Navigation(
+    page_left=emojis[0], page_right=emojis[1], remove=emojis[2]
+)
 
 
 class Bot(commands.Bot):
@@ -64,12 +66,11 @@ web_server = HttpWebHook(bot, db)
 async def show_links(ctx):
     embed = discord.Embed(title="Helpful Links", color=bot_config.COLOR)
     description = \
-        f"""**[Support Server]({bot_config.SUPPORT_SERVER})
-        [Invite Me]({bot_config.INVITE})
-        [Submit Bug Report or Suggestion]({bot_config.ISSUES_PAGE})
-        [Source Code]({bot_config.SOURCE_CODE})
-        [Donate/Become a Patron]({bot_config.DONATE})**
-        """
+        f"**[Support Server]({bot_config.SUPPORT_SERVER})**"\
+        f"\n**[Invite Me]({bot_config.INVITE})**"\
+        f"\n**[Submit Bug Report or Suggestion]({bot_config.ISSUES_PAGE})**"\
+        f"\n**[Source Code]({bot_config.SOURCE_CODE})**"\
+        f"\n**[Donate/Become a Patron]({bot_config.DONATE})**"
     embed.description = description
     await ctx.send(embed=embed)
 
@@ -91,13 +92,11 @@ async def show_privacy_policy(ctx):
         starboard is and what it is for'
 )
 async def about_starbot(ctx):
-    msg = """
-    Starboard is a Discord starboard bot.\
-    Starboards are kind of like democratic pins.\
-    A user can "vote" to have a message displayed on \
-    a channel by reacting with an emoji, usually a star.\
-    A Starboard is a great way to archive funny messages.\
-    """
+    msg = "Starboard is a Discord starboard bot. "\
+        "Starboards are kind of like democratic pins. "\
+        "A user can \"vote\" to have a message displayed on "\
+        "a channel by reacting with an emoji, usually a star. "\
+        "A Starboard is a great way to archive funny messages."
     embed = discord.Embed(
         title='About StarBot and Starboards',
         description=msg, color=0xFCFF00
@@ -120,11 +119,9 @@ async def ping(ctx):
 async def stats_for_bot(ctx):
     embed = discord.Embed(
         title='Bot Stats', colour=0xFCFF00,
-        description=f"""
-        **Guilds:** {len(bot.guilds)}
-        **Users:** {len(bot.users)}
-        **Ping:** {int(bot.latency*1000)} ms
-        """
+        description=f"**Guilds:** {len(bot.guilds)}"
+        f"\n**Users:** {len(bot.users)}"
+        f"\n**Ping:** {int(bot.latency*1000)} ms"
     )
     await ctx.send(embed=embed)
 
@@ -179,8 +176,8 @@ async def on_message(message):
         else:
             p = bot_config.DEFAULT_PREFIX
         await message.channel.send(
-            f"Some useful commands are `{p}help` and `{p}links`\
-                \nYou can see all my prefixes with `{p}prefixes`"
+            f"Some useful commands are `{p}help` and `{p}links`"
+            "\nYou can see all my prefixes with `{p}prefixes`"
         )
         await conn.close()
     else:

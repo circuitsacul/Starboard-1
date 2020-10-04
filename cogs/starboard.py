@@ -119,8 +119,8 @@ class Starboard(commands.Cog):
                     title=title, description=msg, color=bot_config.COLOR
                 )
                 embed.set_footer(
-                    text=f'Do {p}settings <channel>"\
-                    "\nto view starboard settings.'
+                    text=f'Do {p}settings <channel>'
+                    '\nto view starboard settings.'
                 )
                 await ctx.send(embed=embed)
 

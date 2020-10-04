@@ -102,7 +102,7 @@ class PatronCommands(commands.Cog):
         title = f"Current Patron Levels for **{user}**:"
         string = ''
         for lvl_id, lvl in PATRON_LEVELS.items():
-            string += f"\n**{lvl['display']['title']}:"\
+            string += f"\n**{lvl['display']['title']}: "\
                 f"{'Yes' if lvl_id in level_ids else 'No'}**"
 
         embed = discord.Embed(

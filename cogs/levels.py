@@ -78,8 +78,8 @@ class Levels(commands.Cog):
 
         embed = discord.Embed(
             title=str(user),
-            description=f"Rank: **#{rank}**\nLevel: **{lvl}**\n\
-            XP: **{xp} / {needed_xp}**",
+            description=f"Rank: **#{rank}**\nLevel: **{lvl}**\n"
+            f"XP: **{xp} / {needed_xp}**",
             color=bot_config.COLOR
         )
         embed.set_thumbnail(url=user.avatar_url)
@@ -100,8 +100,9 @@ class Levels(commands.Cog):
         ordered = await get_leaderboard(self.bot, ctx.guild)
 
         stringed = [
-            f"#{m['index']}. __**{m['name']}**__ | Level {m['d']['lvl']} | \
-                XP {m['d']['xp']}\n"
+            f"#{m['index']}. __**{m['name']}**__ | "
+            f"Level {m['d']['lvl']} | "
+            f"XP {m['d']['xp']}\n"
             for m in ordered
         ]
         size = 10
