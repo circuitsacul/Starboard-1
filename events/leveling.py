@@ -112,7 +112,7 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
         embed = discord.Embed(
             title="Level Up!",
             description=f"You've reached **{new_xp} XP** "
-            "and are now **level {new_lvl}**!",
+            f"and are now **level {new_lvl}**!",
             color=bot_config.COLOR
         )
         embed.set_thumbnail(url="https://i.ibb.co/bvYZ8V8/dizzy-1f4ab.png")
