@@ -17,14 +17,18 @@ async def get_leaderboard(bot, guild):
         members = await conn.fetch(get_members, guild.id)
     await conn.close()
     ordered = []
+    x = 0
     for m in members:
         mobject = discord.utils.get(guild.members, id=m['user_id'])
         if mobject is None or mobject.bot:
             continue
-        else:
-            username = mobject.name
-            user_id = mobject.id
-        ordered.append({'name': username, 'user_id': user_id, 'd': m})
+        x += 1
+        username = mobject.name
+        user_id = mobject.id
+        ordered.append({
+            'name': username, 'user_id': user_id,
+            'index': x, 'd': m
+        })
 
     return ordered
 
@@ -96,8 +100,8 @@ class Levels(commands.Cog):
         ordered = await get_leaderboard(self.bot, ctx.guild)
 
         stringed = [
-            f"__**{m['name']}**__: **Level {m['d']['lvl']} | \
-                XP {m['d']['xp']}**\n"
+            f"#{m['index']}. __**{m['name']}**__ | Level {m['d']['lvl']} | \
+                XP {m['d']['xp']}\n"
             for m in ordered
         ]
         size = 10
