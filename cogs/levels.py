@@ -100,7 +100,7 @@ class Levels(commands.Cog):
                 XP {m['d']['xp']}**\n"
             for m in ordered
         ]
-        size = 5
+        size = 10
         grouped = [stringed[i:i+size] for i in range(0, len(stringed), size)]
 
         embeds = []
