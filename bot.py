@@ -133,6 +133,8 @@ async def stats_for_bot(ctx):
 @bot.event
 async def on_raw_reaction_add(payload):
     guild_id = payload.guild_id
+    if guild_id is None:
+        return
     channel_id = payload.channel_id
     message_id = payload.message_id
     user_id = payload.user_id
@@ -147,6 +149,8 @@ async def on_raw_reaction_add(payload):
 @bot.event
 async def on_raw_reaction_remove(payload):
     guild_id = payload.guild_id
+    if guild_id is None:
+        return
     channel_id = payload.channel_id
     message_id = payload.message_id
     user_id = payload.user_id
@@ -165,12 +169,15 @@ async def on_message(message):
     elif message.content.replace('!', '') == bot.user.mention:
         conn = await db.connect()
 
-        async with db.lock and conn.transaction():
-            await functions.check_or_create_existence(
-                db, conn, bot, message.guild.id, message.author,
-                do_member=True
-            )
-        p = await functions.get_one_prefix(bot, message.guild.id)
+        if message.guild is not None:
+            async with db.lock and conn.transaction():
+                await functions.check_or_create_existence(
+                    db, conn, bot, message.guild.id, message.author,
+                    do_member=True
+                )
+            p = await functions.get_one_prefix(bot, message.guild.id)
+        else:
+            p = bot_config.DEFAULT_PREFIX
         await message.channel.send(
             f"Some useful commands are `{p}help` and `{p}links`\
                 \nYou can see all my prefixes with `{p}prefixes`"

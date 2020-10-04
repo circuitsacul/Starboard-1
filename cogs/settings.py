@@ -91,14 +91,17 @@ class Settings(commands.Cog):
         invoke_without_command=True
     )
     async def guild_prefixes(self, ctx):
-        prefixes = await functions.list_prefixes(self.bot, ctx.guild.id)
+        if ctx.guild is None:
+            prefixes = ['sb!', 'Sb!']
+        else:
+            prefixes = await functions.list_prefixes(self.bot, ctx.guild.id)
 
-        msg = f"**-** {ctx.guild.me.mention}"
+        msg = f"**-** {self.bot.user.mention}"
         for prefix in prefixes:
             msg += f"\n**-** `{prefix}`"
 
         embed = discord.Embed(
-            title=f"Prefixes for {ctx.guild.name}",
+            title=f"Prefixes",
             description=msg,
             color=bot_config.COLOR
         )
