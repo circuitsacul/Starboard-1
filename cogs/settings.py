@@ -1,8 +1,12 @@
-import discord, functions, bot_config
+import discord
+import functions
+import bot_config
 from discord.ext import commands
 
 
-async def change_user_setting(db, user_id: int, lvl_up_msgs: bool=None):
+async def change_user_setting(
+    db, user_id: int, lvl_up_msgs: bool = None
+):
     get_user = \
         """SELECT * FROM users WHERE id=$1"""
     update_user = \
@@ -17,7 +21,8 @@ async def change_user_setting(db, user_id: int, lvl_up_msgs: bool=None):
         if sql_user is None:
             status = None
         else:
-            lum = lvl_up_msgs if lvl_up_msgs is not None else sql_user['lvl_up_msgs']
+            lum = lvl_up_msgs if lvl_up_msgs is not None\
+                else sql_user['lvl_up_msgs']
             await conn.execute(update_user, lum, user_id)
             status = True
 
@@ -33,7 +38,8 @@ class Settings(commands.Cog):
     @commands.group(
         name='profile', aliases=['userConfig', 'uc', 'p'],
         brief='View/change personal settings',
-        description='''Change or view settings for yourself. Changes affect all servers, not just the current one.''',
+        description='Change or view settings for yourself. '
+        'Changes affect all servers, not just the current one.',
         invoke_without_command=True
     )
     async def user_settings(self, ctx):
@@ -58,7 +64,10 @@ class Settings(commands.Cog):
             color=bot_config.COLOR
         )
         p = await functions.get_one_prefix(self.bot, ctx.guild.id)
-        embed.set_footer(text=f"Use {p}profile <setting> <value> to change a setting.")
+        embed.set_footer(
+            text=f"Use {p}profile <setting> <value> "
+            "to change a setting."
+        )
         await ctx.send(embed=embed)
 
     @user_settings.command(
@@ -67,7 +76,9 @@ class Settings(commands.Cog):
         description='Wether or not to send you level up messages'
     )
     async def set_user_lvl_up_msgs(self, ctx, value: bool):
-        status = await change_user_setting(self.db, ctx.message.author.id, lvl_up_msgs=value)
+        status = await change_user_setting(
+            self.db, ctx.message.author.id, lvl_up_msgs=value
+        )
         if status is not True:
             await ctx.send("Somthing went wrong.")
         else:
@@ -102,10 +113,14 @@ class Settings(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     async def add_prefix(self, ctx, prefix: str):
         if len(prefix) > 8:
-            await ctx.send("That prefix is too long! It must be under 9 characters.")
+            await ctx.send(
+                "That prefix is too long! It must be under 9 characters."
+            )
             return
-        
-        status, status_msg = await functions.add_prefix(self.bot, ctx.guild.id, prefix)
+
+        status, status_msg = await functions.add_prefix(
+            self.bot, ctx.guild.id, prefix
+        )
         if status is True:
             await ctx.send(f"Added prefix `{prefix}`")
         else:
@@ -117,7 +132,9 @@ class Settings(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
     async def remove_prefix(self, ctx, prefix: str):
-        status, status_msg = await functions.remove_prefix(self.bot, ctx.guild.id, prefix)
+        status, status_msg = await functions.remove_prefix(
+            self.bot, ctx.guild.id, prefix
+        )
         if status is True:
             await ctx.send(f"Removed prefix `{prefix}`")
         else:

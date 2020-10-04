@@ -1,13 +1,16 @@
-import discord, bot_config, disputils, functions
+import discord
+import bot_config
+import disputils
+import functions
 from discord.ext import commands
 from events import leveling
 from typing import Union
-from pprint import pprint
 
 
 async def get_leaderboard(bot, guild):
     get_members = \
-        """SELECT * FROM members WHERE xp != 0 AND guild_id=$1 ORDER BY xp DESC"""
+        """SELECT * FROM members WHERE xp != 0 AND guild_id=$1
+        ORDER BY xp DESC"""
 
     conn = await bot.db.connect()
     async with bot.db.lock and conn.transaction():
@@ -71,11 +74,15 @@ class Levels(commands.Cog):
 
         embed = discord.Embed(
             title=str(user),
-            description=f"Rank: **#{rank}**\nLevel: **{lvl}**\nXP: **{xp} / {needed_xp}**",
+            description=f"Rank: **#{rank}**\nLevel: **{lvl}**\n\
+            XP: **{xp} / {needed_xp}**",
             color=bot_config.COLOR
         )
         embed.set_thumbnail(url=user.avatar_url)
-        embed.set_footer(text=f"Total Received: {received}\nTotal Given: {given}")
+        embed.set_footer(
+            text=f"Total Received: {received}\
+            \nTotal Given: {given}"
+        )
 
         await ctx.send(embed=embed)
 
@@ -89,7 +96,8 @@ class Levels(commands.Cog):
         ordered = await get_leaderboard(self.bot, ctx.guild)
 
         stringed = [
-            f"__**{m['name']}**__: **Level {m['d']['lvl']} | XP {m['d']['xp']}**\n"
+            f"__**{m['name']}**__: **Level {m['d']['lvl']} | \
+                XP {m['d']['xp']}**\n"
             for m in ordered
         ]
         size = 10
@@ -98,8 +106,13 @@ class Levels(commands.Cog):
         embeds = []
         for group in grouped:
             string = ""
-            embed = discord.Embed(title=f"Leaderboard for {ctx.guild.name}", color=bot_config.COLOR)
-            embed.set_thumbnail(url="https://i.ibb.co/CQvbvDq/trophy-1f3c6.png")
+            embed = discord.Embed(
+                title=f"Leaderboard for {ctx.guild.name}",
+                color=bot_config.COLOR
+            )
+            embed.set_thumbnail(
+                url="https://i.ibb.co/CQvbvDq/trophy-1f3c6.png"
+            )
             for m in group:
                 string += m
             embed.description = string

@@ -1,4 +1,5 @@
-import asyncpg as apg, os
+import asyncpg as apg
+import os
 from aiosqlite import Error
 from asyncio import Lock
 from discord import utils
@@ -146,11 +147,11 @@ class Database:
         self.lock = Lock()
         self._db_path = db_path
         self.cooldowns = {
-            'giving_stars': {} # {user_id: cooldown_end_datetime}
+            'giving_stars': {}  # {user_id: cooldown_end_datetime}
         }
 
     async def open(self, bot):
-        #self.q = await CommonSql()
+        # self.q = await CommonSql()
         await self._create_tables()
         self.q = await CommonSql(await self.connect())
         self.cache = await BotCache(bot.event)
@@ -158,11 +159,14 @@ class Database:
     async def connect(self):
         conn = None
         try:
-            conn = await apg.connect(host='localhost', database='starboard', user='starboard', password=db_pwd)
-            #await conn.execute(
+            conn = await apg.connect(
+                host='localhost', database='starboard',
+                user='starboard', password=db_pwd
+            )
+            # await conn.execute(
             #    "PRAGMA foreign_keys=True"
-            #)
-            #conn.row_factory = self._dict_factory
+            # )
+            # conn.row_factory = self._dict_factory
         except Error as e:
             print(f"Couldn't connect to database: {e}")
             if conn:
@@ -176,12 +180,8 @@ class Database:
         return d
 
     async def _create_table(self, sql):
-        #cursor = self.cursor()
         conn = await self.connect()
         await conn.execute(sql)
-        #c = await conn.cursor()
-        #await c.execute(sql)
-        #await conn.commit()
         await conn.close()
 
     async def _create_tables(self):

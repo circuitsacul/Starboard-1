@@ -1,4 +1,6 @@
-import discord, functions, bot_config
+import discord
+import functions
+import bot_config
 from discord.ext import commands
 from typing import Union
 
@@ -32,18 +34,25 @@ async def change_starboard_settings(
             ssb = rows[0]
 
             s = {}
-            s['ss'] = self_star if self_star is not None else ssb['self_star']
-            s['le'] = link_edits if link_edits is not None else ssb['link_edits']
-            s['ld'] = link_deletes if link_deletes is not None else ssb['link_deletes']
-            s['bos'] = bots_on_sb if bots_on_sb is not None else ssb['bots_on_sb']
-            s['r'] = required if required is not None else ssb['required']
-            s['rtl'] = rtl if rtl is not None else ssb['rtl']
+            s['ss'] = self_star if self_star is not None \
+                else ssb['self_star']
+            s['le'] = link_edits if link_edits is not None \
+                else ssb['link_edits']
+            s['ld'] = link_deletes if link_deletes is not None \
+                else ssb['link_deletes']
+            s['bos'] = bots_on_sb if bots_on_sb is not None \
+                else ssb['bots_on_sb']
+            s['r'] = required if required is not None \
+                else ssb['required']
+            s['rtl'] = rtl if rtl is not None \
+                else ssb['rtl']
 
             if s['r'] <= s['rtl']:
                 status = False
             else:
                 try:
-                    await conn.execute(update_starboard,
+                    await conn.execute(
+                        update_starboard,
                         s['ss'], s['le'], s['ld'], s['bos'], s['r'], s['rtl'],
                         starboard_id
                     )
@@ -59,7 +68,9 @@ async def pretty_emoji_string(emojis, guild):
     for emoji in emojis:
         is_custom = emoji['d_id'] is not None
         if is_custom:
-            emoji_string = str(discord.utils.get(guild.emojis, id=int(emoji['d_id'])))
+            emoji_string = str(discord.utils.get(
+                guild.emojis, id=int(emoji['d_id']))
+            )
         else:
             emoji_string = emoji['name']
         string += emoji_string + " "
@@ -97,14 +108,20 @@ class Starboard(commands.Cog):
                 for row in rows:
                     sb_id = row['id']
                     starboard = self.bot.get_channel(int(sb_id))
-                    sb_title = starboard.mention if starboard else f"Deleted Channel {sb_id}"
+                    sb_title = starboard.mention if starboard \
+                        else f"Deleted Channel {sb_id}"
                     emojis = await conn.fetch(get_emojis, sb_id)
                     emoji_string = await pretty_emoji_string(emojis, ctx.guild)
                     msg += f"{sb_title} {emoji_string}\n"
 
                 p = await functions.get_one_prefix(self.bot, ctx.guild.id)
-                embed = discord.Embed(title=title, description=msg, color=bot_config.COLOR)
-                embed.set_footer(text=f'Do {p}settings <channel>\nto view starboard settings.')
+                embed = discord.Embed(
+                    title=title, description=msg, color=bot_config.COLOR
+                )
+                embed.set_footer(
+                    text=f'Do {p}settings <channel>"\
+                    "\nto view starboard settings.'
+                )
                 await ctx.send(embed=embed)
 
         await conn.close()
@@ -115,7 +132,9 @@ class Starboard(commands.Cog):
         brief='View settings for startboard'
     )
     @commands.guild_only()
-    async def get_starboard_settings(self, ctx, starboard: discord.TextChannel):
+    async def get_starboard_settings(
+        self, ctx, starboard: discord.TextChannel
+    ):
         get_starboard = """SELECT * FROM starboards WHERE id=$1"""
         get_emojis = """SELECT * FROM sbemojis WHERE starboard_id=$1"""
 
@@ -137,12 +156,17 @@ class Starboard(commands.Cog):
                 string += f"\n**requiredStars: {sql_starboard['required']}**"
                 string += f"\n**requiredToLose: {sql_starboard['rtl']}**"
                 string += f"\n**selfStar: {bool(sql_starboard['self_star'])}**"
-                string += f"\n**linkEdits: {bool(sql_starboard['link_edits'])}**"
-                string += f"\n**linkDeletes: {bool(sql_starboard['link_deletes'])}**"
-                string += f"\n**botsOnStarboard: {bool(sql_starboard['bots_on_sb'])}**"
+                string += "\n**linkEdits: "\
+                    f"{bool(sql_starboard['link_edits'])}**"
+                string += "\n**linkDeletes: "\
+                    f"{bool(sql_starboard['link_deletes'])}**"
+                string += "\n**botsOnStarboard: "\
+                    f"{bool(sql_starboard['bots_on_sb'])}**"
                 string += f"\n**locked: {bool(sql_starboard['locked'])}**"
-                
-                embed = discord.Embed(title=title, description=string, color=bot_config.COLOR)
+
+                embed = discord.Embed(
+                    title=title, description=string, color=bot_config.COLOR
+                )
                 await ctx.send(embed=embed)
         await conn.close()
 
@@ -159,7 +183,11 @@ class Starboard(commands.Cog):
             await ctx.send("I can't send messages there.")
             return
         elif not perms.add_reactions:
-            await ctx.send("I can't add reactions to messages there. If you want me to automatically add reactions, please enable this setting.")
+            await ctx.send(
+                "I can't add reactions to messages there. "
+                "If you want me to automatically add reactions, "
+                "please enable this setting."
+            )
 
         conn = await self.db.connect()
         get_starboards = \
@@ -176,7 +204,10 @@ class Starboard(commands.Cog):
             num_starboards = len(rows)
 
             if num_starboards >= limit:
-                await ctx.send("You have reached your limit for starboards. Please upgrade by becoming a patron.")
+                await ctx.send(
+                    "You have reached your limit for starboards. "
+                    "Please upgrade by becoming a patron."
+                )
             else:
                 exists = await functions.check_or_create_existence(
                     self.db, conn, self.bot, guild_id=ctx.guild.id,
@@ -188,10 +219,6 @@ class Starboard(commands.Cog):
                     await ctx.send(f"Added starboard {starboard.mention}")
 
         await conn.close()
-        #if existed['se'] == True:
-        #    await ctx.send("That is already a starboard!")
-        #else:
-        #    await ctx.send(f"Added starboard {starboard.mention}")
 
     @commands.command(
         name='remove', aliases=['r'],
@@ -200,8 +227,12 @@ class Starboard(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
-    async def remove_starboard(self, ctx, starboard: Union[discord.TextChannel, int]):
-        starboard_id = starboard.id if isinstance(starboard, discord.TextChannel) else int(starboard)
+    async def remove_starboard(
+        self, ctx, starboard: Union[discord.TextChannel, int]
+    ):
+        starboard_id = starboard.id if isinstance(
+            starboard, discord.TextChannel
+        ) else int(starboard)
         confirmed = await functions.confirm(
             self.bot, ctx.channel,
             "Are you sure? All starboard messages will be lost forever.",
@@ -223,7 +254,7 @@ class Starboard(commands.Cog):
                 self.db, conn, self.bot, starboard_id=starboard_id,
                 guild_id=ctx.guild.id, create_new=False
             )
-            if existed['se'] == False:
+            if existed['se'] is False:
                 await ctx.send("That is not a starboard!")
                 exists = False
             else:
@@ -240,17 +271,26 @@ class Starboard(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
-    async def add_starboard_emoji(self, ctx, starboard: discord.TextChannel, emoji: Union[discord.Emoji, str]):
+    async def add_starboard_emoji(
+        self, ctx, starboard: discord.TextChannel,
+        emoji: Union[discord.Emoji, str]
+    ):
         check_sbemoji = \
             """SELECT * FROM sbemojis WHERE name=$1 AND starboard_id=$2"""
         get_all_sbemoji = \
             """SELECT * FROM sbemojis WHERE starboard_id=$1"""
         if not isinstance(emoji, discord.Emoji):
             if not functions.is_emoji(emoji):
-                await ctx.send("I don't recognize that emoji. Please make sure it is correct, and if it's a custom emoji it has to be in this server.")
+                await ctx.send(
+                    "I don't recognize that emoji. "
+                    "Please make sure it is correct, and if it's a "
+                    "custom emoji it has to be in this server."
+                )
                 return
-        emoji_name = str(emoji.id) if isinstance(emoji, discord.Emoji) else str(emoji)
-        emoji_id = emoji.id if isinstance(emoji, discord.Emoji) else None
+        emoji_name = str(emoji.id) if isinstance(
+            emoji, discord.Emoji) else str(emoji)
+        emoji_id = emoji.id if isinstance(
+            emoji, discord.Emoji) else None
 
         limit = await functions.get_limit(self.db, 'emojis', ctx.guild)
 
@@ -268,14 +308,19 @@ class Starboard(commands.Cog):
             if not exists['se']:
                 await ctx.send("That is not a starboard!")
             else:
-                rows = await conn.fetch(check_sbemoji, emoji_name, starboard.id)
+                rows = await conn.fetch(
+                    check_sbemoji, emoji_name, starboard.id
+                )
                 exists = len(rows) > 0
                 if exists:
                     await ctx.send("That emoji is already on that starboard!")
                 else:
                     rows = await conn.fetch(get_all_sbemoji, starboard.id)
                     if len(rows) >= limit:
-                        await ctx.send("You have reached your limit for emojis on this starboard. Please upgrade by becoming a patron.")
+                        await ctx.send(
+                            "You have reached your limit for emojis on this "
+                            "starboard. Please upgrade by becoming a patron."
+                        )
                     else:
                         await self.db.q.create_sbemoji.fetch(
                             emoji_id,
@@ -294,13 +339,16 @@ class Starboard(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
-    async def remove_starboard_emoji(self, ctx, starboard: discord.TextChannel, emoji: Union[discord.Emoji, str]):
+    async def remove_starboard_emoji(
+        self, ctx, starboard: discord.TextChannel,
+        emoji: Union[discord.Emoji, str]
+    ):
         get_sbemoji = \
             """SELECT * FROM sbemojis WHERE name=$1 AND starboard_id=$2"""
         del_sbemoji = \
             """DELETE FROM sbemojis WHERE id=$1"""
         emoji_name = emoji.id if isinstance(emoji, discord.Emoji) else emoji
-        emoji_id = emoji.id if isinstance(emoji, discord.Emoji) else None
+        # emoji_id = emoji.id if isinstance(emoji, discord.Emoji) else None
 
         conn = await self.db.connect()
         removed = False
@@ -329,47 +377,72 @@ class Starboard(commands.Cog):
 
     @commands.command(
         name='requiredStars', aliases=['rs', 'required'],
-        description='Set\'s how many stars are needed before a message appears on the starboard',
+        description='Set\'s how many stars are needed before a message '
+        'appears on the starboard',
         brief='Set\'s required stars'
     )
     @commands.guild_only()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
-    async def set_required_stars(self, ctx, starboard: discord.TextChannel, value: int):
+    async def set_required_stars(
+        self, ctx, starboard: discord.TextChannel, value: int
+    ):
         value = 1 if value < 1 else value
-        status = await change_starboard_settings(self.db, starboard.id, required=value)
+        status = await change_starboard_settings(
+            self.db, starboard.id, required=value
+        )
         if status is None:
             await ctx.send("That is not a starboard!")
         elif status is False:
-            await ctx.send("RequiredStars cannot be less than or equal to RequiredToLose")
+            await ctx.send(
+                "RequiredStars cannot be less than or equal to RequiredToLose"
+            )
         else:
-            await ctx.send(f"Set requiredStars to {value} for {starboard.mention}")
+            await ctx.send(
+                f"Set requiredStars to {value} for {starboard.mention}"
+            )
 
     @commands.command(
         name='requiredToLose', aliases=['rtl'],
-        description='Set\'s how few stars a message needs before the messages is removed from the starboard',
+        description='Set\'s how few stars a message needs before the '
+        'messages is removed from the starboard',
         brief='Sets requiredToLose'
     )
     @commands.guild_only()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
-    async def set_required_to_lose(self, ctx, starboard: discord.TextChannel, value: int):
+    async def set_required_to_lose(
+        self, ctx, starboard: discord.TextChannel, value: int
+    ):
         value = -1 if value < -1 else value
-        status = await change_starboard_settings(self.db, starboard.id, rtl=value)
+        status = await change_starboard_settings(
+            self.db, starboard.id, rtl=value
+        )
         if status is None:
             await ctx.send("That is not a starboard!")
         elif status is False:
-            await ctx.send("RequiredToLose cannot be greater than or equal to RequiredStars")
+            await ctx.send(
+                "RequiredToLose cannot be greater "
+                "than or equal to RequiredStars"
+            )
         elif status is True:
-            await ctx.send(f"Set requiredToLose to {value} for {starboard.mention}")
+            await ctx.send(
+                f"Set requiredToLose to {value} "
+                f"for {starboard.mention}"
+            )
 
     @commands.command(
         name='selfStar', aliases=['ss'],
-        description='Set wether or not to allow a user to star their own message for starboard',
+        description='Set wether or not to allow a user to star '
+        'their own message for starboard',
         brief='Set selfStar for starboard'
     )
     @commands.guild_only()
     @commands.has_permissions(manage_channels=True)
-    async def starboard_self_star(self, ctx, starboard: discord.TextChannel, value: bool):
-        status = await change_starboard_settings(self.db, starboard.id, self_star=value)
+    async def starboard_self_star(
+        self, ctx, starboard: discord.TextChannel, value: bool
+    ):
+        status = await change_starboard_settings(
+            self.db, starboard.id, self_star=value
+        )
         if status is None:
             await ctx.send("That is not a starboard!")
         elif status is False:
@@ -379,13 +452,18 @@ class Starboard(commands.Cog):
 
     @commands.command(
         name='linkEdits', aliases=['le'],
-        description='Sets wether or not the bot should edit the starboard message if the user edits it',
+        description='Sets wether or not the bot should edit the starboard '
+        'message if the user edits it',
         brief='Sets linkEdits for a starboard'
     )
     @commands.guild_only()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
-    async def set_link_edits(self, ctx, starboard: discord.TextChannel, value: bool):
-        status = await change_starboard_settings(self.db, starboard.id, link_edits=value)
+    async def set_link_edits(
+        self, ctx, starboard: discord.TextChannel, value: bool
+    ):
+        status = await change_starboard_settings(
+            self.db, starboard.id, link_edits=value
+        )
         if status is None:
             await ctx.send("That is not a starboard!")
         elif status is False:
@@ -395,32 +473,46 @@ class Starboard(commands.Cog):
 
     @commands.command(
         name='linkDeletes', aliases=['ld'],
-        description='Sets wether or not the bot should delete the starboard message if the original is deleted',
+        description='Sets wether or not the bot should delete the starboard '
+        'message if the original is deleted',
         brief='Sets linkDeletes for a starboard'
     )
     @commands.guild_only()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
-    async def set_link_deletes(self, ctx, starboard: discord.TextChannel, value: bool):
-        status = await change_starboard_settings(self.db, starboard.id, link_deletes=value)
+    async def set_link_deletes(
+        self, ctx, starboard: discord.TextChannel, value: bool
+    ):
+        status = await change_starboard_settings(
+            self.db, starboard.id, link_deletes=value
+        )
         if status is None:
             await ctx.send("That is not a starboard!")
         elif status is False:
             await ctx.send("Invalid Setting")
         else:
-            await ctx.send(f"Set linkDeletes to {value} for {starboard.mention}")
+            await ctx.send(
+                f"Set linkDeletes to {value} for {starboard.mention}"
+            )
 
     @commands.command(
         name='botsOnStarboard', aliases=['botsOnSb', 'bos'],
-        description="Sets wether or not to allow bot messages to be put on the starboard",
+        description="Sets wether or not to allow bot messages "
+        "to be put on the starboard",
         brief='Sets botsOnStarboards for a starboard'
     )
     @commands.guild_only()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
-    async def set_bots_on_starboard(self, ctx, starboard: discord.TextChannel, value: bool):
-        status = await change_starboard_settings(self.db, starboard.id, bots_on_sb=value)
+    async def set_bots_on_starboard(
+        self, ctx, starboard: discord.TextChannel, value: bool
+    ):
+        status = await change_starboard_settings(
+            self.db, starboard.id, bots_on_sb=value
+        )
         if status is None:
             await ctx.send("That is not a starboard!")
         elif status is False:
             await ctx.send("Invalid Setting")
         else:
-            await ctx.send(f"Set botsOnStarboard to {value} for {starboard.mention}")
+            await ctx.send(
+                f"Set botsOnStarboard to {value} for {starboard.mention}"
+            )

@@ -1,4 +1,6 @@
-import discord, functions, bot_config
+import discord
+import functions
+import bot_config
 from discord.ext import commands
 from events import starboard_events
 from disputils import BotEmbedPaginator
@@ -16,11 +18,15 @@ async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
 
     conn = await db.connect()
     async with db.lock and conn.transaction():
-        message_id, channel_id = await functions.orig_message_id(db, conn, _message_id)
+        message_id, channel_id = await functions.orig_message_id(
+            db, conn, _message_id
+        )
 
         sql_message = await conn.fetchrow(check_message, message_id)
         if sql_message is None:
-            await ctx.send("That message either has no reactions or does not exist")
+            await ctx.send(
+                "That message either has no reactions or does not exist"
+            )
             status = False
         else:
             await conn.execute(trash_message, trash, message_id)
@@ -28,13 +34,14 @@ async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
 
     channel = bot.get_channel(int(channel_id))
     try:
-        #message = await channel.fetch_message(int(message_id)) if channel is not None else None
         message = await functions.fetch(bot, message_id, channel)
     except discord.errors.NotFound:
         message = None
 
     if status is True:
-        await starboard_events.handle_starboards(db, bot, message_id, channel, message)
+        await starboard_events.handle_starboards(
+            db, bot, message_id, channel, message
+        )
     return status
 
 
@@ -65,15 +72,21 @@ class Utility(commands.Cog):
         else:
             all_strings = []
             for i, msg in enumerate(frozen_messages):
-                from_msg = f"**[{msg['id']}](https://discordapp.com/channels/{msg['guild_id']}/{msg['channel_id']}/{msg['id']}/)**\n"
+                from_msg = f"**[{msg['id']}]"\
+                    "(https://discordapp.com/channels/"\
+                    "{msg['guild_id']}/{msg['channel_id']}/{msg['id']}/)**\n"
                 all_strings.append(from_msg)
 
             size = 10
-            grouped = [all_strings[i:i+size] for i in range(0, len(all_strings), size)]
+            grouped = [
+                all_strings[i:i+size] for i in range(0, len(all_strings), size)
+            ]
 
             all_embeds = []
             for group in grouped:
-                embed = discord.Embed(color=bot_config.COLOR, title='Frozen Messages')
+                embed = discord.Embed(
+                    color=bot_config.COLOR, title='Frozen Messages'
+                )
                 string = ""
                 for item in group:
                     string += item
@@ -83,10 +96,11 @@ class Utility(commands.Cog):
             paginator = BotEmbedPaginator(ctx, all_embeds)
             await paginator.run()
 
-
     @commands.command(
         name='freeze', brief='Freezes a message',
-        description="Freezing a message means that it can't be removed or added to a starboard, and no new reactions will be logged."
+        description="Freezing a message means that it can't "
+        "be removed or added to a starboard, "
+        "and no new reactions will be logged."
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
@@ -100,11 +114,17 @@ class Utility(commands.Cog):
 
         conn = await self.db.connect()
         async with self.db.lock and conn.transaction():
-            message_id, _orig_channel_id = await functions.orig_message_id(self.db, conn, message)
-            sql_message = await conn.fetchrow(get_message, message_id, ctx.guild.id)
-        
+            message_id, _orig_channel_id = await functions.orig_message_id(
+                self.db, conn, message
+            )
+            sql_message = await conn.fetchrow(
+                get_message, message_id, ctx.guild.id
+            )
+
         if not sql_message:
-            await ctx.send("That message either has no reactions or does not exist")
+            await ctx.send(
+                "That message either has no reactions or does not exist"
+            )
 
         else:
             async with self.db.lock and conn.transaction():
@@ -131,11 +151,17 @@ class Utility(commands.Cog):
 
         conn = await self.db.connect()
         async with self.db.lock and conn.transaction():
-            message_id, _orig_channel_id = await functions.orig_message_id(self.db, conn, message)
-            sql_message = await conn.fetchrow(get_message, message_id, ctx.guild.id)
+            message_id, _orig_channel_id = await functions.orig_message_id(
+                self.db, conn, message
+            )
+            sql_message = await conn.fetchrow(
+                get_message, message_id, ctx.guild.id
+            )
 
         if not sql_message:
-            await ctx.send("That message either has no reactions or does not exist")
+            await ctx.send(
+                "That message either has no reactions or does not exist"
+            )
 
         else:
             async with self.db.lock:
@@ -152,7 +178,9 @@ class Utility(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def force_message(self, ctx, _message_id, _channel: discord.TextChannel = None):
+    async def force_message(
+        self, ctx, _message_id, _channel: discord.TextChannel = None
+    ):
         check_message = \
             """SELECT * FROM messages WHERE id=$1"""
         force_message = \
@@ -163,21 +191,25 @@ class Utility(commands.Cog):
         _channel = ctx.channel if _channel is None else _channel
 
         try:
-            #_message = await _channel.fetch_message(int(_message_id))
-            _message = await functions.fetch(self.bot, int(_message_id), _channel)
+            await functions.fetch(
+                self.bot, int(_message_id), _channel
+            )
         except discord.errors.NotFound:
             await ctx.send("I couldn't find that message.")
             return
         except AttributeError:
             await ctx.send("I can't find that channel")
             return
-        
+
         conn = await self.db.connect()
         async with self.db.lock and conn.transaction():
-            message_id, channel_id = await functions.orig_message_id(self.db, conn, _message_id)
+            message_id, channel_id = await functions.orig_message_id(
+                self.db, conn, _message_id
+            )
 
-        channel = self.bot.get_channel(int(channel_id)) if channel_id is not None else ctx.channel
-        #message = await channel.fetch_message(int(message_id))
+        channel = self.bot.get_channel(int(channel_id)) \
+            if channel_id is not None else ctx.channel
+
         message = await functions.fetch(self.bot, int(message_id), channel)
 
         async with self.db.lock and conn.transaction():
@@ -192,17 +224,22 @@ class Utility(commands.Cog):
 
         await ctx.send("Message forced.")
 
-        await starboard_events.handle_starboards(self.db, self.bot, message.id, message.channel, message)
+        await starboard_events.handle_starboards(
+            self.db, self.bot, message.id, message.channel, message
+        )
 
     @commands.command(
         name='trash',
-        description='Trashing a message prevents users from seeing it or reacting to it.',
+        description='Trashing a message prevents users '
+        'from seeing it or reacting to it.',
         brief='Trashes a message'
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
     async def trash_message(self, ctx, _messsage_id):
-        status = await handle_trashing(self.db, self.bot, ctx, _messsage_id, True)
+        status = await handle_trashing(
+            self.db, self.bot, ctx, _messsage_id, True
+        )
         if status is True:
             await ctx.send("Message Trashed")
 
@@ -214,14 +251,17 @@ class Utility(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
     async def untrash_message(self, ctx, _message_id):
-        status = await handle_trashing(self.db, self.bot, ctx, _message_id, False)
+        status = await handle_trashing(
+            self.db, self.bot, ctx, _message_id, False
+        )
         if status is True:
             await ctx.send("Message untrashed")
 
     @commands.command(
         name='clearCache', aliases=['cc', 'clearC'],
         brief='Clear message cache',
-        description="You don't really need to worry about this. This is just in case something goes wrong with the message caching.",
+        description="You don't really need to worry about this. "
+        "This is just in case something goes wrong with the message caching.",
         hidden=True
     )
     @commands.guild_only()

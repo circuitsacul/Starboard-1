@@ -1,8 +1,12 @@
-import discord, sys, asyncio, sys, os, asyncio, dotenv, functions, logging, traceback
+import discord
+import sys
+import asyncio
+import os
+import dotenv
+import functions
+import traceback
 import pretty_help
 from discord.ext import commands
-from typing import Union
-#from flask.app import Flask
 from pretty_help import PrettyHelp
 
 dotenv.load_dotenv()
@@ -14,14 +18,12 @@ from events import leveling
 from database.database import Database
 from api import post_guild_count
 
-from events import leveling
 from cogs.starboard import Starboard
 from cogs.owner import Owner
 from cogs.utility import Utility
 from cogs.patron import PatronCommands, HttpWebHook
 from cogs.levels import Levels
 from cogs.settings import Settings
-#from cogs.patron import FlaskWebHook
 
 _TOKEN = os.getenv('TOKEN')
 _BETA_TOKEN = os.getenv('BETA_TOKEN')
@@ -29,7 +31,6 @@ _BETA_TOKEN = os.getenv('BETA_TOKEN')
 BETA = True if len(sys.argv) > 1 and sys.argv[1] == 'beta' else False
 TOKEN = _BETA_TOKEN if BETA and _BETA_TOKEN is not None else _TOKEN
 DB_PATH = bot_config.BETA_DB_PATH if BETA else bot_config.DB_PATH
-#PREFIX = commands.when_mentioned_or(bot_config.DEFAULT_PREFIX)
 
 db = Database(DB_PATH)
 
@@ -51,26 +52,8 @@ bot = Bot(
     ),
     case_insensitive=True
 )
-#web_server = FlaskWebHook(bot, db)
 web_server = HttpWebHook(bot, db)
 
-#running = True
-
-
-# Handle Donations
-#@tasks.loop(seconds=30)
-#async def _handle_donation():
-#    if not running:
-#        return
-#    handle_donations()
-
-
-#def handle_donations():
-#    print("Running Donation Handler")
-#    cp_queue = web_server.queue.copy()
-#    for item in cp_queue:
-#        print("New Donation Event")
-#        print(item)
 
 # Info Commands
 @bot.command(
@@ -104,16 +87,18 @@ async def show_privacy_policy(ctx):
 
 @bot.command(
     name='about', brief='About Starboards',
-    description='Give quick description of what a starboard is and what it is for'
+    description='Give quick description of what a \
+        starboard is and what it is for'
 )
 async def about_starbot(ctx):
     msg = """
     Starboard is a Discord starboard bot.\
     Starboards are kind of like democratic pins.\
-    A user can "vote" to have a message displayed on a channel by reacting with an emoji, usually a star.\
+    A user can "vote" to have a message displayed on \
+    a channel by reacting with an emoji, usually a star.\
     A Starboard is a great way to archive funny messages.\
     """
-    embed=discord.Embed(
+    embed = discord.Embed(
         title='About StarBot and Starboards',
         description=msg, color=0xFCFF00
     )
@@ -123,21 +108,24 @@ async def about_starbot(ctx):
 @bot.command(
     name='ping', aliases=['latency'], description='Get bot latency',
     brief='Get bot latency'
-    )
+)
 async def ping(ctx):
     await ctx.send('Pong! {0} ms'.format(int(bot.latency*1000)))
 
 
-@bot.command(name='stats', aliases=['botstats'], description='Bot stats', brief='Bot stats')
+@bot.command(
+    name='stats', aliases=['botstats'],
+    description='Bot stats', brief='Bot stats'
+)
 async def stats_for_bot(ctx):
     embed = discord.Embed(
         title='Bot Stats', colour=0xFCFF00,
-        description = f"""
+        description=f"""
         **Guilds:** {len(bot.guilds)}
         **Users:** {len(bot.users)}
         **Ping:** {int(bot.latency*1000)} ms
         """
-        )
+    )
     await ctx.send(embed=embed)
 
 
@@ -150,7 +138,10 @@ async def on_raw_reaction_add(payload):
     user_id = payload.user_id
     emoji = payload.emoji
 
-    await starboard_events.handle_reaction(db, bot, guild_id, channel_id, user_id, message_id, emoji, True)
+    await starboard_events.handle_reaction(
+        db, bot, guild_id, channel_id,
+        user_id, message_id, emoji, True
+    )
 
 
 @bot.event
@@ -161,7 +152,10 @@ async def on_raw_reaction_remove(payload):
     user_id = payload.user_id
     emoji = payload.emoji
 
-    await starboard_events.handle_reaction(db, bot, guild_id, channel_id, user_id, message_id, emoji, False)
+    await starboard_events.handle_reaction(
+        db, bot, guild_id, channel_id,
+        user_id, message_id, emoji, False
+    )
 
 
 @bot.event
@@ -177,7 +171,10 @@ async def on_message(message):
                 do_member=True
             )
         p = await functions.get_one_prefix(bot, message.guild.id)
-        await message.channel.send(f"Some useful commands are `{p}help` and `{p}links`\nYou can see all my prefixes with `{p}prefixes`")
+        await message.channel.send(
+            f"Some useful commands are `{p}help` and `{p}links`\
+                \nYou can see all my prefixes with `{p}prefixes`"
+        )
         await conn.close()
     else:
         await bot.process_commands(message)
@@ -186,7 +183,10 @@ async def on_message(message):
 @bot.event
 async def on_error(event, *args, **kwargs):
     owner = bot.get_user(bot_config.OWNER_ID)
-    await owner.send(f"Error on event {event} with args {args} and kwargs {kwargs}\n\n```{traceback.format_exc()}```")
+    await owner.send(
+        f"Error on event {event} with args {args} and \
+            kwargs {kwargs}\n\n```{traceback.format_exc()}```"
+    )
 
 
 @bot.event
@@ -221,7 +221,8 @@ async def on_command_error(ctx, error):
         )
         embed.add_field(
             name='Report?',
-            value=f"Are you ok if I report this to the bot dev? React below with :white_check_mark: for yes.",
+            value="Are you ok if I report this to the bot dev? React below \
+                with :white_check_mark: for yes.",
             inline=False
         )
 
@@ -233,7 +234,11 @@ async def on_command_error(ctx, error):
             delete=False
         )
         if report:
-            await ctx.send("I've reported the problem! Please still consider joining the support server and explaining what happened.")
+            await ctx.send(
+                "I've reported the problem! Please still \
+                consider joining the support server and explaining \
+                what happened."
+            )
             owner_embed = discord.Embed(
                 title=f'Error in {ctx.guild.name} ({ctx.guild.id})',
                 description=f"{type(error)}:\n{error}",
@@ -242,7 +247,10 @@ async def on_command_error(ctx, error):
             owner = bot.get_user(bot.owner_id)
             await owner.send(embed=owner_embed)
         else:
-            await ctx.send("This problem was not reported. Please consider joining the support server and explaining what happened.")
+            await ctx.send(
+                "This problem was not reported. Please consider \
+                joining the support server and explaining what happened."
+            )
         return
     embed = discord.Embed(
         title='Oops!',

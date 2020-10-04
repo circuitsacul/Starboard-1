@@ -1,9 +1,9 @@
 from discord import utils
 from discord.ext import commands
-from bot_config import PATRON_LEVELS, DEFAULT_PREFIX
-from typing import Tuple, List, Union
-import bot_config, emoji, bot_config, discord
-
+from typing import Tuple, Union
+import emoji
+import bot_config
+import discord
 
 
 async def fetch(bot, msg_id: int, channel: Union[discord.TextChannel, int]):
@@ -25,7 +25,9 @@ async def fetch(bot, msg_id: int, channel: Union[discord.TextChannel, int]):
 
 async def _prefix_callable(bot, message):
     if not message.guild:
-        return commands.when_mentioned_or(bot_config.DEFAULT_PREFIX)(bot, message)
+        return commands.when_mentioned_or(
+            bot_config.DEFAULT_PREFIX
+        )(bot, message)
     prefixes = await list_prefixes(bot, message.guild.id)
     return commands.when_mentioned_or(*prefixes)(bot, message)
 
@@ -52,7 +54,8 @@ async def add_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
     if prefix in current_prefixes:
         return False, "That prefix already exists"
     if len(prefix) > 8:
-        return False, "That prefix is too long. It must be less than 9 characters."
+        return False, \
+            "That prefix is too long. It must be less than 9 characters."
     conn = await bot.db.connect()
     async with bot.db.lock and conn.transaction():
         await bot.db.q.create_prefix.fetch(guild_id, prefix)
@@ -86,7 +89,10 @@ async def check_single_exists(conn, sql, params):
     return False
 
 
-async def check_or_create_existence(db, conn, bot, guild_id=None, user=None, starboard_id=None, do_member=False, create_new=True):
+async def check_or_create_existence(
+    db, conn, bot, guild_id=None, user=None,
+    starboard_id=None, do_member=False, create_new=True
+):
     check_guild = \
         """SELECT * FROM guilds WHERE id=$1"""
     check_user = \
@@ -99,11 +105,10 @@ async def check_or_create_existence(db, conn, bot, guild_id=None, user=None, sta
     if guild_id is not None:
         gexists = await check_single_exists(conn, check_guild, (guild_id,))
         if not gexists and create_new:
-            #await conn.execute(db.q.create_guild, guild_id)
             await db.q.create_guild.fetch(guild_id)
             prefixes = await list_prefixes(bot, guild_id)
             if len(prefixes) == 0:
-                await add_prefix(bot, guild_id, DEFAULT_PREFIX)
+                await add_prefix(bot, guild_id, bot_config.DEFAULT_PREFIX)
     else:
         gexists = None
     if user is not None:
@@ -113,13 +118,17 @@ async def check_or_create_existence(db, conn, bot, guild_id=None, user=None, sta
     else:
         uexists = None
     if starboard_id is not None and guild_id is not None:
-        s_exists = await check_single_exists(conn, check_starboard, (starboard_id,))
+        s_exists = await check_single_exists(
+            conn, check_starboard, (starboard_id,)
+        )
         if not s_exists and create_new:
             await db.q.create_starboard.fetch(starboard_id, guild_id)
     else:
         s_exists = None
     if do_member and user is not None and guild_id is not None:
-        mexists = await check_single_exists(conn, check_member, (guild_id, user.id,))
+        mexists = await check_single_exists(
+            conn, check_member, (guild_id, user.id,)
+        )
         if not mexists and create_new:
             await db.q.create_member.fetch(user.id, guild_id)
     else:
@@ -129,7 +138,10 @@ async def check_or_create_existence(db, conn, bot, guild_id=None, user=None, sta
 
 
 async def required_patron_level(db, user_id, level):
-    all_levels = [PATRON_LEVELS[p['product_id']]['num'] for p in await get_patron_levels(db, user_id)]
+    all_levels = [
+        bot_config.PATRON_LEVELS[p['product_id']]['num']
+        for p in await get_patron_levels(db, user_id)
+    ]
     largest = max(all_levels) if all_levels != [] else None
     if largest is not None and largest >= level:
         return True
@@ -187,14 +199,14 @@ async def confirm(bot, channel, text, user_id, embed=None, delete=True):
         if delete:
             try:
                 await message.delete()
-            except:
+            except Exception:
                 pass
         return True
     elif str(reaction) == '❌':
         if delete:
             try:
                 await message.delete()
-            except:
+            except Exception:
                 pass
         return False
 
@@ -207,7 +219,7 @@ async def orig_message_id(db, conn, message_id):
     if len(rows) == 0:
         return message_id, None
     sql_message = rows[0]
-    if sql_message['is_orig'] == True:
+    if sql_message['is_orig'] is True:
         return message_id, sql_message['channel_id']
     orig_messsage_id = sql_message['orig_message_id']
     rows = await conn.fetch(get_message, orig_messsage_id)
