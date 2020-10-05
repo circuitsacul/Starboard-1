@@ -120,7 +120,7 @@ async def bot_ping(ctx):
     send = time.time()
     pinger = await ctx.channel.fetch_message(_pinger.id)
     fetch = time.time()
-    await pinger.edit(content='Editing...')
+    await pinger.edit(content='Pinging...')
     edit = time.time()
     await pinger.delete()
     delete = time.time()
