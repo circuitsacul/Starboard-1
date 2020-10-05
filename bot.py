@@ -291,8 +291,7 @@ async def on_command_error(ctx, error):
             )
         return
     embed = discord.Embed(
-        title='Oops!',
-        description=f"```{error}```",
+        title=f"{error}",
         color=bot_config.MISTAKE_COLOR
     )
     await ctx.send(embed=embed)
