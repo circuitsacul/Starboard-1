@@ -23,7 +23,7 @@ async def get_leaderboard(bot, guild):
         if mobject is None or mobject.bot:
             continue
         x += 1
-        username = mobject.name
+        username = str(mobject)
         user_id = mobject.id
         ordered.append({
             'name': username, 'user_id': user_id,
