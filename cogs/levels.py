@@ -112,7 +112,7 @@ class Levels(commands.Cog):
         for group in grouped:
             string = ""
             embed = discord.Embed(
-                title=f"Leaderboard",
+                title="Leaderboard",
                 color=bot_config.COLOR
             )
             embed.set_thumbnail(
