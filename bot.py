@@ -177,7 +177,7 @@ async def on_message(message):
             p = bot_config.DEFAULT_PREFIX
         await message.channel.send(
             f"Some useful commands are `{p}help` and `{p}links`"
-            "\nYou can see all my prefixes with `{p}prefixes`"
+            f"\nYou can see all my prefixes with `{p}prefixes`"
         )
         await conn.close()
     else:
