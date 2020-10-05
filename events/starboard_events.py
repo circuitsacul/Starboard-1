@@ -282,7 +282,7 @@ async def get_embed_from_message(message):
         title="NSFW" if nsfw else discord.Embed.Empty, colour=bot_config.COLOR
     )
     embed.set_author(
-        name=message.author.name, icon_url=message.author.avatar_url
+        name=str(message.author), icon_url=message.author.avatar_url
     )
     embed_text = ''
     msg_attachments = message.attachments
@@ -398,7 +398,7 @@ async def calculate_points(conn, sql_message, sql_starboard, bot):
             sql_user = rows[0]
             if sql_user['is_bot'] is True:
                 continue
-            # if int(sql_user['id']) == bot.user.id:
+            #https://discord.gg/3gK8mSA if int(sql_user['id']) == bot.user.id:
             #    continue
             total_points += 1
 
