@@ -100,19 +100,19 @@ class Levels(commands.Cog):
         ordered = await get_leaderboard(self.bot, ctx.guild)
 
         stringed = [
-            f"#{m['index']}. __**{m['name']}**__ | "
+            f"#{m['index']}. __**{m['name']}**__:\n"
             f"Level {m['d']['lvl']} | "
-            f"XP {m['d']['xp']}\n"
+            f"XP {m['d']['xp']}\n\n"
             for m in ordered
         ]
-        size = 10
+        size = 5
         grouped = [stringed[i:i+size] for i in range(0, len(stringed), size)]
 
         embeds = []
         for group in grouped:
             string = ""
             embed = discord.Embed(
-                title=f"Leaderboard for {ctx.guild.name}",
+                title=f"Leaderboard",
                 color=bot_config.COLOR
             )
             embed.set_thumbnail(
@@ -121,6 +121,7 @@ class Levels(commands.Cog):
             for m in group:
                 string += m
             embed.description = string
+            embed.set_footer(icon_url=ctx.guild.icon_url, text=ctx.guild.name)
             embeds.append(embed)
 
         if len(embeds) == 0:
