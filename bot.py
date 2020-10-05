@@ -6,6 +6,7 @@ import dotenv
 import functions
 import traceback
 import pretty_help
+import time
 from discord.ext import commands
 from pretty_help import PrettyHelp
 
@@ -105,11 +106,42 @@ async def about_starbot(ctx):
 
 
 @bot.command(
-    name='ping', aliases=['latency'], description='Get bot latency',
-    brief='Get bot latency'
+    name='ping', aliases=['latency'],
+    description='Get various bot ping statistics.',
+    brief='Get bot ping'
 )
-async def ping(ctx):
-    await ctx.send('Pong! {0} ms'.format(int(bot.latency*1000)))
+@commands.cooldown(1, 5, commands.BucketType.user)
+async def bot_ping(ctx):
+    def ms(seconds):
+        return int((seconds*1000))
+
+    start = time.time()
+    _pinger = await ctx.send("Pinging...")
+    send = time.time()
+    pinger = await ctx.channel.fetch_message(_pinger.id)
+    fetch = time.time()
+    await pinger.edit(content='Editing...')
+    edit = time.time()
+    await pinger.delete()
+    delete = time.time()
+
+    send_time = ms(send-start)
+    fetch_time = ms(fetch-send)
+    edit_time = ms(edit-fetch)
+    delete_time = ms(delete-edit)
+    latency = ms(bot.latency)
+
+    embed = discord.Embed(
+        title='Pong!',
+        description=f"Latency: {latency} ms\n"
+        f"Message Send: {send_time} ms\n"
+        f"Message Fetch: {fetch_time} ms\n"
+        f"Message Edit: {edit_time} ms\n"
+        f"Message Delete: {delete_time} ms",
+        color=bot_config.COLOR
+    )
+
+    await ctx.send(embed=embed)
 
 
 @bot.command(
@@ -206,6 +238,8 @@ async def on_command_error(ctx, error):
     elif type(error) is discord.ext.commands.errors.MissingPermissions:
         pass
     elif type(error) is discord.ext.commands.errors.NotOwner:
+        pass
+    elif type(error) is discord.ext.commands.errors.CommandOnCooldown:
         pass
     elif type(error) is discord.http.Forbidden:
         error = "I don't have the permissions to do that"
