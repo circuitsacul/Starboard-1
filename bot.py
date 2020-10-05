@@ -290,11 +290,12 @@ async def on_command_error(ctx, error):
                 joining the support server and explaining what happened."
             )
         return
-    embed = discord.Embed(
-        title=f"{error}",
-        color=bot_config.MISTAKE_COLOR
-    )
-    await ctx.send(embed=embed)
+    #embed = discord.Embed(
+    #    title='Oops!',
+    #    description=f"```{error}```",
+    #    color=bot_config.MISTAKE_COLOR
+    #)
+    await ctx.send(error)
 
 
 @bot.event
