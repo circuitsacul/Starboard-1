@@ -10,7 +10,6 @@ from aiosqlite import Error
 async def handle_reaction(
     db, bot, guild_id, _channel_id, user_id, _message_id, _emoji, is_add
 ):
-    emoji_id = _emoji.id
     emoji_name = _emoji.name if _emoji.id is None else str(_emoji.id)
 
     conn = await db.connect()
@@ -71,7 +70,7 @@ async def handle_reaction(
             exists = len(rows) > 0
             if not exists and is_add:
                 await db.q.create_reaction.fetch(
-                    emoji_id, guild_id, user_id,
+                    guild_id, user_id,
                     message_id, emoji_name
                 )
             if exists and not is_add:
