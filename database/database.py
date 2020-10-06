@@ -143,9 +143,8 @@ class CommonSql(aobject):
 
 
 class Database:
-    def __init__(self, db_path):
+    def __init__(self):
         self.lock = Lock()
-        self._db_path = db_path
         self.cooldowns = {
             'giving_stars': {}  # {user_id: cooldown_end_datetime}
         }

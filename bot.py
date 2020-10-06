@@ -30,9 +30,8 @@ _BETA_TOKEN = os.getenv('BETA_TOKEN')
 
 BETA = True if len(sys.argv) > 1 and sys.argv[1] == 'beta' else False
 TOKEN = _BETA_TOKEN if BETA and _BETA_TOKEN is not None else _TOKEN
-DB_PATH = bot_config.BETA_DB_PATH if BETA else bot_config.DB_PATH
 
-db = Database(DB_PATH)
+db = Database()
 
 emojis = bot_config.PAGINATOR_EMOJIS
 navigation = pretty_help.Navigation(
