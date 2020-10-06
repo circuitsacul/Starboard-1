@@ -1,3 +1,4 @@
+from events.starboard_events import calculate_points
 import discord
 import functions
 import bot_config
@@ -271,3 +272,93 @@ class Utility(commands.Cog):
         async with cache.lock:
             cache._messages[ctx.guild.id] = []
         await ctx.send("Message cache cleared")
+
+
+    @commands.command(
+        name='messageInfo', aliases=['messageStats', 'mi'],
+        brief='View statistics on a message'
+    )
+    @commands.guild_only()
+    @commands.has_permissions(manage_messages=True)
+    async def get_message_statistics(self, ctx, message_id: int):
+        get_message = \
+            """SELECT * FROM messages WHERE id=$1 AND guild_id=$2"""
+        get_starboard_message = \
+            """SELECT * FROM messages WHERE is_orig=False
+            AND orig_message_id=$1"""
+
+        conn = await self.bot.db.connect()
+        async with self.bot.db.lock and conn.transaction():
+            orig_message_id, _ = await functions.orig_message_id(
+                self.bot.db, conn, message_id
+            )
+            sql_message = await conn.fetchrow(
+                get_message, orig_message_id, ctx.guild.id
+            )
+
+            if sql_message is not None:
+                sql_sb_messages = await conn.fetch(
+                    get_starboard_message, orig_message_id
+                )
+        await conn.close()
+
+        if sql_message is None:
+            await ctx.send(
+                "That message either never existed or is not in the database."
+            )
+            return
+
+        frozen = sql_message['is_frozen']
+        forced = sql_message['is_forced']
+        trashed = sql_message['is_trashed']
+        author = self.bot.get_user(sql_message['user_id'])
+
+        _channel = self.bot.get_channel(sql_message['channel_id'])
+        try:
+            message = await _channel.fetch_message(sql_message['id'])
+        except (discord.errors.NotFound, AttributeError):
+            message = None
+
+        sb_msg_objs = []
+        for sbm in sql_sb_messages:
+            _channel = self.bot.get_channel(
+                sbm['channel_id']
+            )
+            try:
+                _message = await _channel.fetch_message(
+                    sbm['id']
+                )
+            except (discord.errors.NotFound, AttributeError):
+                _message = None
+
+            if _message:
+                sb_msg_objs.append(_message)
+
+        embed = discord.Embed(
+            title='Message Stats',
+            color=bot_config.COLOR
+        )
+
+        if message is None:
+            jump_string = "Original Message Deleted"
+        else:
+            jump_string = f"[Jump]({message.jump_url})"
+
+        embed.description = f"{jump_string}\n"\
+            f"Author: <@{sql_message['user_id']}> | "\
+            f"{sql_message['user_id']} | "\
+            f"{str(author) if author is not None else 'Deleted User'}\n"\
+            f"Original Message Id: {sql_message['id']}\n"\
+            f"Frozen: {frozen}\nTrashed: {trashed}\nForced: {forced}"
+
+        starboard_string = ""
+        for sbm in sb_msg_objs:
+            starboard_string += f"{sbm.channel.mention}: "\
+                f"[Jump]({sbm.jump_url})"
+
+        embed.add_field(
+            name="Starboards",
+            value=starboard_string
+        )
+
+        await ctx.send(embed=embed)
