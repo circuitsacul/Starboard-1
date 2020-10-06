@@ -74,10 +74,9 @@ class PatronCommands(commands.Cog):
     )
     async def show_donate_info(self, ctx):
         embed = discord.Embed(color=COLOR, title='Patron/Donation Info')
-        embed.description = \
-            """Click [here](https://donatebot.io/checkout/725336160112738385) \
-                to become a patron!
-            I really appreciate any support you can give me :)"""
+        embed.description = f"Click [here]({bot_config.DONATE})"\
+            "to become a patron!"\
+            "I really appreciate any support you can give me :)"
 
         for level_id, level in PATRON_LEVELS.items():
             embed.add_field(

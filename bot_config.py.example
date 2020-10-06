@@ -11,6 +11,8 @@ SUPPORT_SERVER_ID = 0 #your-server-id
 
 PAGINATOR_EMOJIS = ('◀', '▶', '⏹')
 
+DONATE_BOT_ON = False # For those who want to accept donations through donatebot
+
 COLOR = 0xfffb00 # hex
 MISTAKE_COLOR = 0xffaa00 # hex
 ERROR_COLOR = 0xff0000 # hex
