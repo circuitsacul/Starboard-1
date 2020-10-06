@@ -193,17 +193,20 @@ async def on_raw_reaction_remove(payload):
 
 @bot.event
 async def on_message(message):
+    conn = await db.connect()
+    if message.guild is not None:
+        async with db.lock and conn.transaction():
+            await functions.check_or_create_existence(
+                db, conn, bot, message.guild.id, message.author,
+                do_member=True
+            )
+    await conn.close()
+
     if message.author.bot:
         return
-    elif message.content.replace('!', '') == bot.user.mention:
-        conn = await db.connect()
 
+    elif message.content.replace('!', '') == bot.user.mention:
         if message.guild is not None:
-            async with db.lock and conn.transaction():
-                await functions.check_or_create_existence(
-                    db, conn, bot, message.guild.id, message.author,
-                    do_member=True
-                )
             p = await functions.get_one_prefix(bot, message.guild.id)
         else:
             p = bot_config.DEFAULT_PREFIX
@@ -211,7 +214,6 @@ async def on_message(message):
             f"Some useful commands are `{p}help` and `{p}links`"
             f"\nYou can see all my prefixes with `{p}prefixes`"
         )
-        await conn.close()
     else:
         await bot.process_commands(message)
 
