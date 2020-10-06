@@ -93,7 +93,6 @@ async def convert():
                             await c.execute(
                                 db.q.create_reaction,
                                 [
-                                    emoji if type(emoji) is int else None,
                                     guild_id, user_id, message_id, str(emoji)
                                 ]
                             )

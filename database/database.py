@@ -124,9 +124,9 @@ class CommonSql(aobject):
             )
         self.create_reaction = \
             await conn.prepare(
-                """INSERT INTO reactions (d_id, guild_id,
+                """INSERT INTO reactions (guild_id,
                 user_id, message_id, name)
-                VALUES ($1,$2,$3,$4,$5)"""
+                VALUES ($1,$2,$3,$4)"""
             )
 
         self.update_starboard = \
@@ -309,7 +309,6 @@ class Database:
         reactions_table = \
             """CREATE TABLE IF NOT EXISTS reactions (
                 id SERIAL PRIMARY KEY,
-                d_id numeric,
                 guild_id numeric NOT NULL,
                 user_id numeric NOT NULL,
                 message_id numeric NOT NULL,
