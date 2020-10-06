@@ -14,7 +14,6 @@ dotenv.load_dotenv()
 
 import bot_config
 from events import starboard_events
-from events import leveling
 
 from database.database import Database
 from api import post_guild_count
