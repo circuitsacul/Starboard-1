@@ -23,10 +23,10 @@ async def is_starboard_emoji(db, guild_id, emoji):
             emojis = await conn.fetch(get_sbeemojis, starboard['id'])
             all_emojis += [
                 str(e['name']) if e['d_id'] is None
-                else e['d_id'] for e in emojis
+                else str(e['d_id']) for e in emojis
             ]
     await conn.close()
-    return emoji in all_emojis
+    return str(emoji) in all_emojis
 
 
 async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
@@ -76,6 +76,7 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
     async with db.lock and conn.transaction():
         sql_reacter = await conn.fetchrow(get_member, reacter_id, guild_id)
         given = sql_reacter['given']+points
+        given = 0 if given < 0 else given
         await conn.execute(
             set_points.format('given'), given, reacter_id, guild_id
         )
@@ -84,6 +85,7 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
             get_member, receiver_id, guild_id
         )
         received = sql_receiver['received']+points
+        received = 0 if received < 0 else received
         await conn.execute(
             set_points.format('received'), received, receiver_id, guild_id
         )
