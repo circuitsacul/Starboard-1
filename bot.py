@@ -150,7 +150,7 @@ async def bot_ping(ctx):
 )
 async def stats_for_bot(ctx):
     embed = discord.Embed(
-        title='Bot Stats', colour=0xFCFF00,
+        title='Bot Stats', colour=bot_config.COLOR,
         description=f"**Guilds:** {len(bot.guilds)}"
         f"\n**Users:** {len(bot.users)}"
         f"\n**Ping:** {int(bot.latency*1000)} ms"
