@@ -49,8 +49,10 @@ class Settings(commands.Cog):
         conn = await self.db.connect()
         async with self.db.lock and conn.transaction():
             await functions.check_or_create_existence(
-                self.db, conn, self.bot, guild_id=ctx.guild.id,
-                user=ctx.message.author, do_member=True
+                self.db, conn, self.bot,
+                guild_id=ctx.guild.id if ctx.guild is not None else None,
+                user=ctx.message.author,
+                do_member=True if ctx.guild is not None else None
             )
             sql_user = await conn.fetchrow(get_user, ctx.message.author.id)
         await conn.close()
@@ -63,7 +65,10 @@ class Settings(commands.Cog):
             description=settings_str,
             color=bot_config.COLOR
         )
-        p = await functions.get_one_prefix(self.bot, ctx.guild.id)
+        if ctx.guild is not None:
+            p = await functions.get_one_prefix(self.bot, ctx.guild.id)
+        else:
+            p = bot_config.DEFAULT_PREFIX
         embed.set_footer(
             text=f"Use {p}profile <setting> <value> "
             "to change a setting."
@@ -92,7 +97,7 @@ class Settings(commands.Cog):
     )
     async def guild_prefixes(self, ctx):
         if ctx.guild is None:
-            prefixes = ['sb!', 'Sb!']
+            prefixes = ['sb!']
         else:
             prefixes = await functions.list_prefixes(self.bot, ctx.guild.id)
 
