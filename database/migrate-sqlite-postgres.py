@@ -4,7 +4,7 @@ from discord.ext.commands import Bot
 from database import Database as NewDB
 from old.old_database import Database as OldDB
 
-path_to_sql = "sql/beta_database.sqlite3"
+path_to_sql = "sql/database.sqlite3"
 
 odb = OldDB(path_to_sql)
 ndb = NewDB()
