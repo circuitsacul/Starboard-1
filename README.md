@@ -15,6 +15,7 @@ Starboard is an advanced, reliable, and highly customizable starboard bot. I've 
 ## Starboard's Features
  - Supports multiple starboards
  - Supports multiple normal and custom emojis for *each* starboard
+ - Leveling, rank, and leaderboard
  - Starboard moderation, such as:
    - Freezing a message, preventing the points from updating on it
    - Forcing a message, so it's on the starboard no matter what
@@ -41,4 +42,4 @@ These directions are for self-hosting the bot. If you just want a working bot, y
  - Run `python bot.py` to run the bot!
 
 ## Contributing
-If you see a bug or possible improvement and want to help out, you can fork this repostory, make the edits, and then create a pull request. Also look at the guidelines in `CONTRIBUTING.md`. I really appreciate any help that you can give.
+If you see a bug or possible improvement and want to help out, you can fork this repostory, make the edits, and then create a pull request. Make sure to look at the guidelines in `CONTRIBUTING.md`. I really appreciate any help that you can give.
