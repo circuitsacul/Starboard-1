@@ -128,9 +128,10 @@ class Settings(commands.Cog):
             )
             return
 
-        status, status_msg = await functions.add_prefix(
-            self.bot, ctx.guild.id, prefix
-        )
+        async with self.bot.db.lock:
+            status, status_msg = await functions.add_prefix(
+                self.bot, ctx.guild.id, prefix
+            )
         if status is True:
             await ctx.send(f"Added prefix `{prefix}`")
         else:
@@ -142,9 +143,10 @@ class Settings(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
     async def remove_prefix(self, ctx, prefix: str):
-        status, status_msg = await functions.remove_prefix(
-            self.bot, ctx.guild.id, prefix
-        )
+        async with self.bot.db.lock:
+            status, status_msg = await functions.remove_prefix(
+                self.bot, ctx.guild.id, prefix
+            )
         if status is True:
             await ctx.send(f"Removed prefix `{prefix}`")
         else:

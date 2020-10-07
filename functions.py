@@ -70,11 +70,9 @@ async def remove_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
     del_prefix = \
         """DELETE FROM prefixes WHERE prefix=$1 AND guild_id=$2"""
 
-    async with bot.db.lock:
-        conn = await bot.db.connect()
-        async with conn.transaction():
-            await conn.execute(del_prefix, prefix, guild_id)
-        #await conn.close()
+    conn = await bot.db.connect()
+    async with conn.transaction():
+        await conn.execute(del_prefix, prefix, guild_id)
 
     return True, ''
 
