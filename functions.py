@@ -106,11 +106,17 @@ async def check_or_create_existence(
         """SELECT * FROM members WHERE guild_id=$1 AND user_id=$2"""
 
     if guild_id is not None:
+        print(1)
         gexists = await check_single_exists(conn, check_guild, (guild_id,))
+        print(2)
         if not gexists and create_new:
+            print(3)
             await db.q.create_guild.fetch(guild_id)
+            print(4)
             prefixes = await list_prefixes(bot, guild_id)
+            print(5)
             if len(prefixes) == 0:
+                print(6)
                 await add_prefix(bot, guild_id, bot_config.DEFAULT_PREFIX)
     else:
         gexists = None

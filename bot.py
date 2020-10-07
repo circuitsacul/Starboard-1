@@ -202,18 +202,13 @@ async def on_message(message):
 
     elif message.content.replace('!', '') == bot.user.mention:
         async with db.lock:
-            print(1)
             conn = await db.connect()
-            print(2)
             if message.guild is not None:
-                print(3)
                 async with conn.transaction():
-                    print(4)
                     await functions.check_or_create_existence(
                         db, conn, bot, message.guild.id, message.author,
                         do_member=True
                     )
-                    print(5)
             #await conn.close()
 
         if message.guild is not None:
