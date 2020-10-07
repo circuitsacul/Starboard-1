@@ -358,7 +358,7 @@ class Utility(commands.Cog):
         starboard_string = ""
         for sbm in sb_msg_objs:
             starboard_string += f"{sbm.channel.mention}: "\
-                f"[Jump]({sbm.jump_url})"
+                f"[Jump]({sbm.jump_url})\n"
 
         embed.add_field(
             name="Starboards",
