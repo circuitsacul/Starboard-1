@@ -21,6 +21,7 @@ async def get_leaderboard(bot, guild):
 
     for m in members:
         mobject = discord.utils.get(guild.members, id=int(m['user_id']))
+        print(m['user_id'])
         print(type(mobject))
         if mobject is None or mobject.bot:
             print("Nope")
