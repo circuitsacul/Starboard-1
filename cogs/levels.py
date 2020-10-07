@@ -18,10 +18,11 @@ async def get_leaderboard(bot, guild):
     await conn.close()
     ordered = []
     x = 0
-    print(members)
+
     for m in members:
         mobject = discord.utils.get(guild.members, id=m['user_id'])
         if mobject is None or mobject.bot:
+            print("Nope")
             continue
         x += 1
         username = str(mobject)
