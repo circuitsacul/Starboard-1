@@ -38,6 +38,11 @@ navigation = pretty_help.Navigation(
     page_left=emojis[0], page_right=emojis[1], remove=emojis[2]
 )
 
+intents = discord.Intents(
+    messages=True, guilds=True, reactions=True,
+    members=True
+)
+
 
 class Bot(commands.Bot):
     def __init__(self, db, *args, **kwargs):
@@ -51,7 +56,8 @@ bot = Bot(
         color=bot_config.COLOR, no_category="Info", active=30,
         navigation=navigation
     ),
-    case_insensitive=True
+    case_insensitive=True,
+    intents=intents
 )
 web_server = HttpWebHook(bot, db)
 
