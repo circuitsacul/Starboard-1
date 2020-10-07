@@ -96,15 +96,15 @@ async def show_privacy_policy(ctx):
     description='Give quick description of what a \
         starboard is and what it is for'
 )
-async def about_starbot(ctx):
+async def about_starboard(ctx):
     msg = "Starboard is a Discord starboard bot. "\
         "Starboards are kind of like democratic pins. "\
         "A user can \"vote\" to have a message displayed on "\
         "a channel by reacting with an emoji, usually a star. "\
         "A Starboard is a great way to archive funny messages."
     embed = discord.Embed(
-        title='About StarBot and Starboards',
-        description=msg, color=0xFCFF00
+        title='About Starboard and Starboards',
+        description=msg, color=bot_config.COLOR
     )
     await ctx.send(embed=embed)
 
