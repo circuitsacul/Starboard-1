@@ -14,19 +14,20 @@ async def change_user_setting(
         SET lvl_up_msgs=$1
         WHERE id=$2"""
 
-    conn = await db.connect()
-    async with db.lock and conn.transaction():
-        sql_user = await conn.fetchrow(get_user, user_id)
+    async with db.lock:
+        conn = await db.connect()
+        async with conn.transaction():
+            sql_user = await conn.fetchrow(get_user, user_id)
 
-        if sql_user is None:
-            status = None
-        else:
-            lum = lvl_up_msgs if lvl_up_msgs is not None\
-                else sql_user['lvl_up_msgs']
-            await conn.execute(update_user, lum, user_id)
-            status = True
+            if sql_user is None:
+                status = None
+            else:
+                lum = lvl_up_msgs if lvl_up_msgs is not None\
+                    else sql_user['lvl_up_msgs']
+                await conn.execute(update_user, lum, user_id)
+                status = True
 
-    await conn.close()
+        await conn.close()
     return status
 
 
@@ -46,16 +47,17 @@ class Settings(commands.Cog):
         get_user = \
             """SELECT * FROM users WHERE id=$1"""
 
-        conn = await self.db.connect()
-        async with self.db.lock and conn.transaction():
-            await functions.check_or_create_existence(
-                self.db, conn, self.bot,
-                guild_id=ctx.guild.id if ctx.guild is not None else None,
-                user=ctx.message.author,
-                do_member=True if ctx.guild is not None else None
-            )
-            sql_user = await conn.fetchrow(get_user, ctx.message.author.id)
-        await conn.close()
+        async with self.db.lock:
+            conn = await self.db.connect()
+            async with conn.transaction():
+                await functions.check_or_create_existence(
+                    self.db, conn, self.bot,
+                    guild_id=ctx.guild.id if ctx.guild is not None else None,
+                    user=ctx.message.author,
+                    do_member=True if ctx.guild is not None else None
+                )
+                sql_user = await conn.fetchrow(get_user, ctx.message.author.id)
+            await conn.close()
 
         settings_str = ""
         settings_str += f"\n**LevelUpMessages: {sql_user['lvl_up_msgs']}**"

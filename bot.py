@@ -197,19 +197,20 @@ async def on_raw_reaction_remove(payload):
 
 @bot.event
 async def on_message(message):
-    conn = await db.connect()
-    if message.guild is not None:
-        async with db.lock and conn.transaction():
-            await functions.check_or_create_existence(
-                db, conn, bot, message.guild.id, message.author,
-                do_member=True
-            )
-    await conn.close()
-
     if message.author.bot:
         return
 
     elif message.content.replace('!', '') == bot.user.mention:
+        async with db.lock:
+            conn = await db.connect()
+            if message.guild is not None:
+                async with conn.transaction():
+                    await functions.check_or_create_existence(
+                        db, conn, bot, message.guild.id, message.author,
+                        do_member=True
+                    )
+            await conn.close()
+
         if message.guild is not None:
             p = await functions.get_one_prefix(bot, message.guild.id)
         else:

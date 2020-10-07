@@ -41,10 +41,11 @@ async def list_prefixes(bot, guild_id: int):
     get_prefixes = \
         """SELECT * FROM prefixes WHERE guild_id=$1"""
 
-    conn = await bot.db.connect()
-    async with bot.db.lock and conn.transaction():
-        prefixes = await conn.fetch(get_prefixes, guild_id)
-    await conn.close()
+    async with bot.db.lock:
+        conn = await bot.db.connect()
+        async with conn.transaction():
+            prefixes = await conn.fetch(get_prefixes, guild_id)
+        await conn.close()
 
     return [p['prefix'] for p in prefixes]
 
@@ -56,10 +57,12 @@ async def add_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
     if len(prefix) > 8:
         return False, \
             "That prefix is too long. It must be less than 9 characters."
-    conn = await bot.db.connect()
-    async with bot.db.lock and conn.transaction():
-        await bot.db.q.create_prefix.fetch(guild_id, prefix)
-    await conn.close()
+
+    async with bot.db.lock:
+        conn = await bot.db.connect()
+        async with conn.transaction():
+            await bot.db.q.create_prefix.fetch(guild_id, prefix)
+        await conn.close()
     return True, ''
 
 
@@ -71,9 +74,11 @@ async def remove_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
     del_prefix = \
         """DELETE FROM prefixes WHERE prefix=$1 AND guild_id=$2"""
 
-    conn = await bot.db.connect()
-    async with bot.db.lock and conn.transaction():
-        await conn.execute(del_prefix, prefix, guild_id)
+    async with bot.db.lock:
+        conn = await bot.db.connect()
+        async with conn.transaction():
+            await conn.execute(del_prefix, prefix, guild_id)
+        await conn.close()
 
     return True, ''
 
@@ -153,10 +158,11 @@ async def get_patron_levels(db, user_id):
     get_patrons = \
         """SELECT * FROM patrons WHERE user_id=$1"""
 
-    conn = await db.connect()
-    async with db.lock and conn.transaction():
-        rows = await conn.fetch(get_patrons, user_id)
-    await conn.close()
+    async with db.lock:
+        conn = await db.connect()
+        async with conn.transaction():
+            rows = await conn.fetch(get_patrons, user_id)
+        await conn.close()
     return rows
 
 

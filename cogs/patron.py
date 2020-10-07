@@ -20,18 +20,19 @@ async def update_patron_for_user(bot, db, user_id, product_id, add: bool):
     del_patron = \
         """DELETE FROM patrons WHERE id=$1"""
 
-    conn = await db.connect()
-    async with db.lock and conn.transaction():
-        rows = await conn.fetch(check_patron, user_id, product_id)
-        if len(rows) == 0:
-            sql_patron = None
-        else:
-            sql_patron = rows[0]
-        if add and not sql_patron:
-            await new_patron.fetch(user_id, product_id)
-        if not add and sql_patron:
-            await conn.execute(del_patron, sql_patron['id'])
-    await conn.close()
+    async with db.lock:
+        conn = await db.connect()
+        async with conn.transaction():
+            rows = await conn.fetch(check_patron, user_id, product_id)
+            if len(rows) == 0:
+                sql_patron = None
+            else:
+                sql_patron = rows[0]
+            if add and not sql_patron:
+                await new_patron.fetch(user_id, product_id)
+            if not add and sql_patron:
+                await conn.execute(del_patron, sql_patron['id'])
+        await conn.close()
 
     give_role = PATRON_LEVELS[product_id]['gives_role']
     if give_role:
@@ -51,10 +52,11 @@ class PatronCommands(commands.Cog):
     @commands.command(name='donationevents', aliases=['de'])
     @commands.is_owner()
     async def list_donation_events(self, ctx):
-        conn = await self.db.connect()
-        async with self.db.lock and conn.transaction():
-            donations = await conn.fetch("SELECT * FROM donations")
-        await conn.close()
+        async with self.db.lock:
+            conn = await self.db.connect()
+            async with conn.transaction():
+                donations = await conn.fetch("SELECT * FROM donations")
+            await conn.close()
         string = None
         if len(donations) == 0:
             string = "No Donations Yet"
@@ -178,15 +180,16 @@ class HttpWebHook():
     async def handle_donation_event(self, data):
         product_id = None if 'product_id' not in data else data['product_id']
         role_id = None if 'role_id' not in data else data['role_id']
-        conn = await self.db.connect()
-        async with self.db.lock and conn.transaction():
-            await conn.execute(
-                self.db.q.create_donation,
-                data['txn_id'], data['buyer_id'], product_id, role_id,
-                data['guild_id'], data['buyer_email'], data['price'],
-                data['currency'], data['recurring'], data['status']
-            )
-        await conn.close()
+        async with self.db.lock:
+            conn = await self.db.connect()
+            async with conn.transaction():
+                await conn.execute(
+                    self.db.q.create_donation,
+                    data['txn_id'], data['buyer_id'], product_id, role_id,
+                    data['guild_id'], data['buyer_email'], data['price'],
+                    data['currency'], data['recurring'], data['status']
+                )
+            await conn.close()
 
         if 'product_id' not in data:
             pass

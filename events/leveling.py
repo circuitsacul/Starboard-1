@@ -15,17 +15,18 @@ async def is_starboard_emoji(db, guild_id, emoji):
     get_sbeemojis = \
         """SELECT * FROM sbemojis WHERE starboard_id=$1"""
 
-    conn = await db.connect()
-    async with db.lock and conn.transaction():
-        starboards = await conn.fetch(get_starboards, guild_id)
-        all_emojis = []
-        for starboard in starboards:
-            emojis = await conn.fetch(get_sbeemojis, starboard['id'])
-            all_emojis += [
-                str(e['name']) if e['d_id'] is None
-                else str(e['d_id']) for e in emojis
-            ]
-    await conn.close()
+    async with db.lock:
+        conn = await db.connect()
+        async with conn.transaction():
+            starboards = await conn.fetch(get_starboards, guild_id)
+            all_emojis = []
+            for starboard in starboards:
+                emojis = await conn.fetch(get_sbeemojis, starboard['id'])
+                all_emojis += [
+                    str(e['name']) if e['d_id'] is None
+                    else str(e['d_id']) for e in emojis
+                ]
+        await conn.close()
     return str(emoji) in all_emojis
 
 
@@ -72,43 +73,44 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
 
     leveled_up = False
 
-    conn = await db.connect()
-    async with db.lock and conn.transaction():
-        sql_reacter = await conn.fetchrow(get_member, reacter_id, guild_id)
-        given = sql_reacter['given']+points
-        given = 0 if given < 0 else given
-        await conn.execute(
-            set_points.format('given'), given, reacter_id, guild_id
-        )
-
-        sql_receiver = await conn.fetchrow(
-            get_member, receiver_id, guild_id
-        )
-        received = sql_receiver['received']+points
-        received = 0 if received < 0 else received
-        await conn.execute(
-            set_points.format('received'), received, receiver_id, guild_id
-        )
-
-        sql_receiver_user = await conn.fetchrow(get_user, receiver_id)
-        send_lvl_msgs = sql_receiver_user['lvl_up_msgs']
-
-        current_lvl = sql_receiver['lvl']
-        current_xp = sql_receiver['xp']
-        needed_xp = await next_level_xp(current_lvl)
-
-        new_xp = current_xp + points
-        new_xp = 0 if new_xp < 0 else new_xp
-        new_lvl = current_lvl + 1 if new_xp >= needed_xp else current_lvl
-        leveled_up = new_lvl > current_lvl if cooldown_over else False
-
-        if cooldown_over:
+    async with db.lock:
+        conn = await db.connect()
+        async with conn.transaction():
+            sql_reacter = await conn.fetchrow(get_member, reacter_id, guild_id)
+            given = sql_reacter['given']+points
+            given = 0 if given < 0 else given
             await conn.execute(
-                set_xp_level, new_xp, new_lvl,
-                sql_receiver['user_id'], guild_id
+                set_points.format('given'), given, reacter_id, guild_id
             )
 
-    await conn.close()
+            sql_receiver = await conn.fetchrow(
+                get_member, receiver_id, guild_id
+            )
+            received = sql_receiver['received']+points
+            received = 0 if received < 0 else received
+            await conn.execute(
+                set_points.format('received'), received, receiver_id, guild_id
+            )
+
+            sql_receiver_user = await conn.fetchrow(get_user, receiver_id)
+            send_lvl_msgs = sql_receiver_user['lvl_up_msgs']
+
+            current_lvl = sql_receiver['lvl']
+            current_xp = sql_receiver['xp']
+            needed_xp = await next_level_xp(current_lvl)
+
+            new_xp = current_xp + points
+            new_xp = 0 if new_xp < 0 else new_xp
+            new_lvl = current_lvl + 1 if new_xp >= needed_xp else current_lvl
+            leveled_up = new_lvl > current_lvl if cooldown_over else False
+
+            if cooldown_over:
+                await conn.execute(
+                    set_xp_level, new_xp, new_lvl,
+                    sql_receiver['user_id'], guild_id
+                )
+
+        await conn.close()
 
     if leveled_up and send_lvl_msgs:
         embed = discord.Embed(

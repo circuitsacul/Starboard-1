@@ -17,21 +17,22 @@ async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
 
     status = True
 
-    conn = await db.connect()
-    async with db.lock and conn.transaction():
-        message_id, channel_id = await functions.orig_message_id(
-            db, conn, _message_id
-        )
-
-        sql_message = await conn.fetchrow(check_message, message_id)
-        if sql_message is None:
-            await ctx.send(
-                "That message either has no reactions or does not exist"
+    async with db.lock:
+        conn = await db.connect()
+        async with conn.transaction():
+            message_id, channel_id = await functions.orig_message_id(
+                db, conn, _message_id
             )
-            status = False
-        else:
-            await conn.execute(trash_message, trash, message_id)
-    await conn.close()
+
+            sql_message = await conn.fetchrow(check_message, message_id)
+            if sql_message is None:
+                await ctx.send(
+                    "That message either has no reactions or does not exist"
+                )
+                status = False
+            else:
+                await conn.execute(trash_message, trash, message_id)
+        await conn.close()
 
     channel = bot.get_channel(int(channel_id))
     try:
@@ -63,10 +64,11 @@ class Utility(commands.Cog):
             """SELECT * FROM messages
             WHERE is_frozen = True AND guild_id=$1"""
 
-        conn = await self.db.connect()
-        async with self.db.lock and conn.transaction():
-            frozen_messages = await conn.fetch(get_frozen, ctx.guild.id)
-        await conn.close()
+        async with self.db.lock:
+            conn = await self.db.connect()
+            async with conn.transaction():
+                frozen_messages = await conn.fetch(get_frozen, ctx.guild.id)
+            await conn.close()
 
         if len(frozen_messages) == 0:
             await ctx.send("You don't have any frozen messages")
@@ -113,27 +115,26 @@ class Utility(commands.Cog):
             SET is_frozen = True
             WHERE id=$1"""
 
-        conn = await self.db.connect()
-        async with self.db.lock and conn.transaction():
-            message_id, _orig_channel_id = await functions.orig_message_id(
-                self.db, conn, message
-            )
-            sql_message = await conn.fetchrow(
-                get_message, message_id, ctx.guild.id
-            )
+        async with self.db.lock:
+            conn = await self.db.connect()
+            async with conn.transaction():
+                message_id, _orig_channel_id = await functions.orig_message_id(
+                    self.db, conn, message
+                )
+                sql_message = await conn.fetchrow(
+                    get_message, message_id, ctx.guild.id
+                )
 
-        if not sql_message:
-            await ctx.send(
-                "That message either has no reactions or does not exist"
-            )
-
-        else:
-            async with self.db.lock and conn.transaction():
+            if not sql_message:
+                message = "That message either has "\
+                    "no reactions or does not exist"
+            else:
                 await conn.execute(freeze_message, message_id)
+                message = f"Message **{message_id}** is now frozen"
 
-            await ctx.send(f"Message **{message_id}** is now frozen")
+            await conn.close()
 
-        await conn.close()
+        await ctx.send(message)
 
     @commands.command(
         name='unfreeze', aliases=['uf'],
@@ -150,27 +151,24 @@ class Utility(commands.Cog):
             SET is_frozen = False
             WHERE id=$1"""
 
-        conn = await self.db.connect()
-        async with self.db.lock and conn.transaction():
-            message_id, _orig_channel_id = await functions.orig_message_id(
-                self.db, conn, message
-            )
-            sql_message = await conn.fetchrow(
-                get_message, message_id, ctx.guild.id
-            )
+        async with self.db.lock:
+            conn = await self.db.connect()
+            async with conn.transaction():
+                message_id, _orig_channel_id = await functions.orig_message_id(
+                    self.db, conn, message
+                )
+                sql_message = await conn.fetchrow(
+                    get_message, message_id, ctx.guild.id
+                )
+                if not sql_message:
+                    message = "That message either has"\
+                        " no reactions or does not exist"
+                else:
+                    await conn.execute(freeze_message, message_id)
+                    message = f"Message **{message_id}** is now unfrozen"
 
-        if not sql_message:
-            await ctx.send(
-                "That message either has no reactions or does not exist"
-            )
-
-        else:
-            async with self.db.lock:
-                await conn.execute(freeze_message, message_id)
-
-            await ctx.send(f"Message **{message_id}** is now unfrozen")
-
-        await conn.close()
+            await conn.close()
+        await ctx.send(message)
 
     @commands.command(
         name='force',
@@ -202,26 +200,31 @@ class Utility(commands.Cog):
             await ctx.send("I can't find that channel")
             return
 
-        conn = await self.db.connect()
-        async with self.db.lock and conn.transaction():
-            message_id, channel_id = await functions.orig_message_id(
-                self.db, conn, _message_id
-            )
+        async with self.db.lock:
+            conn = await self.db.connect()
+            async with conn.transaction():
+                message_id, channel_id = await functions.orig_message_id(
+                    self.db, conn, _message_id
+                )
+            await conn.close()
 
         channel = self.bot.get_channel(int(channel_id)) \
             if channel_id is not None else ctx.channel
 
         message = await functions.fetch(self.bot, int(message_id), channel)
 
-        async with self.db.lock and conn.transaction():
-            sql_message = await conn.fetchrow(check_message, message_id)
-            if sql_message is None:
-                await self.db.q.create_message.fetch(
-                    message.id, ctx.guild.id, message.author.id,
-                    None, message.channel.id, True, message.channel.is_nsfw()
-                )
-            await conn.execute(force_message, message.id)
-        await conn.close()
+        async with self.db.lock:
+            conn = await self.db.connect()
+            async with conn.transaction():
+                sql_message = await conn.fetchrow(check_message, message_id)
+                if sql_message is None:
+                    await self.db.q.create_message.fetch(
+                        message.id, ctx.guild.id, message.author.id,
+                        None, message.channel.id, True,
+                        message.channel.is_nsfw()
+                    )
+                await conn.execute(force_message, message.id)
+            await conn.close()
 
         await ctx.send("Message forced.")
 
@@ -287,20 +290,21 @@ class Utility(commands.Cog):
             """SELECT * FROM messages WHERE is_orig=False
             AND orig_message_id=$1"""
 
-        conn = await self.bot.db.connect()
-        async with self.bot.db.lock and conn.transaction():
-            orig_message_id, _ = await functions.orig_message_id(
-                self.bot.db, conn, message_id
-            )
-            sql_message = await conn.fetchrow(
-                get_message, orig_message_id, ctx.guild.id
-            )
-
-            if sql_message is not None:
-                sql_sb_messages = await conn.fetch(
-                    get_starboard_message, orig_message_id
+        async with self.db.lock:
+            conn = await self.bot.db.connect()
+            async with conn.transaction():
+                orig_message_id, _ = await functions.orig_message_id(
+                    self.bot.db, conn, message_id
                 )
-        await conn.close()
+                sql_message = await conn.fetchrow(
+                    get_message, orig_message_id, ctx.guild.id
+                )
+
+                if sql_message is not None:
+                    sql_sb_messages = await conn.fetch(
+                        get_starboard_message, orig_message_id
+                    )
+            await conn.close()
 
         if sql_message is None:
             await ctx.send(

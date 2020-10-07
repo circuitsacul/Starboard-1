@@ -12,10 +12,11 @@ async def get_leaderboard(bot, guild):
         """SELECT * FROM members WHERE xp != 0 AND guild_id=$1
         ORDER BY xp DESC"""
 
-    conn = await bot.db.connect()
-    async with bot.db.lock and conn.transaction():
-        members = await conn.fetch(get_members, guild.id)
-    await conn.close()
+    async with bot.db.lock:
+        conn = await bot.db.connect()
+        async with conn.transaction():
+            members = await conn.fetch(get_members, guild.id)
+        await conn.close()
     ordered = []
     x = 0
 
@@ -60,14 +61,17 @@ class Levels(commands.Cog):
         get_member = \
             """SELECT * FROM members WHERE user_id=$1 and guild_id=$2"""
 
-        conn = await self.db.connect()
-        async with self.db.lock and conn.transaction():
-            await functions.check_or_create_existence(
-                self.bot.db, conn, self.bot, guild_id=ctx.guild.id, user=user,
-                do_member=True
-            )
-            sql_member = await conn.fetchrow(get_member, user.id, ctx.guild.id)
-        await conn.close()
+        async with self.db.lock:
+            conn = await self.db.connect()
+            async with conn.transaction():
+                await functions.check_or_create_existence(
+                    self.bot.db, conn, self.bot, guild_id=ctx.guild.id,
+                    user=user, do_member=True
+                )
+                sql_member = await conn.fetchrow(
+                    get_member, user.id, ctx.guild.id
+                )
+            await conn.close()
         given = sql_member['given']
         received = sql_member['received']
         xp = sql_member['xp']
@@ -145,8 +149,9 @@ class Levels(commands.Cog):
             lvl=0
             WHERE user_id=$1 AND guild_id=$2"""
 
-        conn = await self.db.connect()
-        async with self.db.lock and conn.transaction():
-            await conn.execute(set_points, user.id, ctx.guild.id)
-        await conn.close()
+        async with self.db.lock:
+            conn = await self.db.connect()
+            async with conn.transaction():
+                await conn.execute(set_points, user.id, ctx.guild.id)
+            await conn.close()
         await ctx.send(f"Reset {user.name}'s levels and xp.")
