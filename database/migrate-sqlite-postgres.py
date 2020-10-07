@@ -1,8 +1,12 @@
 import asyncio
+import dotenv
+
+dotenv.load_dotenv()
 
 from discord.ext.commands import Bot
 from database import Database as NewDB
 from old.old_database import Database as OldDB
+
 
 path_to_sql = "sql/database.sqlite3"
 
