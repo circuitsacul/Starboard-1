@@ -1,6 +1,5 @@
 import asyncpg as apg
 import os
-from aiosqlite import Error
 from asyncio import Lock
 from discord import utils
 
@@ -172,7 +171,7 @@ class Database:
             #    "PRAGMA foreign_keys=True"
             # )
             # conn.row_factory = self._dict_factory
-        except Error as e:
+        except Exception as e:
             print(f"Couldn't connect to database: {e}")
             if conn:
                 await conn.close()
