@@ -30,6 +30,8 @@ async def get_leaderboard(bot, guild):
             'index': x, 'd': m
         })
 
+    print(ordered)
+
     return ordered
 
 
