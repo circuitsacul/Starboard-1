@@ -20,7 +20,7 @@ async def get_leaderboard(bot, guild):
     x = 0
 
     for m in members:
-        mobject = discord.utils.get(guild.members, id=int(m['user_id']))
+        mobject = bot.get_user(int(m['user_id']))
         if mobject is None or mobject.bot:
             continue
         x += 1
