@@ -344,21 +344,24 @@ class Utility(commands.Cog):
         )
 
         if message is None:
-            jump_string = "Original Message Deleted"
+            jump_string = "Message Deleted"
         else:
-            jump_string = f"[Jump]({message.jump_url})"
+            jump_string = f"[Jump to Message]({message.jump_url})"
 
         embed.description = f"{jump_string}\n"\
+            f"Original Message Id: {sql_message['id']}\n"\
             f"Author: <@{sql_message['user_id']}> | "\
             f"{sql_message['user_id']} | "\
             f"{str(author) if author is not None else 'Deleted User'}\n"\
-            f"Original Message Id: {sql_message['id']}\n"\
             f"Frozen: {frozen}\nTrashed: {trashed}\nForced: {forced}"
 
         starboard_string = ""
         for sbm in sb_msg_objs:
             starboard_string += f"{sbm.channel.mention}: "\
                 f"[Jump]({sbm.jump_url})\n"
+
+        starboard_string = "This message is not on any starboards"\
+            if starboard_string == "" else starboard_string
 
         embed.add_field(
             name="Starboards",
