@@ -209,7 +209,7 @@ async def on_message(message):
                         db, conn, bot, message.guild.id, message.author,
                         do_member=True
                     )
-            await conn.close()
+            #await conn.close()
 
         if message.guild is not None:
             p = await functions.get_one_prefix(bot, message.guild.id)

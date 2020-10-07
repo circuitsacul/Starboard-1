@@ -16,7 +16,7 @@ async def get_leaderboard(bot, guild):
         conn = await bot.db.connect()
         async with conn.transaction():
             members = await conn.fetch(get_members, guild.id)
-        await conn.close()
+        #await conn.close()
     ordered = []
     x = 0
 
@@ -71,7 +71,7 @@ class Levels(commands.Cog):
                 sql_member = await conn.fetchrow(
                     get_member, user.id, ctx.guild.id
                 )
-            await conn.close()
+            #await conn.close()
         given = sql_member['given']
         received = sql_member['received']
         xp = sql_member['xp']
@@ -153,5 +153,5 @@ class Levels(commands.Cog):
             conn = await self.db.connect()
             async with conn.transaction():
                 await conn.execute(set_points, user.id, ctx.guild.id)
-            await conn.close()
+            #await conn.close()
         await ctx.send(f"Reset {user.name}'s levels and xp.")

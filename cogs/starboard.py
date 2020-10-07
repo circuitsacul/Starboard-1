@@ -58,7 +58,7 @@ async def change_starboard_settings(
                     except Exception as e:
                         print(e)
                         status = False
-        await conn.close()
+        #await conn.close()
     return status
 
 
@@ -127,7 +127,7 @@ class Starboard(commands.Cog):
                         text=f'Do {p}settings <channel>'
                         '\nto view starboard settings.'
                     )
-            await conn.close()
+            #await conn.close()
 
         if message is not None:
             await ctx.send(message)
@@ -177,7 +177,7 @@ class Starboard(commands.Cog):
                         title=title, description=string, color=bot_config.COLOR
                     )
                     await ctx.send(embed=embed)
-            await conn.close()
+            #await conn.close()
 
     @commands.command(
         name='add', aliases=['a'],
@@ -228,7 +228,7 @@ class Starboard(commands.Cog):
                     else:
                         await ctx.send(f"Added starboard {starboard.mention}")
 
-            await conn.close()
+            #await conn.close()
 
     @commands.command(
         name='remove', aliases=['r'],
@@ -271,7 +271,7 @@ class Starboard(commands.Cog):
                 else:
                     remove_starboard = """DELETE FROM starboards WHERE id=$1"""
                     await conn.execute(remove_starboard, starboard_id)
-            await conn.close()
+            #await conn.close()
         if exists:
             await ctx.send("Removed starboard")
 
@@ -343,7 +343,7 @@ class Starboard(commands.Cog):
                             )
                             added = True
 
-            await conn.close()
+            #await conn.close()
         if added:
             await ctx.send(f"Added {emoji} to {starboard.mention}")
 
@@ -387,7 +387,7 @@ class Starboard(commands.Cog):
                         sbemoji_id = rows[0]['id']
                         await conn.execute(del_sbemoji, sbemoji_id)
                         removed = True
-            await conn.close()
+            #await conn.close()
         if removed:
             await ctx.send(f"Removed {emoji} from {starboard.mention}")
 

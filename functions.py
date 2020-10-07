@@ -45,7 +45,7 @@ async def list_prefixes(bot, guild_id: int):
         conn = await bot.db.connect()
         async with conn.transaction():
             prefixes = await conn.fetch(get_prefixes, guild_id)
-        await conn.close()
+        #await conn.close()
 
     return [p['prefix'] for p in prefixes]
 
@@ -62,7 +62,7 @@ async def add_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
         conn = await bot.db.connect()
         async with conn.transaction():
             await bot.db.q.create_prefix.fetch(guild_id, prefix)
-        await conn.close()
+        #await conn.close()
     return True, ''
 
 
@@ -78,7 +78,7 @@ async def remove_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
         conn = await bot.db.connect()
         async with conn.transaction():
             await conn.execute(del_prefix, prefix, guild_id)
-        await conn.close()
+        #await conn.close()
 
     return True, ''
 
@@ -162,7 +162,7 @@ async def get_patron_levels(db, user_id):
         conn = await db.connect()
         async with conn.transaction():
             rows = await conn.fetch(get_patrons, user_id)
-        await conn.close()
+        #await conn.close()
     return rows
 
 

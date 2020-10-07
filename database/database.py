@@ -148,6 +148,7 @@ class Database:
         self.cooldowns = {
             'giving_stars': {}  # {user_id: cooldown_end_datetime}
         }
+        self.conn = None
 
     async def open(self, bot):
         # self.q = await CommonSql()
@@ -156,6 +157,11 @@ class Database:
         self.cache = await BotCache(bot.event)
 
     async def connect(self):
+        if self.conn is None:
+            self.conn = await self.make_connection()
+        return self.conn
+
+    async def make_connection(self):
         conn = None
         try:
             conn = await apg.connect(
@@ -181,7 +187,7 @@ class Database:
     async def _create_table(self, sql):
         conn = await self.connect()
         await conn.execute(sql)
-        await conn.close()
+        #await conn.close()
 
     async def _create_tables(self):
         guilds_table = \

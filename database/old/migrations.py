@@ -41,4 +41,4 @@ async def migrate(db):
             pass
 
         await conn.commit()
-        await conn.close()
+        #await conn.close()

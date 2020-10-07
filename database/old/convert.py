@@ -151,7 +151,7 @@ async def convert():
                     pass
 
     await conn.commit()
-    await conn.close()
+    #await conn.close()
 
 
 async def main():

@@ -27,7 +27,7 @@ async def change_user_setting(
                 await conn.execute(update_user, lum, user_id)
                 status = True
 
-        await conn.close()
+        #await conn.close()
     return status
 
 
@@ -57,7 +57,7 @@ class Settings(commands.Cog):
                     do_member=True if ctx.guild is not None else None
                 )
                 sql_user = await conn.fetchrow(get_user, ctx.message.author.id)
-            await conn.close()
+            #await conn.close()
 
         settings_str = ""
         settings_str += f"\n**LevelUpMessages: {sql_user['lvl_up_msgs']}**"

@@ -68,7 +68,7 @@ class Database:
         except Error as e:
             print(f"Couldn't connect to database: {e}")
             if conn:
-                await conn.close()
+                #await conn.close()
         return conn
 
     def _dict_factory(self, cursor, row):
@@ -83,7 +83,7 @@ class Database:
         c = await conn.cursor()
         await c.execute(sql)
         await conn.commit()
-        await conn.close()
+        #await conn.close()
 
     async def _create_tables(self):
         guilds_table = \
