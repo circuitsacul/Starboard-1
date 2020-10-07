@@ -15,6 +15,7 @@ Starboard is an advanced, reliable, and highly customizable starboard bot. I've 
 ## Starboard's Features
  - Supports multiple starboards
  - Supports multiple normal and custom emojis for *each* starboard
+ - Leveling, rank, and leaderboard
  - Starboard moderation, such as:
    - Freezing a message, preventing the points from updating on it
    - Forcing a message, so it's on the starboard no matter what
