@@ -1,10 +1,10 @@
 import discord
 import functions
 import bot_config
+import asyncpg
 from discord.errors import Forbidden
 from discord import utils
 from events import leveling
-from aiosqlite import Error
 
 
 async def handle_reaction(
@@ -80,7 +80,7 @@ async def handle_reaction(
                     await conn.execute(
                         remove_reaction, message_id, user_id, emoji_name
                     )
-            except Error:
+            except asyncpg.exceptions.ForeignKeyViolationError:
                 pass
 
         #await conn.close()
