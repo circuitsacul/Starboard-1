@@ -33,8 +33,8 @@ async def is_starboard_emoji(db, guild_id, emoji):
 async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
     guild_id = guild.id
     receiver_id = receiver.id
-    if reacter_id == receiver_id:
-        return
+    #if reacter_id == receiver_id:
+    #    return
     emoji = _emoji.id if _emoji.id is not None else _emoji.name
     is_sbemoji = await is_starboard_emoji(db, guild_id, emoji)
     if not is_sbemoji:
@@ -120,10 +120,16 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
             color=bot_config.COLOR
         )
         embed.set_thumbnail(url="https://i.ibb.co/bvYZ8V8/dizzy-1f4ab.png")
-        embed.set_footer(text=guild.name, icon_url=guild.icon_url)
+        embed.set_author(name=guild.name, icon_url=guild.icon_url)
+        embed.set_footer(
+            text="Tip: Disable these messages by running"
+            " sb!profile lum false"
+        )
         embed.timestamp = datetime.datetime.now()
         try:
-            await receiver.send(embed=embed)
+            await receiver.send(
+                embed=embed
+            )
             pass
         except (discord.errors.HTTPException, AttributeError):
             pass
