@@ -39,6 +39,9 @@ async def handle_reaction(
     channel = utils.get(guild.channels, id=int(channel_id))
     user = utils.get(guild.members, id=user_id)
 
+    if user.bot:
+        return
+
     try:
         message = await functions.fetch(bot, int(message_id), channel)
     except (discord.errors.NotFound, discord.errors.Forbidden, AttributeError):
