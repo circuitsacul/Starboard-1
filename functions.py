@@ -28,12 +28,14 @@ async def _prefix_callable(bot, message):
         return commands.when_mentioned_or(
             bot_config.DEFAULT_PREFIX
         )(bot, message)
-    prefixes = await list_prefixes(bot, message.guild.id)
+    async with bot.db.lock:
+        prefixes = await list_prefixes(bot, message.guild.id)
     return commands.when_mentioned_or(*prefixes)(bot, message)
 
 
 async def get_one_prefix(bot, guild_id: int):
-    prefixes = await list_prefixes(bot, guild_id)
+    async with bot.db.lock:
+        prefixes = await list_prefixes(bot, guild_id)
     return prefixes[0] if len(prefixes) > 0 else '@' + bot.user.name + ' '
 
 
