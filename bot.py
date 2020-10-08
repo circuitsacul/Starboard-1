@@ -164,6 +164,44 @@ async def stats_for_bot(ctx):
 
 # Events
 @bot.event
+async def on_guild_join(guild):
+    support_server = bot.get_guild(
+        bot_config.SUPPORT_SERVER_ID
+    )
+    log_channel = discord.utils.get(
+        support_server.channels,
+        id=bot_config.SERVER_LOG_ID
+    )
+
+    embed = discord.Embed(
+        description=f"Joined **{guild.name}**!",
+        color=bot_config.GUILD_JOIN_COLOR
+    )
+    embed.set_footer(text=f"We now have {len(bot.guilds)} servers")
+
+    await log_channel.send(embed=embed)
+
+
+@bot.event
+async def on_guild_remove(guild):
+    support_server = bot.get_guild(
+        bot_config.SUPPORT_SERVER_ID
+    )
+    log_channel = discord.utils.get(
+        support_server.channels,
+        id=bot_config.SERVER_LOG_ID
+    )
+
+    embed = discord.Embed(
+        description=f"Left **{guild.name}**.",
+        color=bot_config.GUILD_LEAVE_COLOR
+    )
+    embed.set_footer(text=f"We now have {len(bot.guilds)} servers")
+
+    await log_channel.send(embed=embed)
+
+
+@bot.event
 async def on_raw_reaction_add(payload):
     guild_id = payload.guild_id
     if guild_id is None:

@@ -8,14 +8,17 @@ DONATE = "(optional) link to donatebot.io donation page" # str or None
 ISSUES_PAGE = "link to github issues page"
 
 SUPPORT_SERVER_ID = 0 #your-server-id
+SERVER_LOG_ID = 0 #the channel to send server joins and leaves to. Must be in support server
 
 PAGINATOR_EMOJIS = ('◀', '▶', '⏹')
 
 DONATE_BOT_ON = False # For those who want to accept donations through donatebot
 
-COLOR = 0xffe16c # hex
-MISTAKE_COLOR = 0xffaa00 # hex
-ERROR_COLOR = 0xff0000 # hex
+COLOR = 0xffe16c
+MISTAKE_COLOR = 0xffaa00  # hex (Currently Unused by the bot)
+ERROR_COLOR = 0xff0000  # hex
+GUILD_LEAVE_COLOR = 0xff7b1c # hex
+GUILD_JOIN_COLOR = 0xffe16c # hex
 
 # Donation Config
 DEFAULT_LEVEL = {
