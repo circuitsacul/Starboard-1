@@ -99,5 +99,5 @@ class Owner(commands.Cog):
         bot_id
     ):
         async with ctx.typing():
-            post_all(guilds, users, bot_id)
-        await ctx.send("Done!")
+            errors = post_all(guilds, users, bot_id)
+        await ctx.send(errors)

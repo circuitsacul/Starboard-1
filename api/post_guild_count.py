@@ -13,7 +13,8 @@ def post_bod(guilds: int, bot_user_id: int):
     data = json.dumps({"guildCount": guilds})
     url = f"https://bots.ondiscord.xyz/bot-api/bots/{bot_user_id}/guilds"
 
-    requests.post(url, data=data, headers=headers)
+    r = requests.post(url, data=data, headers=headers)
+    return r.text
 
 
 def post_dbl(guilds: int, users: int, bot_user_id: int):
@@ -24,7 +25,8 @@ def post_dbl(guilds: int, users: int, bot_user_id: int):
     })
     url = f"https://discordbotlist.com/api/v1/bots/{bot_user_id}/stats"
 
-    requests.post(url, data=data, headers=headers)
+    r = requests.post(url, data=data, headers=headers)
+    return r.text
 
 
 def post_boats(guilds: int, bot_user_id: int):
@@ -34,13 +36,19 @@ def post_boats(guilds: int, bot_user_id: int):
     })
     url = f"https://discord.boats/api/bot/{bot_user_id}"
 
-    requests.post(url, data=data, headers=headers)
+    r = requests.post(url, data=data, headers=headers)
+    return r.text
 
 
 def post_all(guilds: int, users: int, bot_user_id: int):
-    post_bod(guilds, bot_user_id)
-    post_dbl(guilds, users, bot_user_id)
-    post_boats(guilds, bot_user_id)
+    bod = post_bod(guilds, bot_user_id)
+    dbl = post_dbl(guilds, users, bot_user_id)
+    boats = post_boats(guilds, bot_user_id)
+    return {
+        'bod': bod,
+        'dbl': dbl,
+        'boats': boats
+    }
 
 
 async def loop_post(bot):
