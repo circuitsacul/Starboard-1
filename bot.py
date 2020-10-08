@@ -173,11 +173,23 @@ async def on_guild_join(guild):
         id=bot_config.SERVER_LOG_ID
     )
 
+    members = 0
+    bots = 0
+    for u in guild.members:
+        if u.bot:
+            bots += 1
+        else:
+            members += 1
+
     embed = discord.Embed(
-        description=f"Joined **{guild.name}**!",
+        description=f"Joined **{guild.name}**!\n"
+        f"**{members}** Members | **{bots}** Bots",
         color=bot_config.GUILD_JOIN_COLOR
     )
-    embed.set_footer(text=f"We now have {len(bot.guilds)} servers")
+    embed.set_footer(
+        text=f"We now have {len(bot.guilds)} servers and "
+        f"{len(bot.users)} users"
+    )
 
     await log_channel.send(embed=embed)
 
@@ -196,7 +208,10 @@ async def on_guild_remove(guild):
         description=f"Left **{guild.name}**.",
         color=bot_config.GUILD_LEAVE_COLOR
     )
-    embed.set_footer(text=f"We now have {len(bot.guilds)} servers")
+    embed.set_footer(
+        text=f"We now have {len(bot.guilds)} servers and "
+        f"{len(bot.users)} users"
+    )
 
     await log_channel.send(embed=embed)
 
