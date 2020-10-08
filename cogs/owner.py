@@ -95,8 +95,9 @@ class Owner(commands.Cog):
     )
     @commands.is_owner()
     async def manual_post_guild_count(
-        self, ctx, guilds: int, users: int
+        self, ctx, guilds: int, users: int,
+        bot_id
     ):
         async with ctx.typing():
-            post_all(guilds, users, self.bot.user.id)
+            post_all(guilds, users, bot_id)
         await ctx.send("Done!")

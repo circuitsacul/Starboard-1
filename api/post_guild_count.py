@@ -17,15 +17,12 @@ def post_bod(guilds: int, bot_user_id: int):
 
 
 def post_dbl(guilds: int, users: int, bot_user_id: int):
-    # NOTE: This function, for some reason, does not actually work.
-    # If you find a fix, please let me know, for now it does nothing.
-    return
     headers = {"Authorization": DBL_TOKEN, "Content-Type": "application/json"}
     data = json.dumps({
         "users": users,
         "guilds": guilds
     })
-    url = f"https://discordbotlist.com/api/v1/bots/:{bot_user_id}/stats"
+    url = f"https://discordbotlist.com/api/v1/bots/{bot_user_id}/stats"
 
     requests.post(url, data=data, headers=headers)
 
@@ -35,14 +32,14 @@ def post_boats(guilds: int, bot_user_id: int):
     data = json.dumps({
         "server_count": guilds
     })
-    url = f"https://discord.boats/api/bot/:{bot_user_id}"
+    url = f"https://discord.boats/api/bot/{bot_user_id}"
 
     requests.post(url, data=data, headers=headers)
 
 
 def post_all(guilds: int, users: int, bot_user_id: int):
     post_bod(guilds, bot_user_id)
-    #post_dbl(guilds, users, bot_user_id)
+    post_dbl(guilds, users, bot_user_id)
     post_boats(guilds, bot_user_id)
 
 
