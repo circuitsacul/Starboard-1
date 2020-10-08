@@ -1,6 +1,7 @@
 import ast
 import discord
 
+from api.post_guild_count import post_all
 from discord.ext import commands
 
 
@@ -86,3 +87,16 @@ class Owner(commands.Cog):
         async with cache.lock:
             cache._messages = {}
         await ctx.send("Cleared message cache for all servers.")
+
+    @commands.command(
+        name='postGuildCount', aliases=['pgc'],
+        brief='Manually post the guild count to bot lists',
+        description='Manually post the guild count to bot lists'
+    )
+    @commands.is_owner()
+    async def manual_post_guild_count(
+        self, ctx, guilds: int, users: int
+    ):
+        async with ctx.typing():
+            post_all(guilds, users, self.bot.user.id)
+        await ctx.send("Done!")
