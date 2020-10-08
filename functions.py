@@ -42,8 +42,7 @@ async def list_prefixes(bot, guild_id: int):
         """SELECT * FROM prefixes WHERE guild_id=$1"""
 
     conn = await bot.db.connect()
-    async with conn.transaction():
-        prefixes = await conn.fetch(get_prefixes, guild_id)
+    prefixes = await conn.fetch(get_prefixes, guild_id)
 
     return [p['prefix'] for p in prefixes]
 
