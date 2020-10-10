@@ -27,7 +27,7 @@ class BotCache(aobject):
         async with self.lock:
             self._messages.setdefault(guild, [])
             self._messages[guild].append(item)
-            if len(self._messages) > self.limit:
+            if len(self._messages[guild]) > self.limit:
                 self._messages[guild].pop(0)
 
     async def get(self, guild: int, **kwargs):
