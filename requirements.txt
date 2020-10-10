@@ -3,3 +3,4 @@ asyncpg
 python-dotenv
 discord-pretty-help
 disputils
+aiohttp-requests

@@ -99,5 +99,9 @@ class Owner(commands.Cog):
         bot_id
     ):
         async with ctx.typing():
-            errors = post_all(guilds, users, bot_id)
-        await ctx.send(errors)
+            errors = await post_all(guilds, users, bot_id)
+        string = ''
+        for bl in errors:
+            msg = errors[bl]
+            string += f"{bl}: {msg}\n"
+        await ctx.send(string)
