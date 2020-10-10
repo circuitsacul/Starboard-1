@@ -487,6 +487,14 @@ class Starboard(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
     async def run_setup_wizard(self, ctx):
+        async with self.bot.db.lock:
+            conn = self.bot.db.conn
+            async with conn.transaction():
+                await functions.check_or_create_existence(
+                    self.db, conn, self.bot, guild_id=ctx.guild.id,
+                    user=ctx.message.author, do_member=True
+                )
+
         wizard = SetupWizard(ctx, self.bot)
         can_run = True
         async with self.bot.wizzard_lock():
