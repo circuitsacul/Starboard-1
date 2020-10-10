@@ -12,7 +12,12 @@ from functions import get_limit
 
 
 def mybool(string: str):
-    return string.lower()[0] in ['y', 't']
+    string = string.lower()
+    if string[0] in ['y', 't']:
+        return True
+    elif string[0] in ['n', 'f']:
+        return False
+    raise ValueError(f"Please give either yes, no, true, or false.")
 
 
 class SetupWizard:

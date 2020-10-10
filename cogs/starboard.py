@@ -486,6 +486,10 @@ class Starboard(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
+    @commands.bot_has_permissions(
+        manage_messages=True, manage_channels=True,
+        embed_links=True
+    )
     async def run_setup_wizard(self, ctx):
         async with self.bot.db.lock:
             conn = self.bot.db.conn
@@ -510,8 +514,8 @@ class Starboard(commands.Cog):
                 await ctx.send(
                     "A setup wizard is already running for this server!"
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            print(e)
 
         if can_run:
             async with self.bot.wizzard_lock():
