@@ -45,8 +45,10 @@ async def list_prefixes(bot, guild_id: int):
 
     conn = await bot.db.connect()
     prefixes = await conn.fetch(get_prefixes, guild_id)
+    prefix_list = [bot_config.DEFAULT_PREFIX] if prefixes == [] else\
+        [p['prefix'] for p in prefixes]
 
-    return [p['prefix'] for p in prefixes]
+    return prefix_list
 
 
 async def add_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
