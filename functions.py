@@ -4,6 +4,76 @@ from typing import Tuple, Union
 import emoji
 import bot_config
 import discord
+import disputils
+
+
+async def change_starboard_settings(
+    db, starboard_id, self_star=None, link_edits=None,
+    link_deletes=None, bots_on_sb=None,
+    required=None, rtl=None
+):
+    get_starboard = \
+        """SELECT * FROM starboards WHERE id=$1"""
+    update_starboard = \
+        """UPDATE starboards
+        SET self_star=$1,
+        link_edits=$2,
+        link_deletes=$3,
+        bots_on_sb=$4,
+        required=$5,
+        rtl=$6
+        WHERE id=$7"""
+
+    if required is not None:
+        if required > 100:
+            required = 100
+        elif required < 1:
+            required = 1
+    if rtl is not None:
+        if rtl > 95:
+            rtl = 95
+        elif rtl < -1:
+            rtl = -1
+
+    async with db.lock:
+        conn = await db.connect()
+        status = True
+        async with conn.transaction():
+            rows = await conn.fetch(get_starboard, starboard_id)
+            if len(rows) == 0:
+                status = None
+            else:
+                ssb = rows[0]
+
+                s = {}
+                s['ss'] = self_star if self_star is not None \
+                    else ssb['self_star']
+                s['le'] = link_edits if link_edits is not None \
+                    else ssb['link_edits']
+                s['ld'] = link_deletes if link_deletes is not None \
+                    else ssb['link_deletes']
+                s['bos'] = bots_on_sb if bots_on_sb is not None \
+                    else ssb['bots_on_sb']
+                s['r'] = required if required is not None \
+                    else ssb['required']
+                s['rtl'] = rtl if rtl is not None \
+                    else ssb['rtl']
+
+                if s['r'] <= s['rtl']:
+                    status = False
+                else:
+                    try:
+                        await conn.execute(
+                            update_starboard,
+                            s['ss'], s['le'], s['ld'], s['bos'], s['r'],
+                            s['rtl'], starboard_id
+                        )
+                    except Exception as e:
+                        print(e)
+                        status = False
+        #await conn.close()
+    return status
+
 
 
 async def fetch(bot, msg_id: int, channel: Union[discord.TextChannel, int]):
@@ -185,6 +255,20 @@ async def get_limit(db, item, guild):
     return max_of_item
 
 
+async def pretty_emoji_string(emojis, guild):
+    string = ""
+    for sbemoji in emojis:
+        is_custom = sbemoji['d_id'] is not None
+        if is_custom:
+            emoji_string = str(discord.utils.get(
+                guild.emojis, id=int(sbemoji['d_id']))
+            )
+        else:
+            emoji_string = sbemoji['name']
+        string += emoji_string + " "
+    return string
+
+
 async def confirm(bot, channel, text, user_id, embed=None, delete=True):
     message = await channel.send(text, embed=embed)
     await message.add_reaction('✅')
@@ -212,6 +296,28 @@ async def confirm(bot, channel, text, user_id, embed=None, delete=True):
             except Exception:
                 pass
         return False
+
+
+async def multi_choice(bot, channel, user, title, description, _options):
+    options = [option for option in _options]
+    mc = disputils.MultipleChoice(bot, options, title, description)
+    await mc.run([user], channel)
+    await mc.quit(mc.choice)
+    return _options[mc.choice]
+
+
+async def user_input(bot, channel, user, prompt, timeout=30):
+    await channel.send(prompt)
+
+    def check(msg):
+        if msg.author.id != user.id:
+            return False
+        if msg.channel.id != channel.id:
+            return False
+        return True
+
+    inp = await bot.wait_for('message', check=check, timeout=timeout)
+    return inp
 
 
 async def orig_message_id(db, conn, message_id):

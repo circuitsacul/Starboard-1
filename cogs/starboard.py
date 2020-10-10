@@ -1,65 +1,11 @@
 import discord
 import functions
 import bot_config
+import converters
 from discord.ext import commands
-from typing import Union
-
-
-async def change_starboard_settings(
-    db, starboard_id, self_star=None, link_edits=None,
-    link_deletes=None, bots_on_sb=None,
-    required=None, rtl=None
-):
-    get_starboard = \
-        """SELECT * FROM starboards WHERE id=$1"""
-    update_starboard = \
-        """UPDATE starboards
-        SET self_star=$1,
-        link_edits=$2,
-        link_deletes=$3,
-        bots_on_sb=$4,
-        required=$5,
-        rtl=$6
-        WHERE id=$7"""
-
-    async with db.lock:
-        conn = await db.connect()
-        status = True
-        async with conn.transaction():
-            rows = await conn.fetch(get_starboard, starboard_id)
-            if len(rows) == 0:
-                status = None
-            else:
-                ssb = rows[0]
-
-                s = {}
-                s['ss'] = self_star if self_star is not None \
-                    else ssb['self_star']
-                s['le'] = link_edits if link_edits is not None \
-                    else ssb['link_edits']
-                s['ld'] = link_deletes if link_deletes is not None \
-                    else ssb['link_deletes']
-                s['bos'] = bots_on_sb if bots_on_sb is not None \
-                    else ssb['bots_on_sb']
-                s['r'] = required if required is not None \
-                    else ssb['required']
-                s['rtl'] = rtl if rtl is not None \
-                    else ssb['rtl']
-
-                if s['r'] <= s['rtl']:
-                    status = False
-                else:
-                    try:
-                        await conn.execute(
-                            update_starboard,
-                            s['ss'], s['le'], s['ld'], s['bos'], s['r'],
-                            s['rtl'], starboard_id
-                        )
-                    except Exception as e:
-                        print(e)
-                        status = False
-        #await conn.close()
-    return status
+from typing import Set, Union
+from .wizard import SetupWizard
+from functions import change_starboard_settings
 
 
 async def pretty_emoji_string(emojis, guild):
@@ -532,3 +478,33 @@ class Starboard(commands.Cog):
             await ctx.send(
                 f"Set botsOnStarboard to {value} for {starboard.mention}"
             )
+
+    @commands.command(
+        name='setup', aliases=['configure', 'config'],
+        description="A setup wizard to make things easier for you",
+        brief='A setup wizard'
+    )
+    @commands.guild_only()
+    @commands.has_permissions(manage_channels=True, manage_messages=True)
+    async def run_setup_wizard(self, ctx):
+        wizard = SetupWizard(ctx, self.bot)
+        can_run = True
+        async with self.bot.wizzard_lock():
+            if ctx.guild.id in self.bot.running_wizzards:
+                can_run = False
+            else:
+                self.bot.running_wizzards.append(ctx.guild.id)
+
+        try:
+            if can_run:
+                await wizard.run()
+            else:
+                await ctx.send(
+                    "A setup wizard is already running for this server!"
+                )
+        except Exception:
+            pass
+
+        if can_run:
+            async with self.bot.wizzard_lock():
+                self.bot.running_wizzards.remove(ctx.guild.id)

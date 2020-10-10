@@ -2,6 +2,7 @@ import discord
 import sys
 import asyncio
 import os
+from discord.errors import Forbidden
 import dotenv
 import functions
 import traceback
@@ -9,6 +10,7 @@ import pretty_help
 import time
 from discord.ext import commands
 from pretty_help import PrettyHelp
+from asyncio import Lock
 
 dotenv.load_dotenv()
 
@@ -50,6 +52,8 @@ class Bot(commands.Bot):
     def __init__(self, db, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.db = db
+        self.running_wizzards = []
+        self.wizzard_lock = Lock
 
 
 bot = Bot(
@@ -307,7 +311,12 @@ async def on_command_error(ctx, error):
         pass
     elif type(error) is discord.ext.commands.errors.BadUnionArgument:
         pass
+    elif type(error) is Forbidden:
+        error = "I don't have the permissions to do that"
     elif type(error) is discord.http.Forbidden:
+        error = "I don't have the permissions to do that"
+    elif type(error) is discord.ext.commands.errors.CommandInvokeError and\
+            "Forbidden" in str(error):
         error = "I don't have the permissions to do that"
     else:
         print(f"Error {type(error)}: {error}")
