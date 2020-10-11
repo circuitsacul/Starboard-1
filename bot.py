@@ -9,6 +9,7 @@ import functions
 import traceback
 import pretty_help
 import time
+import checks
 from discord.ext import commands
 from pretty_help import PrettyHelp
 from asyncio import Lock
@@ -298,6 +299,8 @@ async def on_error(event, *args, **kwargs):
 async def on_command_error(ctx, error):
     if type(error) is discord.ext.commands.errors.CommandNotFound:
         return
+    elif type(error) is checks.WizzardRunningError:
+        pass
     elif type(error) is discord.ext.commands.errors.BadArgument:
         pass
     elif type(error) is discord.ext.commands.errors.MissingRequiredArgument:

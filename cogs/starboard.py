@@ -1,7 +1,7 @@
 import discord
 import functions
 import bot_config
-import converters
+import checks
 from discord.ext import commands
 from typing import Set, Union
 from .wizard import SetupWizard
@@ -130,8 +130,9 @@ class Starboard(commands.Cog):
         description='Add a starboard',
         brief='Add a starboard'
     )
-    @commands.guild_only()
+    @checks.no_wizzard_running()
     @commands.has_permissions(manage_channels=True)
+    @commands.guild_only()
     async def add_starboard(self, ctx, starboard: discord.TextChannel):
         perms = starboard.permissions_for(ctx.guild.me)
         if not perms.send_messages:
@@ -181,8 +182,9 @@ class Starboard(commands.Cog):
         description='Remove a starboard',
         brief='Remove a starboard'
     )
-    @commands.guild_only()
+    @checks.no_wizzard_running()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
+    @commands.guild_only()
     async def remove_starboard(
         self, ctx, starboard: Union[discord.TextChannel, int]
     ):
@@ -226,8 +228,9 @@ class Starboard(commands.Cog):
         description='Add emoji to a starboard',
         brief='Add emoji to starboard'
     )
-    @commands.guild_only()
+    @checks.no_wizzard_running()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
+    @commands.guild_only()
     async def add_starboard_emoji(
         self, ctx, starboard: discord.TextChannel,
         emoji: Union[discord.Emoji, str]
@@ -298,8 +301,9 @@ class Starboard(commands.Cog):
         description='Removes a starboard emoji',
         brief='Removes a starboard emoji'
     )
-    @commands.guild_only()
+    @checks.no_wizzard_running()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
+    @commands.guild_only()
     async def remove_starboard_emoji(
         self, ctx, starboard: discord.TextChannel,
         emoji: Union[discord.Emoji, str]
@@ -343,8 +347,9 @@ class Starboard(commands.Cog):
         'appears on the starboard',
         brief='Set\'s required stars'
     )
-    @commands.guild_only()
+    @checks.no_wizzard_running()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
+    @commands.guild_only()
     async def set_required_stars(
         self, ctx, starboard: discord.TextChannel, value: int
     ):
@@ -369,8 +374,9 @@ class Starboard(commands.Cog):
         'messages is removed from the starboard',
         brief='Sets requiredToLose'
     )
-    @commands.guild_only()
+    @checks.no_wizzard_running()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
+    @commands.guild_only()
     async def set_required_to_lose(
         self, ctx, starboard: discord.TextChannel, value: int
     ):
@@ -397,8 +403,9 @@ class Starboard(commands.Cog):
         'their own message for starboard',
         brief='Set selfStar for starboard'
     )
-    @commands.guild_only()
+    @checks.no_wizzard_running()
     @commands.has_permissions(manage_channels=True)
+    @commands.guild_only()
     async def starboard_self_star(
         self, ctx, starboard: discord.TextChannel, value: bool
     ):
@@ -418,8 +425,9 @@ class Starboard(commands.Cog):
         'message if the user edits it',
         brief='Sets linkEdits for a starboard'
     )
-    @commands.guild_only()
+    @checks.no_wizzard_running()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
+    @commands.guild_only()
     async def set_link_edits(
         self, ctx, starboard: discord.TextChannel, value: bool
     ):
@@ -439,8 +447,9 @@ class Starboard(commands.Cog):
         'message if the original is deleted',
         brief='Sets linkDeletes for a starboard'
     )
-    @commands.guild_only()
+    @checks.no_wizzard_running()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
+    @commands.guild_only()
     async def set_link_deletes(
         self, ctx, starboard: discord.TextChannel, value: bool
     ):
@@ -462,8 +471,9 @@ class Starboard(commands.Cog):
         "to be put on the starboard",
         brief='Sets botsOnStarboards for a starboard'
     )
-    @commands.guild_only()
+    @checks.no_wizzard_running()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
+    @commands.guild_only()
     async def set_bots_on_starboard(
         self, ctx, starboard: discord.TextChannel, value: bool
     ):
@@ -484,12 +494,12 @@ class Starboard(commands.Cog):
         description="A setup wizard to make things easier for you",
         brief='A setup wizard'
     )
-    @commands.guild_only()
     @commands.has_permissions(manage_channels=True, manage_messages=True)
     @commands.bot_has_permissions(
         manage_messages=True, manage_channels=True,
         embed_links=True
     )
+    @commands.guild_only()
     async def run_setup_wizard(self, ctx):
         async with self.bot.db.lock:
             conn = self.bot.db.conn
