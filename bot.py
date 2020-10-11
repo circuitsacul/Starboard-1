@@ -4,6 +4,7 @@ import asyncio
 import os
 from discord.errors import Forbidden
 import dotenv
+from bot_config import SUPPORT_SERVER
 import functions
 import traceback
 import pretty_help
@@ -275,8 +276,10 @@ async def on_message(message):
         else:
             p = bot_config.DEFAULT_PREFIX
         await message.channel.send(
-            f"Some useful commands are `{p}help` and `{p}links`"
-            f"\nYou can see all my prefixes with `{p}prefixes`"
+            f"To get started, run `{p}setup`.\n"
+            f"To see all my commands, run `{p}help`\n"
+            "If you need help, you can join the support "
+            f"server {SUPPORT_SERVER}"
         )
     else:
         await bot.process_commands(message)
