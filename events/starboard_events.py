@@ -39,7 +39,7 @@ async def handle_reaction(
     channel = utils.get(guild.channels, id=int(channel_id))
     user = utils.get(guild.members, id=user_id)
 
-    if user.bot:
+    if user is not None and user.bot:
         return
 
     try:
