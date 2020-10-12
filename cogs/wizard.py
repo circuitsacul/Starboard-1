@@ -128,7 +128,7 @@ class SetupWizard:
             await sleep(1)
 
     async def modify_starboard(self):
-        channel = await self._get_channel("What starboard should I modify?")
+        channel = await self._get_starboard("What starboard should I modify?")
         if channel is None:
             return
         exists = await self._check_starboard(channel.id)
@@ -144,7 +144,7 @@ class SetupWizard:
     async def delete_starboard(self):
         remove_starboard = \
             """DELETE FROM starboards WHERE id=$1"""
-        channel = await self._get_channel("What starboard should I delete?")
+        channel = await self._get_starboard("What starboard should I delete?")
         if channel is None:
             return
 
@@ -180,7 +180,9 @@ class SetupWizard:
             }
 
             settings = await self._current_settings(channel)
-            choice = await self._multi_choice(settings)
+            choice = await self._multi_choice(
+                settings, prompt=f"Modifying {channel.mention}"
+            )
             if choice is None:
                 modifying = False
             elif choice == 0:
@@ -431,6 +433,31 @@ class SetupWizard:
             await sleep(1)
             return await self._get_channel(prompt)
         return channel
+
+    async def _get_starboard(self, prompt):
+        get_starboards = """SELECT * FROM starboards WHERE guild_id=$1"""
+        async with self.bot.db.lock:
+            conn = self.bot.db.conn
+            async with conn.transaction():
+                sql_starboards = await conn.fetch(
+                    get_starboards, self.ctx.guild.id
+                )
+
+        starboards = []
+        choices = {}
+        for sb in sql_starboards:
+            _starboard = utils.get(self.ctx.guild.channels, id=sb['id'])
+            if _starboard is None:
+                continue
+            starboards.append(_starboard)
+
+        for x, sb in enumerate(starboards):
+            choices[sb.mention] = x
+
+        choice = await self._multi_choice(choices, prompt)
+        if choice is None:
+            return None
+        return starboards[choice]
 
     async def _multi_choice(self, options, prompt=""):
         mc = disputils.MultipleChoice(
