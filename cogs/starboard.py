@@ -3,7 +3,7 @@ import functions
 import bot_config
 import checks
 from discord.ext import commands
-from typing import Set, Union
+from typing import Union
 from .wizard import SetupWizard
 from functions import change_starboard_settings
 
@@ -524,8 +524,8 @@ class Starboard(commands.Cog):
                 await ctx.send(
                     "A setup wizard is already running for this server!"
                 )
-        except Exception as e:
-            print(e)
+        except Exception:
+            await ctx.send("Wizard exited due to a problem.")
 
         if can_run:
             async with self.bot.wizzard_lock():

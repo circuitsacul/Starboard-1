@@ -67,12 +67,10 @@ class SetupWizard:
         current_num = len(sql_starboards)
         limit = await get_limit(self.bot.db, 'starboards', self.ctx.guild)
         if current_num >= limit:
-            await self.message.edit(embed=await self._get_embed(
+            await self._error(
                 "You have reached your limit for starboards. Please upgrade "
-                "by becoming a patron.",
-                color=self.mistake
-            ))
-            await sleep(3)
+                "by becoming a patron."
+            )
             return
 
         new_or_used = await self._multi_choice(
@@ -119,25 +117,22 @@ class SetupWizard:
             await sleep(1)
             await self._change_starboard_settings(channel)
         else:
-            await self.message.edit(
-                embed=await self._get_embed(
-                    "That is already a starboard!",
-                    self.mistake
-                )
+            await self._error(
+                "That is already a starboard!",
             )
-            await sleep(1)
 
     async def modify_starboard(self):
         channel = await self._get_starboard("What starboard should I modify?")
+        if channel is False:
+            await self._error("You don't have any starboards yet.")
+            return
         if channel is None:
             return
         exists = await self._check_starboard(channel.id)
         if not exists:
-            await self.message.edit(embed=await self._get_embed(
+            await self._error(
                 "That is not a starboard!",
-                self.mistake
-            ))
-            await sleep(1)
+            )
             return await self.modify_starboard()
         await self._change_starboard_settings(channel)
 
@@ -145,16 +140,17 @@ class SetupWizard:
         remove_starboard = \
             """DELETE FROM starboards WHERE id=$1"""
         channel = await self._get_starboard("What starboard should I delete?")
+        if channel is False:
+            await self._error("You con't have any starboards yet.")
+            return
         if channel is None:
             return
 
         exists = await self._check_starboard(channel.id)
         if exists is False:
-            await self.message.edit(embed=await self._get_embed(
+            await self._error(
                 "That is not a starboard!",
-                self.mistake
-            ))
-            await sleep(1)
+            )
             return await self.delete_starboard()
 
         async with self.bot.db.lock:
@@ -228,12 +224,10 @@ class SetupWizard:
 
         current_num = len(sql_emojis)
         if current_num >= emoji_limit:
-            await self.message.edit(embed=await self._get_embed(
+            await self._error(
                 "You have reached your limit for emojis on the starboard. "
                 "Please upgrade by becoming a patron.",
-                color=self.mistake
-            ))
-            await sleep(3)
+            )
             return
 
         args = await self._get_emoji(
@@ -255,11 +249,9 @@ class SetupWizard:
                         emoji_id, channel.id, emoji_str, False
                     )
         if sql_emoji is not None:
-            await self.message.edit(embed=await self._get_embed(
+            await self._error(
                 "That emoji already exists!",
-                self.mistake
-            ))
-            await sleep(1)
+            )
 
     async def _remove_emoji(self, channel):
         check_emoji = """SELECT * FROM sbemojis WHERE starboard_id=$1
@@ -287,11 +279,9 @@ class SetupWizard:
                         emoji_str
                     )
         if sql_emoji is None:
-            await self.message.edit(embed=await self._get_embed(
+            await self._error(
                 "That emoji does not exist on this starboard!",
-                self.mistake
-            ))
-            await sleep(1)
+            )
 
     async def _get_emoji(self, prompt):
         inp = await self._input(prompt)
@@ -312,11 +302,9 @@ class SetupWizard:
             else:
                 emoji_name = inp
         if emoji_name is None and emoji_id is None:
-            await self.message.edit(embed=await self._get_embed(
+            await self._error(
                 "I couldn't find that emoji",
-                self.mistake
-            ))
-            await sleep(1)
+            )
             return await self._get_emoji(prompt)
         return emoji_id, emoji_name
 
@@ -365,10 +353,7 @@ class SetupWizard:
             elif index == 'required' and error is None:
                 error = "requiredStars cannot be less than or equal to "\
                     "requiredToLose"
-            await self.message.edit(embed=await self._get_embed(
-                error, self.mistake
-            ))
-            await sleep(3)
+            await self._error(error)
             return await self._change_setting(
                 channel, name, index, vtype
             )
@@ -426,11 +411,9 @@ class SetupWizard:
         except ValueError:
             channel = utils.get(self.ctx.guild.channels, name=channel_name)
         if channel is None:
-            embed = await self._get_embed(
-                "I couldn't find that channel", self.mistake
+            await self._error(
+                "I couldn't find that channel"
             )
-            await self.message.edit(embed=embed)
-            await sleep(1)
             return await self._get_channel(prompt)
         return channel
 
@@ -450,6 +433,9 @@ class SetupWizard:
             if _starboard is None:
                 continue
             starboards.append(_starboard)
+
+        if len(starboards) == 0:
+            return False
 
         for x, sb in enumerate(starboards):
             choices[sb.mention] = x
@@ -520,3 +506,27 @@ class SetupWizard:
             color=color
         )
         return embed
+
+    async def _error(self, content):
+        embed = await self._get_embed(content, self.mistake)
+        await self.message.edit(embed=embed)
+        await self.message.add_reaction("🆗")
+
+        def check(reaction, user):
+            if reaction.message.id != self.message.id:
+                return False
+            if user.id != self.ctx.message.author.id:
+                return False
+            if reaction.emoji != "🆗":
+                return False
+            return True
+
+        try:
+            await self.bot.wait_for('reaction_add', check=check, timeout=30)
+        except TimeoutError:
+            pass
+
+        try:
+            await self.message.clear_reactions()
+        except Exception:
+            pass
