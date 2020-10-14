@@ -311,7 +311,7 @@ class Starboard(commands.Cog):
             """SELECT * FROM sbemojis WHERE name=$1 AND starboard_id=$2"""
         del_sbemoji = \
             """DELETE FROM sbemojis WHERE id=$1"""
-        emoji_name = emoji.id if isinstance(emoji, discord.Emoji) else emoji
+        emoji_name = str(emoji.id) if isinstance(emoji, discord.Emoji) else emoji
         # emoji_id = emoji.id if isinstance(emoji, discord.Emoji) else None
 
         async with self.db.lock:
