@@ -27,7 +27,6 @@ async def change_user_setting(
                 await conn.execute(update_user, lum, user_id)
                 status = True
 
-        #await conn.close()
     return status
 
 
@@ -57,7 +56,6 @@ class Settings(commands.Cog):
                     do_member=True if ctx.guild is not None else None
                 )
                 sql_user = await conn.fetchrow(get_user, ctx.message.author.id)
-            #await conn.close()
 
         settings_str = ""
         settings_str += f"\n**LevelUpMessages: {sql_user['lvl_up_msgs']}**"
@@ -111,7 +109,7 @@ class Settings(commands.Cog):
             msg += f"\n**-** `{prefix}`"
 
         embed = discord.Embed(
-            title=f"Prefixes",
+            title="Prefixes",
             description=msg,
             color=bot_config.COLOR
         )

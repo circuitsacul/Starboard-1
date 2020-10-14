@@ -186,7 +186,6 @@ class Database:
     async def _create_table(self, sql):
         conn = await self.connect()
         await conn.execute(sql)
-        #await conn.close()
 
     async def _create_tables(self):
         guilds_table = \

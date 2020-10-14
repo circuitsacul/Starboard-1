@@ -32,7 +32,10 @@ async def post_dbl(guilds: int, users: int, bot_user_id: int):
 
 
 async def post_boats(guilds: int, bot_user_id: int):
-    headers = {"Authorization": BOATS_TOKEN, "Content-Type": "application/json"}
+    headers = {
+        "Authorization": BOATS_TOKEN,
+        "Content-Type": "application/json"
+    }
     data = json.dumps({
         "server_count": guilds
     })

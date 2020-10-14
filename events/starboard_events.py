@@ -31,7 +31,7 @@ async def handle_reaction(
             message_id, orig_channel_id = await functions.orig_message_id(
                 db, conn, _message_id
             )
-        #await conn.close()
+
     channel_id = orig_channel_id if orig_channel_id is not None \
         else _channel_id
 
@@ -86,8 +86,6 @@ async def handle_reaction(
             except asyncpg.exceptions.ForeignKeyViolationError:
                 pass
 
-        #await conn.close()
-
     if message is not None and user is not None and not user.bot:
         await leveling.handle_reaction(
             db, user.id, message.author, guild, _emoji, is_add
@@ -112,7 +110,6 @@ async def handle_starboards(db, bot, message_id, channel, message):
                 sql_starboards = await conn.fetch(
                     get_starboards, sql_message['guild_id']
                 )
-        #await conn.close()
 
     if sql_message is not None:
         for sql_starboard in sql_starboards:
@@ -135,11 +132,12 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
     async with db.lock:
         conn = await db.connect()
         async with conn.transaction():
-            sql_author = await conn.fetchrow(get_author, sql_message['user_id'])
+            sql_author = await conn.fetchrow(
+                get_author, sql_message['user_id']
+            )
             rows = await conn.fetch(
                 get_starboard_message, sql_message['id'], sql_starboard['id']
             )
-        #await conn.close()
 
     delete = False
     if len(rows) == 0:
@@ -173,7 +171,6 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
             points, emojis = await calculate_points(
                 conn, sql_message, sql_starboard, bot
             )
-        #await conn.close()
 
     deleted = message is None
     on_starboard = starboard_message is not None
@@ -259,7 +256,7 @@ async def update_message(
                             starboard.id, False,
                             orig_message.channel.is_nsfw()
                         )
-                    #await conn.close()
+
         elif update and sb_message and link_edits:
             await sb_message.edit(
                 content=plain_text, embed=embed
@@ -406,8 +403,7 @@ async def calculate_points(conn, sql_message, sql_starboard, bot):
             sql_user = rows[0]
             if sql_user['is_bot'] is True:
                 continue
-            #https://discord.gg/3gK8mSA if int(sql_user['id']) == bot.user.id:
-            #    continue
+
             total_points += 1
 
     return total_points, emojis

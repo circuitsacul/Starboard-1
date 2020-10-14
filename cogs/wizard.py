@@ -17,7 +17,7 @@ def mybool(string: str):
         return True
     elif string[0] in ['n', 'f']:
         return False
-    raise ValueError(f"Please give either yes, no, true, or false.")
+    raise ValueError("Please give either yes, no, true, or false.")
 
 
 class SetupWizard:
@@ -309,11 +309,6 @@ class SetupWizard:
         return emoji_id, emoji_name
 
     async def _change_setting(self, channel, name, index, vtype):
-        #change_setting = \
-        #    f"""UPDATE starboards
-        #    SET {index}=$1
-        #    WHERE id=$2"""
-
         new_value = await self._input(f"Choose a new value for {name}")
         if new_value is None:
             return
@@ -334,18 +329,6 @@ class SetupWizard:
             )
             error = None
 
-        #retry = False
-        #async with self.bot.db.lock:
-        #    conn = self.bot.db.conn
-        #    async with conn.transaction():
-        #        try:
-        #            await conn.execute(
-        #                change_setting, vtype(new_value),
-        #                channel.id
-        #            )
-        #        except Exception:
-        #            retry = True
-        #if retry:
         if status is False:
             if index == 'rtl' and error is None:
                 error = "requiredToLose cannot be greater than or equal "\

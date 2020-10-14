@@ -65,7 +65,7 @@ class Starboard(commands.Cog):
                             emojis, ctx.guild
                         )
                         msg += f"{sb_title} {emoji_string}\n"
-                    
+
                     embed = discord.Embed(
                         title=title, description=msg, color=bot_config.COLOR
                     )
@@ -73,7 +73,6 @@ class Starboard(commands.Cog):
                         text=f'Do {p}settings <channel>'
                         '\nto view starboard settings.'
                     )
-            #await conn.close()
 
         if message is not None:
             await ctx.send(message)
@@ -99,31 +98,34 @@ class Starboard(commands.Cog):
                     self.db, conn, self.bot, guild_id=ctx.guild.id,
                     user=ctx.message.author, do_member=True
                 )
-                sql_starboard = await conn.fetchrow(get_starboard, starboard.id)
+                sql_starboard = await conn.fetchrow(
+                    get_starboard, starboard.id
+                )
                 if sql_starboard is None:
                     await ctx.send("That is not a starboard!")
                 else:
                     starboard = self.bot.get_channel(starboard.id)
                     emojis = await conn.fetch(get_emojis, starboard.id)
-                    pretty_emojis = await pretty_emoji_string(emojis, ctx.guild)
+                    pretty_emojis = await pretty_emoji_string(
+                        emojis, ctx.guild
+                    )
                     title = f"Settings for {starboard.name}:"
-                    string = f"**emojis: {pretty_emojis}**"
-                    string += f"\n**requiredStars: {sql_starboard['required']}**"
-                    string += f"\n**requiredToLose: {sql_starboard['rtl']}**"
-                    string += f"\n**selfStar: {bool(sql_starboard['self_star'])}**"
-                    string += "\n**linkEdits: "\
-                        f"{bool(sql_starboard['link_edits'])}**"
-                    string += "\n**linkDeletes: "\
-                        f"{bool(sql_starboard['link_deletes'])}**"
-                    string += "\n**botsOnStarboard: "\
-                        f"{bool(sql_starboard['bots_on_sb'])}**"
-                    string += f"\n**locked: {bool(sql_starboard['locked'])}**"
+                    string = f"**emojis: {pretty_emojis}**"\
+                        f"\n**requiredStars: {sql_starboard['required']}**"\
+                        f"\n**requiredToLose: {sql_starboard['rtl']}**"\
+                        f"\n**selfStar: {bool(sql_starboard['self_star'])}**"\
+                        "\n**linkEdits: "\
+                        f"{bool(sql_starboard['link_edits'])}**"\
+                        "\n**linkDeletes: "\
+                        f"{bool(sql_starboard['link_deletes'])}**"\
+                        "\n**botsOnStarboard: "\
+                        f"{bool(sql_starboard['bots_on_sb'])}**"\
+                        f"\n**locked: {bool(sql_starboard['locked'])}**"
 
                     embed = discord.Embed(
                         title=title, description=string, color=bot_config.COLOR
                     )
                     await ctx.send(embed=embed)
-            #await conn.close()
 
     @commands.command(
         name='add', aliases=['a'],
@@ -175,8 +177,6 @@ class Starboard(commands.Cog):
                     else:
                         await ctx.send(f"Added starboard {starboard.mention}")
 
-            #await conn.close()
-
     @commands.command(
         name='remove', aliases=['r'],
         description='Remove a starboard',
@@ -219,7 +219,7 @@ class Starboard(commands.Cog):
                 else:
                     remove_starboard = """DELETE FROM starboards WHERE id=$1"""
                     await conn.execute(remove_starboard, starboard_id)
-            #await conn.close()
+
         if exists:
             await ctx.send("Removed starboard")
 
@@ -292,7 +292,6 @@ class Starboard(commands.Cog):
                             )
                             added = True
 
-            #await conn.close()
         if added:
             await ctx.send(f"Added {emoji} to {starboard.mention}")
 
@@ -330,14 +329,16 @@ class Starboard(commands.Cog):
                 if not exists['se']:
                     await ctx.send("That is not a starboard!")
                 else:
-                    rows = await conn.fetch(get_sbemoji, emoji_name, starboard.id)
+                    rows = await conn.fetch(
+                        get_sbemoji, emoji_name, starboard.id
+                    )
                     if len(rows) == 0:
                         await ctx.send("That is not a starboard emoji!")
                     else:
                         sbemoji_id = rows[0]['id']
                         await conn.execute(del_sbemoji, sbemoji_id)
                         removed = True
-            #await conn.close()
+
         if removed:
             await ctx.send(f"Removed {emoji} from {starboard.mention}")
 

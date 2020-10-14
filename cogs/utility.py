@@ -1,4 +1,3 @@
-from events.starboard_events import calculate_points
 import discord
 import functions
 import bot_config
@@ -32,7 +31,6 @@ async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
                 status = False
             else:
                 await conn.execute(trash_message, trash, message_id)
-        #await conn.close()
 
     channel = bot.get_channel(int(channel_id))
     try:
@@ -68,7 +66,6 @@ class Utility(commands.Cog):
             conn = await self.db.connect()
             async with conn.transaction():
                 frozen_messages = await conn.fetch(get_frozen, ctx.guild.id)
-            #await conn.close()
 
         if len(frozen_messages) == 0:
             await ctx.send("You don't have any frozen messages")
@@ -132,8 +129,6 @@ class Utility(commands.Cog):
                 await conn.execute(freeze_message, message_id)
                 message = f"Message **{message_id}** is now frozen"
 
-            #await conn.close()
-
         await ctx.send(message)
 
     @commands.command(
@@ -167,7 +162,6 @@ class Utility(commands.Cog):
                     await conn.execute(freeze_message, message_id)
                     message = f"Message **{message_id}** is now unfrozen"
 
-            #await conn.close()
         await ctx.send(message)
 
     @commands.command(
@@ -206,7 +200,6 @@ class Utility(commands.Cog):
                 message_id, channel_id = await functions.orig_message_id(
                     self.db, conn, _message_id
                 )
-            #await conn.close()
 
         channel = self.bot.get_channel(int(channel_id)) \
             if channel_id is not None else ctx.channel
@@ -224,7 +217,6 @@ class Utility(commands.Cog):
                         message.channel.is_nsfw()
                     )
                 await conn.execute(force_message, message.id)
-            #await conn.close()
 
         await ctx.send("Message forced.")
 
@@ -276,7 +268,6 @@ class Utility(commands.Cog):
             cache._messages[ctx.guild.id] = []
         await ctx.send("Message cache cleared")
 
-
     @commands.command(
         name='messageInfo', aliases=['messageStats', 'mi'],
         brief='View statistics on a message'
@@ -304,7 +295,6 @@ class Utility(commands.Cog):
                     sql_sb_messages = await conn.fetch(
                         get_starboard_message, orig_message_id
                     )
-            #await conn.close()
 
         if sql_message is None:
             await ctx.send(

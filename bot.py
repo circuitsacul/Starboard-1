@@ -270,7 +270,6 @@ async def on_message(message):
                         db, conn, bot, message.guild.id, message.author,
                         do_member=True
                     )
-            #await conn.close()
 
         if message.guild is not None:
             p = await functions.get_one_prefix(bot, message.guild.id)
@@ -373,11 +372,11 @@ async def on_command_error(ctx, error):
                 joining the support server and explaining what happened."
             )
         return
-    #embed = discord.Embed(
+    # embed = discord.Embed(
     #    title='Oops!',
     #    description=f"```{error}```",
     #    color=bot_config.MISTAKE_COLOR
-    #)
+    # )
     await ctx.send(error)
 
 

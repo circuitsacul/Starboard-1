@@ -26,7 +26,6 @@ async def is_starboard_emoji(db, guild_id, emoji):
                     str(e['name']) if e['d_id'] is None
                     else str(e['d_id']) for e in emojis
                 ]
-        #await conn.close()
     return str(emoji) in all_emojis
 
 
@@ -109,8 +108,6 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
                     set_xp_level, new_xp, new_lvl,
                     sql_receiver['user_id'], guild_id
                 )
-
-        #await conn.close()
 
     if leveled_up and send_lvl_msgs:
         embed = discord.Embed(

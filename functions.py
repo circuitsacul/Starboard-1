@@ -71,7 +71,6 @@ async def change_starboard_settings(
                     except Exception as e:
                         print(e)
                         status = False
-        #await conn.close()
     return status
 
 
@@ -228,7 +227,6 @@ async def get_patron_levels(db, user_id):
         conn = await db.connect()
         async with conn.transaction():
             rows = await conn.fetch(get_patrons, user_id)
-        #await conn.close()
     return rows
 
 

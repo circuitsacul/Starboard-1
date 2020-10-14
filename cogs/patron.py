@@ -32,7 +32,6 @@ async def update_patron_for_user(bot, db, user_id, product_id, add: bool):
                 await new_patron.fetch(user_id, product_id)
             if not add and sql_patron:
                 await conn.execute(del_patron, sql_patron['id'])
-        #await conn.close()
 
     give_role = PATRON_LEVELS[product_id]['gives_role']
     if give_role:
@@ -56,7 +55,6 @@ class PatronCommands(commands.Cog):
             conn = await self.db.connect()
             async with conn.transaction():
                 donations = await conn.fetch("SELECT * FROM donations")
-            #await conn.close()
         string = None
         if len(donations) == 0:
             string = "No Donations Yet"
@@ -189,7 +187,6 @@ class HttpWebHook():
                     data['guild_id'], data['buyer_email'], data['price'],
                     data['currency'], data['recurring'], data['status']
                 )
-            #await conn.close()
 
         if 'product_id' not in data:
             pass
