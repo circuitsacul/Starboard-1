@@ -1,5 +1,4 @@
-DB_PATH = "database/sql/database.db" # str
-BETA_DB_PATH = "database/sql/beta_database.db" # str
+OWNER_ID = your_id_here
 
 INVITE = "bot invite link" # str
 SUPPORT_SERVER = "permanent invite to your support server" # str

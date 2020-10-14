@@ -1,5 +1,6 @@
 import ast
 import discord
+import checks
 
 from api.post_guild_count import post_all
 from discord.ext import commands
@@ -28,7 +29,7 @@ class Owner(commands.Cog):
     @commands.command(
         name='eval', aliases=['e']
     )
-    @commands.is_owner()
+    @checks.is_owner()
     async def eval_fn(self, ctx, *, body):
         """Evaluates input.
         Input is interpreted as newline seperated statements.
@@ -81,7 +82,7 @@ class Owner(commands.Cog):
         brief='Clear cache from all servers',
         description='Clear cache from all servers'
     )
-    @commands.is_owner()
+    @checks.is_owner()
     async def clear_global_cache(self, ctx):
         cache = self.bot.db.cache
         async with cache.lock:
@@ -93,7 +94,7 @@ class Owner(commands.Cog):
         brief='Manually post the guild count to bot lists',
         description='Manually post the guild count to bot lists'
     )
-    @commands.is_owner()
+    @checks.is_owner()
     async def manual_post_guild_count(
         self, ctx, guilds: int, users: int,
         bot_id

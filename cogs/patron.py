@@ -3,6 +3,7 @@ import functions
 import os
 import dotenv
 import bot_config
+import checks
 from aiohttp import web
 from discord.ext import commands
 
@@ -49,7 +50,7 @@ class PatronCommands(commands.Cog):
         self.db = db
 
     @commands.command(name='donationevents', aliases=['de'])
-    @commands.is_owner()
+    @checks.is_owner()
     async def list_donation_events(self, ctx):
         async with self.db.lock:
             conn = await self.db.connect()
@@ -112,7 +113,7 @@ class PatronCommands(commands.Cog):
     @commands.command(
         name='handlePremium', aliases=['hp']
     )
-    @commands.is_owner()
+    @checks.is_owner()
     async def handel_patron(
         self, ctx, user: discord.User = None,
         product_id: str = None, add: str = 'add'
