@@ -88,6 +88,18 @@ class SetupWizard:
                 channel = await self.ctx.guild.create_text_channel(
                     channel_name
                 )
+                await channel.set_permissions(
+                    self.ctx.guild.default_role,
+                    send_messages=False
+                )
+                await channel.set_permissions(
+                    self.ctx.guild.me,
+                    read_messages=True,
+                    send_messages=True,
+                    embed_links=True,
+                    add_reactions=True,
+                    read_message_history=True
+                )
         elif new_or_used == 2:
             channel = await self._get_channel("What channel should I use?")
 
