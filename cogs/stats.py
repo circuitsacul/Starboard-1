@@ -1,5 +1,6 @@
 # Put here for ease of use with statcord
 from discord.ext import commands
+from bot_config import OWNER_ID
 import statcord
 import os
 
@@ -15,6 +16,7 @@ class StatcordPost(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command(self, ctx):
-        if ctx.message.author.id == self.bot.owner_id:
+        if ctx.message.author.id == OWNER_ID:
+            print("nope")
             return
         self.api.command_run(ctx)
