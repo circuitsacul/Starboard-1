@@ -5,6 +5,7 @@ import asyncpg
 from discord.errors import Forbidden
 from discord import utils
 from events import leveling
+from api import tenor
 
 
 async def handle_reaction(
@@ -330,9 +331,14 @@ async def get_embed_from_message(message):
                     'url': msg_embed.url, 'type': 'image'
                 })
         elif msg_embed.type == 'gifv':
+            gifid = tenor.get_gif_id(msg_embed.url)
+            if gifid is None:
+                display_url = msg_embed.thumbnail.url
+            else:
+                display_url = await tenor.get_gif_url(gifid)
             if msg_embed.url != discord.Embed.Empty:
                 urls.append({
-                    'name': 'GIF', 'display_url': msg_embed.thumbnail.url,
+                    'name': 'GIF', 'display_url': display_url,
                     'url': msg_embed.url, 'type': 'gif'
                 })
         elif msg_embed.type == 'video':

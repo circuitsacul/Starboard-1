@@ -17,6 +17,5 @@ class StatcordPost(commands.Cog):
     @commands.Cog.listener()
     async def on_command(self, ctx):
         if ctx.message.author.id == OWNER_ID:
-            print("nope")
             return
         self.api.command_run(ctx)
