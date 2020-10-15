@@ -1,8 +1,9 @@
 from aiohttp_requests import requests
 import json
 import asyncio
+import os
 
-apikey = '010WJV3ZGAN2'
+APIKEY = os.getenv('APIKEY')
 
 
 def _simplify(url):
@@ -21,7 +22,7 @@ def get_gif_id(url: str):
 
 async def get_gif_url(gifid: str):
     r = await requests.get(
-        f"https://api.tenor.com/v1/gifs?ids={gifid}&key={apikey}"
+        f"https://api.tenor.com/v1/gifs?ids={gifid}&key={APIKEY}"
     )
 
     if r.status == 200:
