@@ -249,7 +249,7 @@ async def get_patron_levels(db, user_id):
 async def handle_role(bot, db, user_id, guild_id, role_id, add):
     guild = bot.get_guild(guild_id)
     #member = utils.get(guild.members, id=user_id)
-    member = functions.get_members([int(user_id)], guild)
+    member = (await functions.get_members([int(user_id)], guild))[0]
     role = utils.get(guild.roles, id=role_id)
     if add:
         await member.add_roles(role)
