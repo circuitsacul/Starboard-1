@@ -1,10 +1,26 @@
 from discord import utils
 from discord.ext import commands
-from typing import Tuple, Union
+from typing import Tuple, Union, Iterable
 import emoji
 import bot_config
 import discord
 import disputils
+import functions
+
+
+async def get_members(user_ids: Iterable[int], guild: discord.Guild):
+    unfound_ids = []
+    users = []
+    for uid in user_ids:
+        u = guild.get_member(uid)
+        if u is not None:
+            users.append(u)
+        else:
+            unfound_ids.append(uid)
+    if unfound_ids != []:
+        users += await guild.query_members(limit=None, user_ids=unfound_ids)
+    print("returning")
+    return users
 
 
 async def change_starboard_settings(
@@ -232,7 +248,8 @@ async def get_patron_levels(db, user_id):
 
 async def handle_role(bot, db, user_id, guild_id, role_id, add):
     guild = bot.get_guild(guild_id)
-    member = utils.get(guild.members, id=user_id)
+    #member = utils.get(guild.members, id=user_id)
+    member = functions.get_members([int(user_id)], guild)
     role = utils.get(guild.roles, id=role_id)
     if add:
         await member.add_roles(role)

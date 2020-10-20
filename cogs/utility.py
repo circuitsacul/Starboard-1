@@ -305,7 +305,8 @@ class Utility(commands.Cog):
         frozen = sql_message['is_frozen']
         forced = sql_message['is_forced']
         trashed = sql_message['is_trashed']
-        author = self.bot.get_user(sql_message['user_id'])
+        #author = self.bot.get_user(sql_message['user_id'])
+        author = functions.get_members([int(sql_message['user_id'])], ctx.guild)
 
         _channel = self.bot.get_channel(sql_message['channel_id'])
         try:

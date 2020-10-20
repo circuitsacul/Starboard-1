@@ -2,6 +2,7 @@ import discord
 import bot_config
 import disputils
 import functions
+from discord import utils
 from discord.ext import commands
 from events import leveling
 from typing import Union
@@ -20,8 +21,14 @@ async def get_leaderboard(bot, guild):
     ordered = []
     x = 0
 
+    member_objects = await functions.get_members(
+        [int(m['user_id']) for m in members],
+        guild
+    )
+
     for m in members:
-        mobject = bot.get_user(int(m['user_id']))
+        #mobject = bot.get_user(int(m['user_id']))
+        mobject = utils.get(member_objects, id=m['user_id'])
         if mobject is None or mobject.bot:
             continue
         x += 1
