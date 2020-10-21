@@ -364,7 +364,7 @@ async def on_command_error(ctx, error):
                 description=f"{type(error)}:\n{error}",
                 color=bot_config.ERROR_COLOR
             )
-            owner = bot.get_user(bot.owner_id)
+            owner = bot.get_user(bot_config.OWNER_ID)
             await owner.send(embed=owner_embed)
         else:
             await ctx.send(
