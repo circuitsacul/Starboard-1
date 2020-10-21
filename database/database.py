@@ -114,16 +114,16 @@ class CommonSql(aobject):
                 name, is_downvote)
                 VALUES($1,$2,$3,$4)"""
             )
-        self.create_aschannel = \
-            await conn.prepare(
-                """INSERT INTO aschannels (id, guild_id)
-                VALUES($1, $2)"""
-            )
-        self.create_asemoji = \
-            await conn.prepare(
-                """INSERT INTO asemojis (aschannel_id, name)
-                VALUES($1, $2)"""
-            )
+        #self.create_aschannel = \
+        #    await conn.prepare(
+        #        """INSERT INTO aschannels (id, guild_id)
+        #        VALUES($1, $2)"""
+        #    )
+        #self.create_asemoji = \
+        #    await conn.prepare(
+        #        """INSERT INTO asemojis (aschannel_id, name)
+        #        VALUES($1, $2)"""
+        #    )
         self.create_message = \
             await conn.prepare(
                 """INSERT INTO messages (id, guild_id,
