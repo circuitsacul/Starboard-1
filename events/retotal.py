@@ -21,8 +21,8 @@ async def needs_recount(bot, message):
             )
             sql_total = len(reactions)
 
-    if sql_total < 0.8*total:
-        # recount if the bot has logged less than 80% of the reactions
+    if sql_total < 0.3*total:
+        # recount if the bot has logged less than 30% of the reactions
         return True
     return False
 
