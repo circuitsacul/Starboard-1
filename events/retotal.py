@@ -1,3 +1,6 @@
+import functions
+
+
 # Check and recount stars on a message when necessary
 async def needs_recount(bot, message):
     get_reactions = \
@@ -48,21 +51,27 @@ async def recount_reactions(bot, message):
             elif user.bot:
                 continue
             to_add.append({
-                'user_id': user.id, 'name': name
+                'user': user, 'name': name
             })
 
     async with bot.db.lock:
         conn = bot.db.conn
         async with conn.transaction():
             for r in to_add:
+                await functions.check_or_create_existence(
+                    bot.db, conn, bot,
+                    guild_id=message.guild.id,
+                    user=r['user'], do_member=True
+                )
+
                 sql_r = await conn.fetchrow(
                     check_reaction, message.id, r['name'],
-                    r['user_id']
+                    r['user'].id
                 )
                 if sql_r is not None:
                     continue
 
                 await bot.db.q.create_reaction.fetch(
-                    message.guild.id, r['user_id'],
+                    message.guild.id, r['user'].id,
                     message.id, r['name']
                 )
