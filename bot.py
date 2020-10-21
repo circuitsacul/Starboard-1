@@ -322,11 +322,16 @@ async def on_command_error(ctx, error):
         error = "I don't have the permissions to do that"
     elif type(error) is discord.http.Forbidden:
         error = "I don't have the permissions to do that"
-    elif type(error) is discord.ext.commands.errors.CommandInvokeError and\
-            "Forbidden" in str(error):
-        error = "I don't have the permissions to do that"
+    elif type(error) is discord.ext.commands.errors.CommandInvokeError:
+        if "Forbidden" in str(error):
+            error = "I don't have the permissions to do that"
+        elif "ValueError" in str(error):
+            error = str(error)
     else:
         print(f"Error {type(error)}: {error}")
+        traceback.print_exception(
+            type(error), error, error.__traceback__, file=sys.stderr
+        )
 
         embed = discord.Embed(
             title='Error!',
@@ -371,15 +376,7 @@ async def on_command_error(ctx, error):
                 "This problem was not reported. Please consider "
                 "joining the support server and explaining what happened."
             )
-    # embed = discord.Embed(
-    #    title='Oops!',
-    #    description=f"```{error}```",
-    #    color=bot_config.MISTAKE_COLOR
-    # )
-
-    traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
-
-    await ctx.send(error)
+    await ctx.send(f"{error}")
 
 
 @bot.event
