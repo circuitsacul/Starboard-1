@@ -257,9 +257,9 @@ async def handle_role(bot, db, user_id, guild_id, role_id, add):
 
 
 async def get_limit(db, item, guild):
-    owner = guild.owner
+    owner_id = guild.owner_id
     max_of_item = bot_config.DEFAULT_LEVEL[item]
-    levels = await get_patron_levels(db, owner.id)
+    levels = await get_patron_levels(db, owner_id)
     for _patron in levels:
         product_id = _patron['product_id']
         temp_max = bot_config.PATRON_LEVELS[product_id]['perks'][item]
