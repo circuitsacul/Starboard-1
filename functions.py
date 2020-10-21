@@ -91,7 +91,7 @@ async def change_starboard_settings(
 
 async def fetch(bot, msg_id: int, channel: Union[discord.TextChannel, int]):
     if isinstance(channel, int):
-        channel = await bot.get_channel(int(channel))
+        channel = bot.get_channel(int(channel))
     if channel is None:
         return
 
