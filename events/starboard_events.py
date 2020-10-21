@@ -136,6 +136,9 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
     starboard_id = sql_starboard['id']
     starboard = bot.get_channel(int(starboard_id))
 
+    if starboard is None:
+        return
+
     async with db.lock:
         conn = await db.connect()
         async with conn.transaction():
