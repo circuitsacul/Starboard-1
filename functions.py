@@ -19,7 +19,6 @@ async def get_members(user_ids: Iterable[int], guild: discord.Guild):
             unfound_ids.append(uid)
     if unfound_ids != []:
         users += await guild.query_members(limit=None, user_ids=unfound_ids)
-    print("returning")
     return users
 
 
