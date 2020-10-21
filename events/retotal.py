@@ -58,6 +58,8 @@ async def recount_reactions(bot, message):
     # from the cache when recounting the stars on it
     await bot.db.cache.remove(message.id, message.guild.id)
     message = await functions.fetch(bot, message.id, message.guild.id)
+    if message is None:
+        return
 
     # [{'user_id': user_id, 'name': name}, ...]
     # other values can be determined from the message object
