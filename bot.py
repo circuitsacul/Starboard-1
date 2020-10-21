@@ -355,9 +355,9 @@ async def on_command_error(ctx, error):
         )
         if report:
             await ctx.send(
-                "I've reported the problem! Please still \
-                consider joining the support server and explaining \
-                what happened."
+                "I've reported the problem! Please still"
+                "consider joining the support server and explaining"
+                "what happened."
             )
             owner_embed = discord.Embed(
                 title=f'Error in {ctx.guild.name} ({ctx.guild.id})',
@@ -368,15 +368,17 @@ async def on_command_error(ctx, error):
             await owner.send(embed=owner_embed)
         else:
             await ctx.send(
-                "This problem was not reported. Please consider \
-                joining the support server and explaining what happened."
+                "This problem was not reported. Please consider "
+                "joining the support server and explaining what happened."
             )
-        return
     # embed = discord.Embed(
     #    title='Oops!',
     #    description=f"```{error}```",
     #    color=bot_config.MISTAKE_COLOR
     # )
+
+    traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+
     await ctx.send(error)
 
 
