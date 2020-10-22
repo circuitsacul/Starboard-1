@@ -58,7 +58,6 @@ async def needs_recount(bot, message):
 
 
 async def recount_reactions(bot, message):
-    print("Recounting")
     check_reaction = \
         """SELECT * FROM reactions WHERE
         message_id=$1 AND name=$2 AND user_id=$3"""
