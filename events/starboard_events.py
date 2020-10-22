@@ -40,7 +40,11 @@ async def handle_reaction(
     guild = bot.get_guild(guild_id)
     channel = utils.get(guild.channels, id=int(channel_id))
     #user = utils.get(guild.members, id=user_id)
-    user = (await functions.get_members([user_id], guild))[0]
+    _users = await functions.get_members([user_id], guild)
+    if len(_users) == 0:
+        user = None
+    else:
+        user = _users[0]
 
     if user is not None and user.bot:
         return
