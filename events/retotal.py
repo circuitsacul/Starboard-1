@@ -15,10 +15,11 @@ async def is_starboard_emoji(db, guild_id, emoji):
             all_emojis = []
             for starboard in starboards:
                 emojis = await conn.fetch(get_sbeemojis, starboard['id'])
-                all_emojis += [
-                    str(e['name']) if e['d_id'] is None
-                    else str(e['d_id']) for e in emojis
-                ]
+                #all_emojis += [
+                #    str(e['name']) if e['d_id'] is None
+                #    else str(e['d_id']) for e in emojis
+                #]
+                all_emojis += [e['name'] for e in emojis]
     return str(emoji) in all_emojis
 
 
@@ -32,9 +33,14 @@ async def needs_recount(bot, message):
 
     total = 0
     for r in message.reactions:
-        total += r.count
+        if r.custom_emoji:
+            name = str(r.emoji.id)
+        else:
+            name = str(r.emoji)
+        if await is_starboard_emoji(bot.db, message.guild.id, name):
+            total += r.count
 
-    if total <= 3:  # Don't recount if the message only has 1 reaction (or 0)
+    if total == 0:  # Don't recount if the message doesn't have reactions
         return False
 
     async with bot.db.lock:
@@ -45,13 +51,14 @@ async def needs_recount(bot, message):
             )
             sql_total = len(reactions)
 
-    if sql_total < 0.3*total:
-        # recount if the bot has logged less than 30% of the reactions
+    if sql_total < 0.1*total:
+        # recount if the bot has logged less than 10% of the reactions
         return True
     return False
 
 
 async def recount_reactions(bot, message):
+    print("Recounting")
     check_reaction = \
         """SELECT * FROM reactions WHERE
         message_id=$1 AND name=$2 AND user_id=$3"""
@@ -59,7 +66,7 @@ async def recount_reactions(bot, message):
     # hard to explain why, but I also remove the message
     # from the cache when recounting the stars on it
     await bot.db.cache.remove(message.id, message.guild.id)
-    message = await functions.fetch(bot, message.id, message.guild.id)
+    message = await functions.fetch(bot, message.id, message.channel)
     if message is None:
         return
 
@@ -74,9 +81,7 @@ async def recount_reactions(bot, message):
             name = str(reaction.emoji)
 
         if not await is_starboard_emoji(bot.db, message.guild.id, name):
-            print("Not starboard emoji")
             continue
-        print("Starboard emoji")
 
         async for user in reaction.users():
             if user is None:
