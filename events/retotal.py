@@ -27,6 +27,9 @@ async def needs_recount(bot, message):
     get_reactions = \
         """SELECT * FROM reactions WHERE message_id=$1"""
 
+    if message is None:
+        return False
+
     total = 0
     for r in message.reactions:
         total += r.count
