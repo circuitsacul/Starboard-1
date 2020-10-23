@@ -2,6 +2,7 @@ import discord
 import functions
 import bot_config
 import checks
+import settings
 from discord.ext import commands
 from typing import Union
 from .wizard import SetupWizard
@@ -136,46 +137,8 @@ class Starboard(commands.Cog):
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
     async def add_starboard(self, ctx, starboard: discord.TextChannel):
-        perms = starboard.permissions_for(ctx.guild.me)
-        if not perms.send_messages:
-            await ctx.send("I can't send messages there.")
-            return
-        elif not perms.add_reactions:
-            await ctx.send(
-                "I can't add reactions to messages there. "
-                "If you want me to automatically add reactions, "
-                "please enable this setting."
-            )
-
-        get_starboards = \
-            """SELECT * FROM starboards WHERE guild_id=$1"""
-
-        limit = await functions.get_limit(self.db, 'starboards', ctx.guild)
-
-        async with self.db.lock:
-            conn = await self.db.connect()
-            async with conn.transaction():
-                await functions.check_or_create_existence(
-                    self.db, conn, self.bot, guild_id=ctx.guild.id,
-                    user=ctx.message.author, do_member=True
-                )
-                rows = await conn.fetch(get_starboards, ctx.guild.id)
-                num_starboards = len(rows)
-
-                if num_starboards >= limit:
-                    await ctx.send(
-                        "You have reached your limit for starboards. "
-                        "Please upgrade by becoming a patron."
-                    )
-                else:
-                    exists = await functions.check_or_create_existence(
-                        self.db, conn, self.bot, guild_id=ctx.guild.id,
-                        starboard_id=starboard.id
-                    )
-                    if exists['se']:
-                        await ctx.send("That is already a starboard!")
-                    else:
-                        await ctx.send(f"Added starboard {starboard.mention}")
+        await settings.add_starboard(self.bot, starboard)
+        await ctx.send(f"Created starboard {starboard.mention}")
 
     @commands.command(
         name='remove', aliases=['r'],

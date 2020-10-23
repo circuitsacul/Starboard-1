@@ -4,3 +4,11 @@ class NoPremiumError(Exception):
 
 class AlreadyExists(Exception):
     pass
+
+
+class DoesNotExist(Exception):
+    pass
+
+
+class BotNeedsPerms(Exception):
+    pass

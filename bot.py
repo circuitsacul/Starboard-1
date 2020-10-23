@@ -10,6 +10,7 @@ import traceback
 import pretty_help
 import time
 import checks
+import errors
 from discord.ext import commands
 from pretty_help import PrettyHelp
 from asyncio import Lock
@@ -302,8 +303,17 @@ async def on_error(event, *args, **kwargs):
 
 @bot.event
 async def on_command_error(ctx, error):
+    error = error.original
     if type(error) is discord.ext.commands.errors.CommandNotFound:
         return
+    elif type(error) is errors.BotNeedsPerms:
+        pass
+    elif type(error) is errors.DoesNotExist:
+        pass
+    elif type(error) is errors.NoPremiumError:
+        pass
+    elif type(error) is errors.AlreadyExists:
+        pass
     elif type(error) is checks.WizzardRunningError:
         pass
     elif type(error) is discord.ext.commands.errors.BadArgument:
@@ -325,14 +335,14 @@ async def on_command_error(ctx, error):
     elif type(error) is discord.ext.commands.errors.BotMissingPermissions:
         pass
     elif type(error) is Forbidden:
-        error = "I don't have the permissions to do that"
+        error = "I don't have the permissions to do that!"
     elif type(error) is discord.http.Forbidden:
-        error = "I don't have the permissions to do that"
-    elif type(error) is discord.ext.commands.errors.CommandInvokeError:
-        if "Forbidden" in str(error):
-            error = "I don't have the permissions to do that"
-        elif "ValueError" in str(error):
-            error = str(error)
+        error = "I don't have the permissions to do that!"
+    #elif type(error) is discord.ext.commands.errors.CommandInvokeError:
+    #    if "Forbidden" in str(error):
+    #        error = "I don't have the permissions to do that"
+    #    elif "ValueError" in str(error):
+    #        error = str(error)
     else:
         print(f"Error {type(error)}: {error}")
         traceback.print_exception(
