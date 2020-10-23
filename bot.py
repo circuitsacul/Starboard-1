@@ -303,7 +303,10 @@ async def on_error(event, *args, **kwargs):
 
 @bot.event
 async def on_command_error(ctx, error):
-    error = error.original
+    try:
+        error = error.original
+    except:
+        pass
     if type(error) is discord.ext.commands.errors.CommandNotFound:
         return
     elif type(error) is errors.BotNeedsPerms:
