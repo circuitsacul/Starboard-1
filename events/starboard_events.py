@@ -2,6 +2,7 @@ import discord
 import functions
 import bot_config
 import asyncpg
+from events import retotal
 from discord.errors import Forbidden
 from discord import utils
 from events import leveling
@@ -38,7 +39,12 @@ async def handle_reaction(
 
     guild = bot.get_guild(guild_id)
     channel = utils.get(guild.channels, id=int(channel_id))
-    user = utils.get(guild.members, id=user_id)
+    #user = utils.get(guild.members, id=user_id)
+    _users = await functions.get_members([user_id], guild)
+    if len(_users) == 0:
+        user = None
+    else:
+        user = _users[0]
 
     if user is not None and user.bot:
         return
@@ -112,6 +118,10 @@ async def handle_starboards(db, bot, message_id, channel, message):
                     get_starboards, sql_message['guild_id']
                 )
 
+    needs_recount = await retotal.needs_recount(bot, message)
+    if needs_recount:
+        await retotal.recount_reactions(bot, message)
+
     if sql_message is not None:
         for sql_starboard in sql_starboards:
             await handle_starboard(
@@ -129,6 +139,9 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
 
     starboard_id = sql_starboard['id']
     starboard = bot.get_channel(int(starboard_id))
+
+    if starboard is None:
+        return
 
     async with db.lock:
         conn = await db.connect()
