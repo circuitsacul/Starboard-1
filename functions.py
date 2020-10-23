@@ -1,10 +1,25 @@
 from discord import utils
 from discord.ext import commands
-from typing import Tuple, Union
+from typing import Tuple, Union, Iterable
 import emoji
 import bot_config
 import discord
 import disputils
+import functions
+
+
+async def get_members(user_ids: Iterable[int], guild: discord.Guild):
+    unfound_ids = []
+    users = []
+    for uid in user_ids:
+        u = guild.get_member(uid)
+        if u is not None:
+            users.append(u)
+        else:
+            unfound_ids.append(uid)
+    if unfound_ids != []:
+        users += await guild.query_members(limit=None, user_ids=unfound_ids)
+    return users
 
 
 async def change_starboard_settings(
@@ -76,7 +91,7 @@ async def change_starboard_settings(
 
 async def fetch(bot, msg_id: int, channel: Union[discord.TextChannel, int]):
     if isinstance(channel, int):
-        channel = await bot.get_channel(int(channel))
+        channel = bot.get_channel(int(channel))
     if channel is None:
         return
 
@@ -232,7 +247,8 @@ async def get_patron_levels(db, user_id):
 
 async def handle_role(bot, db, user_id, guild_id, role_id, add):
     guild = bot.get_guild(guild_id)
-    member = utils.get(guild.members, id=user_id)
+    #member = utils.get(guild.members, id=user_id)
+    member = (await functions.get_members([int(user_id)], guild))[0]
     role = utils.get(guild.roles, id=role_id)
     if add:
         await member.add_roles(role)
@@ -241,9 +257,9 @@ async def handle_role(bot, db, user_id, guild_id, role_id, add):
 
 
 async def get_limit(db, item, guild):
-    owner = guild.owner
+    owner_id = guild.owner_id
     max_of_item = bot_config.DEFAULT_LEVEL[item]
-    levels = await get_patron_levels(db, owner.id)
+    levels = await get_patron_levels(db, owner_id)
     for _patron in levels:
         product_id = _patron['product_id']
         temp_max = bot_config.PATRON_LEVELS[product_id]['perks'][item]

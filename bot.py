@@ -36,6 +36,11 @@ _BETA_TOKEN = os.getenv('BETA_TOKEN')
 
 BETA = True if len(sys.argv) > 1 and sys.argv[1] == 'beta' else False
 TOKEN = _BETA_TOKEN if BETA and _BETA_TOKEN is not None else _TOKEN
+BOT_DESCRIPTION = """
+An advanced starboard that allows for multiple starboards and multiple emojis per starboard.
+To get started, run the "setup" command.
+If you need help, just mention me for a link to the support server.
+"""
 
 db = Database()
 
@@ -46,7 +51,7 @@ navigation = pretty_help.Navigation(
 
 intents = discord.Intents(
     messages=True, guilds=True, reactions=True,
-    members=True, emojis=True
+    emojis=True
 )
 
 
@@ -62,10 +67,11 @@ bot = Bot(
     db, command_prefix=functions._prefix_callable,
     help_command=PrettyHelp(
         color=bot_config.COLOR, no_category="Info", active=30,
-        navigation=navigation
+        navigation=navigation, show_index=False
     ),
     case_insensitive=True,
-    intents=intents
+    intents=intents,
+    description=BOT_DESCRIPTION
 )
 web_server = HttpWebHook(bot, db)
 
@@ -322,11 +328,16 @@ async def on_command_error(ctx, error):
         error = "I don't have the permissions to do that"
     elif type(error) is discord.http.Forbidden:
         error = "I don't have the permissions to do that"
-    elif type(error) is discord.ext.commands.errors.CommandInvokeError and\
-            "Forbidden" in str(error):
-        error = "I don't have the permissions to do that"
+    elif type(error) is discord.ext.commands.errors.CommandInvokeError:
+        if "Forbidden" in str(error):
+            error = "I don't have the permissions to do that"
+        elif "ValueError" in str(error):
+            error = str(error)
     else:
         print(f"Error {type(error)}: {error}")
+        traceback.print_exception(
+            type(error), error, error.__traceback__, file=sys.stderr
+        )
 
         embed = discord.Embed(
             title='Error!',
@@ -355,29 +366,23 @@ async def on_command_error(ctx, error):
         )
         if report:
             await ctx.send(
-                "I've reported the problem! Please still \
-                consider joining the support server and explaining \
-                what happened."
+                "I've reported the problem! Please still"
+                "consider joining the support server and explaining"
+                "what happened."
             )
             owner_embed = discord.Embed(
                 title=f'Error in {ctx.guild.name} ({ctx.guild.id})',
                 description=f"{type(error)}:\n{error}",
                 color=bot_config.ERROR_COLOR
             )
-            owner = bot.get_user(bot.owner_id)
+            owner = bot.get_user(bot_config.OWNER_ID)
             await owner.send(embed=owner_embed)
         else:
             await ctx.send(
-                "This problem was not reported. Please consider \
-                joining the support server and explaining what happened."
+                "This problem was not reported. Please consider "
+                "joining the support server and explaining what happened."
             )
-        return
-    # embed = discord.Embed(
-    #    title='Oops!',
-    #    description=f"```{error}```",
-    #    color=bot_config.MISTAKE_COLOR
-    # )
-    await ctx.send(error)
+    await ctx.send(f"{error}")
 
 
 @bot.event
