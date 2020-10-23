@@ -12,3 +12,7 @@ class DoesNotExist(Exception):
 
 class BotNeedsPerms(Exception):
     pass
+
+
+class InvalidArgument(Exception):
+    pass

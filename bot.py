@@ -314,6 +314,8 @@ async def on_command_error(ctx, error):
         pass
     elif type(error) is errors.AlreadyExists:
         pass
+    elif type(error) is errors.InvalidArgument:
+        pass
     elif type(error) is checks.WizzardRunningError:
         pass
     elif type(error) is discord.ext.commands.errors.BadArgument:

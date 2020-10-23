@@ -1,7 +1,9 @@
+from errors import DoesNotExist
 import functions
 import errors
 import discord
 from discord.ext import commands
+from typing import Union
 
 
 async def add_starboard(bot: commands.Bot, channel: discord.TextChannel):
@@ -85,4 +87,103 @@ async def remove_starboard(bot: commands.Bot, channel_id: int, guild_id: int):
 
             await conn.execute(
                 del_starboard, channel_id
+            )
+
+
+async def add_starboard_emoji(
+    bot: commands.Bot, starboard_id: int, guild: discord.Guild,
+    emoji: Union[discord.Emoji, str]
+):
+    check_sbemoji = \
+        """SELECT * FROM sbemojis WHERE name=$1 AND starboard_id=$2"""
+    get_all_sbemojis = \
+        """SELECT * FROM sbemojis WHERE starboard_id=$1"""
+    check_starboard = \
+        """SELECT * FROM starboards WHERE id=$1"""
+
+    if not isinstance(emoji, discord.Emoji):
+        if not functions.is_emoji(emoji):
+            raise errors.InvalidArgument(
+                "I don't recognize that emoji. If it is a custom "
+                "emoji, it has to be in this server."
+            )
+
+    emoji_name = str(emoji.id) if isinstance(
+        emoji, discord.Emoji) else str(emoji)
+    emoji_id = emoji.id if isinstance(
+        emoji, discord.Emoji) else None
+
+    limit = await functions.get_limit(bot.db, 'emojis', guild)
+    conn = bot.db.conn
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            sql_starboard = await conn.fetchrow(
+                check_starboard, starboard_id
+            )
+
+            if sql_starboard is None:
+                raise errors.DoesNotExist("That is not a starboard!")
+
+            all_sbemojis = await conn.fetch(
+                get_all_sbemojis, starboard_id
+            )
+
+            if len(all_sbemojis) + 1 > limit:
+                raise errors.NoPremiumError(
+                    "You have reached your limit for emojis "
+                    "on this starboard.\nTo add more emojis, "
+                    "the server owner must become a patron."
+                )
+
+            sbemoji = await conn.fetchrow(
+                check_sbemoji, emoji_name, starboard_id
+            )
+
+            if sbemoji is not None:
+                raise errors.AlreadyExists(
+                    "That is already a starboard emoji!"
+                )
+
+            await bot.db.q.create_sbemoji.fetch(
+                emoji_id, starboard_id, emoji_name, False
+            )
+
+
+async def remove_starboard_emoji(
+    bot: commands.Bot, starboard_id: int, guild: discord.Guild,
+    emoji: Union[discord.Emoji, str]
+):
+    check_sbemoji = \
+        """SELECT * FROM sbemojis WHERE name=$1 AND starboard_id=$2"""
+    check_starboard = \
+        """SELECT * FROM starboards WHERE id=$1"""
+    del_sbemoji = \
+        """DELETE FROM sbemojis WHERE name=$1 AND starboard_id=$2"""
+
+    emoji_name = str(emoji.id) if isinstance(emoji, discord.Emoji) else emoji
+    conn = bot.db.conn
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            sql_starboard = await conn.fetchrow(
+                check_starboard, starboard_id
+            )
+
+            if sql_starboard is None:
+                raise DoesNotExist(
+                    "That is not a starboard!"
+                )
+
+            sbemoji = await conn.fetchrow(
+                check_sbemoji, emoji_name, starboard_id
+            )
+
+            if sbemoji is None:
+                raise DoesNotExist(
+                    "That is not a starboard emoji!"
+                )
+
+            await conn.execute(
+                del_sbemoji, emoji_name, starboard_id
             )

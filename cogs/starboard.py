@@ -164,27 +164,8 @@ class Starboard(commands.Cog):
             await ctx.send("Cancelling")
             return
 
-        async with self.db.lock:
-            conn = await self.db.connect()
-            exists = True
-            async with conn.transaction():
-                await functions.check_or_create_existence(
-                    self.db, conn, self.bot, guild_id=ctx.guild.id,
-                    user=ctx.message.author, do_member=True
-                )
-                existed = await functions.check_or_create_existence(
-                    self.db, conn, self.bot, starboard_id=starboard_id,
-                    guild_id=ctx.guild.id, create_new=False
-                )
-                if existed['se'] is False:
-                    await ctx.send("That is not a starboard!")
-                    exists = False
-                else:
-                    remove_starboard = """DELETE FROM starboards WHERE id=$1"""
-                    await conn.execute(remove_starboard, starboard_id)
-
-        if exists:
-            await ctx.send("Removed starboard")
+        await settings.remove_starboard(self.bot, starboard_id, ctx.guild.id)
+        await ctx.send("Removed starboard")
 
     @commands.command(
         name='addEmoji', aliases=['ae'],
@@ -198,65 +179,10 @@ class Starboard(commands.Cog):
         self, ctx, starboard: discord.TextChannel,
         emoji: Union[discord.Emoji, str]
     ):
-        check_sbemoji = \
-            """SELECT * FROM sbemojis WHERE name=$1 AND starboard_id=$2"""
-        get_all_sbemoji = \
-            """SELECT * FROM sbemojis WHERE starboard_id=$1"""
-        if not isinstance(emoji, discord.Emoji):
-            if not functions.is_emoji(emoji):
-                await ctx.send(
-                    "I don't recognize that emoji. "
-                    "Please make sure it is correct, and if it's a "
-                    "custom emoji it has to be in this server."
-                )
-                return
-        emoji_name = str(emoji.id) if isinstance(
-            emoji, discord.Emoji) else str(emoji)
-        emoji_id = emoji.id if isinstance(
-            emoji, discord.Emoji) else None
-
-        limit = await functions.get_limit(self.db, 'emojis', ctx.guild)
-
-        async with self.db.lock:
-            conn = await self.db.connect()
-            added = False
-            async with conn.transaction():
-                await functions.check_or_create_existence(
-                    self.db, conn, self.bot, guild_id=ctx.guild.id,
-                    user=ctx.message.author, do_member=True
-                )
-                exists = await functions.check_or_create_existence(
-                    self.db, conn, self.bot, starboard_id=starboard.id,
-                    guild_id=ctx.guild.id, create_new=False
-                )
-                if not exists['se']:
-                    await ctx.send("That is not a starboard!")
-                else:
-                    rows = await conn.fetch(
-                        check_sbemoji, emoji_name, starboard.id
-                    )
-                    exists = len(rows) > 0
-                    if exists:
-                        await ctx.send(
-                            "That emoji is already on that starboard!"
-                        )
-                    else:
-                        rows = await conn.fetch(get_all_sbemoji, starboard.id)
-                        if len(rows) >= limit:
-                            await ctx.send(
-                                "You have reached your limit for emojis on "
-                                "this starboard. Please upgrade by becoming "
-                                "a patron."
-                            )
-                        else:
-                            await self.db.q.create_sbemoji.fetch(
-                                emoji_id,
-                                starboard.id, emoji_name, False
-                            )
-                            added = True
-
-        if added:
-            await ctx.send(f"Added {emoji} to {starboard.mention}")
+        await settings.add_starboard_emoji(
+            self.bot, starboard.id, ctx.guild, emoji
+        )
+        await ctx.send(f"Added {emoji} to {starboard.mention}")
 
     @commands.command(
         name='removeEmoji', aliases=['re'],
@@ -270,40 +196,10 @@ class Starboard(commands.Cog):
         self, ctx, starboard: discord.TextChannel,
         emoji: Union[discord.Emoji, str]
     ):
-        get_sbemoji = \
-            """SELECT * FROM sbemojis WHERE name=$1 AND starboard_id=$2"""
-        del_sbemoji = \
-            """DELETE FROM sbemojis WHERE id=$1"""
-        emoji_name = str(emoji.id) if isinstance(emoji, discord.Emoji) else emoji
-        # emoji_id = emoji.id if isinstance(emoji, discord.Emoji) else None
-
-        async with self.db.lock:
-            conn = await self.db.connect()
-            removed = False
-            async with conn.transaction():
-                await functions.check_or_create_existence(
-                    self.db, conn, self.bot, guild_id=ctx.guild.id,
-                    user=ctx.message.author, do_member=True
-                )
-                exists = await functions.check_or_create_existence(
-                    self.db, conn, self.bot, starboard_id=starboard.id,
-                    guild_id=ctx.guild.id, create_new=False
-                )
-                if not exists['se']:
-                    await ctx.send("That is not a starboard!")
-                else:
-                    rows = await conn.fetch(
-                        get_sbemoji, emoji_name, starboard.id
-                    )
-                    if len(rows) == 0:
-                        await ctx.send("That is not a starboard emoji!")
-                    else:
-                        sbemoji_id = rows[0]['id']
-                        await conn.execute(del_sbemoji, sbemoji_id)
-                        removed = True
-
-        if removed:
-            await ctx.send(f"Removed {emoji} from {starboard.mention}")
+        await settings.remove_starboard_emoji(
+            self.bot, starboard.id, ctx.guild, emoji
+        )
+        await ctx.send(f"Remove {emoji} from {starboard.mention}")
 
     @commands.command(
         name='requiredStars', aliases=['rs', 'required'],

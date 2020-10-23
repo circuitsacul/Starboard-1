@@ -4,6 +4,7 @@ import functions
 import asyncio
 import bot_config
 import emoji as emojilib
+import settings
 from asyncio import sleep
 from discord import utils
 from functions import change_starboard_settings
@@ -56,7 +57,6 @@ class SetupWizard:
 
     async def new_starboard(self):
         get_starboards = """SELECT * FROM starboards WHERE guild_id=$1"""
-        check_starboard = """SELECT * FROM starboards WHERE id=$1"""
 
         async with self.bot.db.lock:
             conn = self.bot.db.conn
@@ -106,19 +106,16 @@ class SetupWizard:
         if channel is None:
             return
 
-        async with self.bot.db.lock:
-            conn = self.bot.db.conn
-            async with conn.transaction():
-                sql_starboard = await conn.fetchrow(
-                    check_starboard, channel.id
-                )
-                status = True
-                if sql_starboard is None:
-                    await self.bot.db.q.create_starboard.fetch(
-                        channel.id, self.ctx.guild.id
-                    )
-                else:
-                    status = False
+        error = None
+        try:
+            await settings.add_starboard(
+                self.bot, channel
+            )
+            status = True
+        except Exception as e:
+            status = False
+            error = str(e)
+
         if status is True:
             await self.message.edit(
                 embed=await self._get_embed(
@@ -129,9 +126,8 @@ class SetupWizard:
             await sleep(1)
             await self._change_starboard_settings(channel)
         else:
-            await self._error(
-                "That is already a starboard!",
-            )
+            await self._error(error)
+            await self.new_starboard()
 
     async def modify_starboard(self):
         channel = await self._get_starboard("What starboard should I modify?")
@@ -149,26 +145,21 @@ class SetupWizard:
         await self._change_starboard_settings(channel)
 
     async def delete_starboard(self):
-        remove_starboard = \
-            """DELETE FROM starboards WHERE id=$1"""
         channel = await self._get_starboard("What starboard should I delete?")
         if channel is False:
-            await self._error("You con't have any starboards yet.")
+            await self._error("You don't have any starboards yet.")
             return
         if channel is None:
             return
 
-        exists = await self._check_starboard(channel.id)
-        if exists is False:
-            await self._error(
-                "That is not a starboard!",
+        try:
+            await settings.remove_starboard(
+                self.bot, channel.id, channel.guild.id
             )
+        except Exception as e:
+            await self._error(str(e))
             return await self.delete_starboard()
 
-        async with self.bot.db.lock:
-            conn = self.bot.db.conn
-            async with conn.transaction():
-                await conn.execute(remove_starboard, channel.id)
         await self.message.edit(embed=await self._get_embed(
             f"Deleted {channel.mention}",
             self.color
@@ -222,8 +213,6 @@ class SetupWizard:
 
     async def _add_emoji(self, channel):
         get_emojis = """SELECT * FROM sbemojis WHERE starboard_id=$1"""
-        check_emoji = """SELECT * FROM sbemojis WHERE starboard_id=$1
-        AND name=$2"""
 
         emoji_limit = await get_limit(
             self.bot.db, 'emojis', self.ctx.guild
@@ -248,52 +237,36 @@ class SetupWizard:
         if args is None:
             return
         emoji_id, emoji_name = args
-        emoji_str = str(emoji_id) if emoji_id is not None else emoji_name
+        if emoji_id is not None:
+            emoji = utils.get(channel.guild.emojis, id=emoji_id)
+        else:
+            emoji = emoji_name
 
-        async with self.bot.db.lock:
-            conn = self.bot.db.conn
-            async with conn.transaction():
-                sql_emoji = await conn.fetchrow(
-                    check_emoji, channel.id, emoji_str
-                )
-                if sql_emoji is None:
-                    await self.bot.db.q.create_sbemoji.fetch(
-                        emoji_id, channel.id, emoji_str, False
-                    )
-        if sql_emoji is not None:
-            await self._error(
-                "That emoji already exists!",
+        try:
+            await settings.add_starboard_emoji(
+                self.bot, channel.id, channel.guild, emoji
             )
+        except Exception as e:
+            await self._error(str(e))
 
     async def _remove_emoji(self, channel):
-        check_emoji = """SELECT * FROM sbemojis WHERE starboard_id=$1
-        AND name=$2"""
-        delete_emoji = """DELETE FROM sbemojis WHERE starboard_id=$1
-        AND name=$2"""
-
         args = await self._get_emoji(
             "What emoij do you want to delete?"
         )
         if args is None:
             return
         emoji_id, emoji_name = args
-        emoji_str = str(emoji_id) if emoji_id is not None else emoji_name
+        if emoji_id is not None:
+            emoji = utils.get(channel.guild.emojis, id=emoji_id)
+        else:
+            emoji = emoji_name
 
-        async with self.bot.db.lock:
-            conn = self.bot.db.conn
-            async with conn.transaction():
-                sql_emoji = await conn.fetchrow(
-                    check_emoji, channel.id, emoji_str
-                )
-                if sql_emoji is not None:
-                    await conn.execute(
-                        delete_emoji, channel.id,
-                        emoji_str
-                    )
-        if sql_emoji is None:
-            await self._error(
-                "That emoji does not exist on this starboard!",
+        try:
+            await settings.remove_starboard_emoji(
+                self.bot, channel.id, channel.guild, emoji
             )
+        except Exception as e:
+            await self._error(str(e))
 
     async def _get_emoji(self, prompt):
         inp = await self._input(prompt)
