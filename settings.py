@@ -65,6 +65,8 @@ async def add_starboard(bot: commands.Bot, channel: discord.TextChannel):
 
             await bot.db.q.create_starboard.fetch(channel.id, guild.id)
 
+    await add_starboard_emoji(bot, channel.id, channel.guild, '⭐')
+
 
 async def remove_starboard(bot: commands.Bot, channel_id: int, guild_id: int):
     check_starboard = \
