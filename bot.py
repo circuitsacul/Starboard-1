@@ -305,7 +305,7 @@ async def on_error(event, *args, **kwargs):
 async def on_command_error(ctx, error):
     try:
         error = error.original
-    except:
+    except Exception:
         pass
     if type(error) is discord.ext.commands.errors.CommandNotFound:
         return
