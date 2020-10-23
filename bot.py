@@ -36,6 +36,11 @@ _BETA_TOKEN = os.getenv('BETA_TOKEN')
 
 BETA = True if len(sys.argv) > 1 and sys.argv[1] == 'beta' else False
 TOKEN = _BETA_TOKEN if BETA and _BETA_TOKEN is not None else _TOKEN
+BOT_DESCRIPTION = """
+An advanced starboard that allows for multiple starboards and multiple emojis per starboard.
+To get started, run the "setup" command.
+If you need help, just mention me for a link to the support server.
+"""
 
 db = Database()
 
@@ -62,10 +67,11 @@ bot = Bot(
     db, command_prefix=functions._prefix_callable,
     help_command=PrettyHelp(
         color=bot_config.COLOR, no_category="Info", active=30,
-        navigation=navigation
+        navigation=navigation, show_index=False
     ),
     case_insensitive=True,
-    intents=intents
+    intents=intents,
+    description=BOT_DESCRIPTION
 )
 web_server = HttpWebHook(bot, db)
 
