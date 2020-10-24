@@ -109,24 +109,24 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
                     sql_receiver['user_id'], guild_id
                 )
 
-    if leveled_up and send_lvl_msgs:
-        embed = discord.Embed(
-            title="Level Up!",
-            description=f"You've reached **{new_xp} XP** "
-            f"and are now **level {new_lvl}**!",
-            color=bot_config.COLOR
-        )
-        embed.set_thumbnail(url="https://i.ibb.co/bvYZ8V8/dizzy-1f4ab.png")
-        embed.set_author(name=guild.name, icon_url=guild.icon_url)
-        embed.set_footer(
-            text="Tip: Disable these messages by running"
-            " sb!profile lum false"
-        )
-        embed.timestamp = datetime.datetime.now()
-        try:
-            await receiver.send(
-                embed=embed
-            )
-            pass
-        except (discord.errors.HTTPException, AttributeError):
-            pass
+    #if leveled_up and send_lvl_msgs:
+    #    embed = discord.Embed(
+    #        title="Level Up!",
+    #        description=f"You've reached **{new_xp} XP** "
+    #        f"and are now **level {new_lvl}**!",
+    #        color=bot_config.COLOR
+    #    )
+    #    embed.set_thumbnail(url="https://i.ibb.co/bvYZ8V8/dizzy-1f4ab.png")
+    #    embed.set_author(name=guild.name, icon_url=guild.icon_url)
+    #    embed.set_footer(
+    #        text="Tip: Disable these messages by running"
+    #        " sb!profile lum false"
+    #    )
+    #    embed.timestamp = datetime.datetime.now()
+    #    try:
+    #        await receiver.send(
+    #            embed=embed
+    #        )
+    #        pass
+    #    except (discord.errors.HTTPException, AttributeError):
+    #        pass
