@@ -98,7 +98,7 @@ class SetupWizard:
                     send_messages=True,
                     embed_links=True,
                     add_reactions=True,
-                    read_message_history=True
+                    read_message_history=True,
                 )
         elif new_or_used == 2:
             channel = await self._get_channel("What channel should I use?")
