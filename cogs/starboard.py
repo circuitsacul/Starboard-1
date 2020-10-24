@@ -358,7 +358,8 @@ class Starboard(commands.Cog):
     @commands.bot_has_permissions(
         manage_messages=True, manage_channels=True,
         embed_links=True, add_reactions=True,
-        read_messages=True, read_message_history=True
+        read_messages=True, read_message_history=True,
+        manage_roles=True
     )
     @commands.guild_only()
     async def run_setup_wizard(self, ctx):
