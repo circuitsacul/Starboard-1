@@ -43,6 +43,7 @@ These directions are for self-hosting the bot. If you just want a working bot, y
 If you see a bug or possible improvement and want to help out, you can fork this repostory, make the edits, and then create a pull request. Make sure to look at the guidelines in `CONTRIBUTING.md`. I really appreciate any help that you can give.
 
 ## Bot Lists
+[![Discord Bots](https://top.gg/api/widget/700796664276844612.svg)](https://top.gg/bot/700796664276844612)
 [![Starboard](https://bots.ondiscord.xyz/bots/700796664276844612/embed?theme=dark&showGuilds=true)](https://bots.ondiscord.xyz/bots/700796664276844612)
 [![Bots for Discord](https://botsfordiscord.com/api/bot/700796664276844612/widget)](https://botsfordiscord.com/bots/700796664276844612)
 [![Discord Boats](https://discord.boats/api/widget/700796664276844612)](https://discord.boats/bot/700796664276844612)
