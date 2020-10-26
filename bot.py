@@ -23,7 +23,7 @@ from events import starboard_events
 from database.database import Database
 from api import post_guild_count
 
-from cogs.stats import StatcordPost
+from cogs.stats import StatcordPost, TopGG
 
 from cogs.starboard import Starboard
 from cogs.owner import Owner
@@ -420,6 +420,7 @@ async def main():
     bot.add_cog(Levels(bot, db))
     bot.add_cog(Settings(bot, db))
     bot.add_cog(StatcordPost(bot))
+    bot.add_cog(TopGG(bot))
     await bot.start(TOKEN)
 
 

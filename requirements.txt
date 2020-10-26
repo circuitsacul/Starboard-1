@@ -5,3 +5,4 @@ discord-pretty-help
 disputils
 aiohttp-requests
 statcord.py
+dblpy

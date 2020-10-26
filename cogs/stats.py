@@ -3,8 +3,11 @@ from discord.ext import commands
 from bot_config import OWNER_ID
 import statcord
 import os
+import dbl
+
 
 STATCORD_TOKEN = os.getenv("STATCORD_TOKEN")
+TOP_TOKEN = os.getenv("TOP_TOKEN")
 
 
 class StatcordPost(commands.Cog):
@@ -16,6 +19,19 @@ class StatcordPost(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command(self, ctx):
-        if ctx.message.author.id == OWNER_ID:
+        if str(ctx.message.author.id) == str(OWNER_ID):
             return
         self.api.command_run(ctx)
+
+
+class TopGG(commands.Cog):
+    """Handles interactions with the top.gg API"""
+
+    def __init__(self, bot):
+        self.bot = bot
+        self.token = TOP_TOKEN
+        self.dblpy = dbl.DBLClient(self.bot, self.token, autopost=True)
+        # Autopost will post your guild count every 30 minutes
+
+    async def on_guild_post():
+        print("Server count posted successfully")
