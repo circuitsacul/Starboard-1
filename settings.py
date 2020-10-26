@@ -1,3 +1,4 @@
+from discord.ext.commands.core import guild_only
 from errors import DoesNotExist
 import functions
 import errors
@@ -43,6 +44,10 @@ async def add_starboard(bot: commands.Bot, channel: discord.TextChannel):
 
     async with bot.db.lock:
         async with conn.transaction():
+            await functions.check_or_create_existence(
+                bot.db, conn, bot, channel.guild.id
+            )
+
             all_starboards = await conn.fetch(
                 get_starboards, guild.id
             )
