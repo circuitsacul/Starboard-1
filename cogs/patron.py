@@ -75,6 +75,7 @@ class PatronCommands(commands.Cog):
     )
     async def show_donate_info(self, ctx):
         await ctx.send("There is currently no functioning patron system.")
+        return
         embed = discord.Embed(color=COLOR, title='Patron/Donation Info')
         embed.description = f"Click [here]({bot_config.DONATE})"\
             "to become a patron!"\
