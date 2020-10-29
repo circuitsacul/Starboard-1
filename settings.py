@@ -1,4 +1,3 @@
-from discord.ext.commands.core import guild_only
 from errors import DoesNotExist
 import functions
 import errors
