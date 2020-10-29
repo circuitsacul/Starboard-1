@@ -2,6 +2,7 @@ import discord
 import functions
 import bot_config
 from discord.ext import commands
+from .wizard import SetupWizard
 
 
 async def change_user_setting(
@@ -152,3 +153,49 @@ class Settings(commands.Cog):
             await ctx.send(f"Removed prefix `{prefix}`")
         else:
             await ctx.send(status_msg)
+
+    @commands.command(
+        name='setup', aliases=['configure', 'config'],
+        description="A setup wizard to make things easier for you",
+        brief='A setup wizard'
+    )
+    @commands.has_permissions(manage_channels=True, manage_messages=True)
+    @commands.bot_has_permissions(
+        manage_messages=True, embed_links=True,
+        add_reactions=True, read_messages=True,
+        read_message_history=True
+    )
+    @commands.bot_has_guild_permissions(
+        manage_channels=True, manage_roles=True
+    )
+    @commands.guild_only()
+    async def run_setup_wizard(self, ctx):
+        async with self.bot.db.lock:
+            conn = self.bot.db.conn
+            async with conn.transaction():
+                await functions.check_or_create_existence(
+                    self.db, conn, self.bot, guild_id=ctx.guild.id,
+                    user=ctx.message.author, do_member=True
+                )
+
+        wizard = SetupWizard(ctx, self.bot)
+        can_run = True
+        async with self.bot.wizzard_lock():
+            if ctx.guild.id in self.bot.running_wizzards:
+                can_run = False
+            else:
+                self.bot.running_wizzards.append(ctx.guild.id)
+
+        try:
+            if can_run:
+                await wizard.run()
+            else:
+                await ctx.send(
+                    "A setup wizard is already running for this server!"
+                )
+        except Exception:
+            await ctx.send("Wizard exited due to a problem.")
+
+        if can_run:
+            async with self.bot.wizzard_lock():
+                self.bot.running_wizzards.remove(ctx.guild.id)

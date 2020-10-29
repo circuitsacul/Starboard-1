@@ -28,10 +28,10 @@ class Starboard(commands.Cog):
         self.bot = bot
         self.db = db
 
-    @commands.command(
+    @commands.group(
         name='starboards', aliases=['boards', 'b'],
         description='List all the starboars for this server',
-        brief='List starboards'
+        brief='List starboards', invoke_without_command=True
     )
     @commands.guild_only()
     async def list_starboards(self, ctx):
@@ -80,13 +80,14 @@ class Starboard(commands.Cog):
         else:
             await ctx.send(embed=embed)
 
-    @commands.command(
-        name='settings', aliases=['s'],
-        description='View all of the settings for a specific starboards',
-        brief='View settings for startboard'
+    @commands.group(
+        name='settings', aliases=['s', 'changeSetting', 'cs'],
+        description='View and change all of the settings for a specific '
+        'starboards',
+        brief='View settings for startboard', invoke_without_command=True
     )
     @commands.guild_only()
-    async def get_starboard_settings(
+    async def sb_settings(
         self, ctx, starboard: discord.TextChannel
     ):
         get_starboard = """SELECT * FROM starboards WHERE id=$1"""
@@ -128,7 +129,7 @@ class Starboard(commands.Cog):
                     )
                     await ctx.send(embed=embed)
 
-    @commands.command(
+    @list_starboards.command(
         name='add', aliases=['a'],
         description='Add a starboard',
         brief='Add a starboard'
@@ -140,7 +141,7 @@ class Starboard(commands.Cog):
         await settings.add_starboard(self.bot, starboard)
         await ctx.send(f"Created starboard {starboard.mention}")
 
-    @commands.command(
+    @list_starboards.command(
         name='remove', aliases=['r'],
         description='Remove a starboard',
         brief='Remove a starboard'
@@ -167,7 +168,7 @@ class Starboard(commands.Cog):
         await settings.remove_starboard(self.bot, starboard_id, ctx.guild.id)
         await ctx.send("Removed starboard")
 
-    @commands.command(
+    @sb_settings.command(
         name='addEmoji', aliases=['ae'],
         description='Add emoji to a starboard',
         brief='Add emoji to starboard'
@@ -184,7 +185,7 @@ class Starboard(commands.Cog):
         )
         await ctx.send(f"Added {emoji} to {starboard.mention}")
 
-    @commands.command(
+    @sb_settings.command(
         name='removeEmoji', aliases=['re'],
         description='Removes a starboard emoji',
         brief='Removes a starboard emoji'
@@ -201,7 +202,7 @@ class Starboard(commands.Cog):
         )
         await ctx.send(f"Remove {emoji} from {starboard.mention}")
 
-    @commands.command(
+    @sb_settings.command(
         name='requiredStars', aliases=['rs', 'required'],
         description='Set\'s how many stars are needed before a message '
         'appears on the starboard',
@@ -228,7 +229,7 @@ class Starboard(commands.Cog):
                 f"Set requiredStars to {value} for {starboard.mention}"
             )
 
-    @commands.command(
+    @sb_settings.command(
         name='requiredToLose', aliases=['rtl'],
         description='Set\'s how few stars a message needs before the '
         'messages is removed from the starboard',
@@ -257,7 +258,7 @@ class Starboard(commands.Cog):
                 f"for {starboard.mention}"
             )
 
-    @commands.command(
+    @sb_settings.command(
         name='selfStar', aliases=['ss'],
         description='Set wether or not to allow a user to star '
         'their own message for starboard',
@@ -279,7 +280,7 @@ class Starboard(commands.Cog):
         else:
             await ctx.send(f"Set selfStar to {value} for {starboard.mention}")
 
-    @commands.command(
+    @sb_settings.command(
         name='linkEdits', aliases=['le'],
         description='Sets wether or not the bot should edit the starboard '
         'message if the user edits it',
@@ -301,7 +302,7 @@ class Starboard(commands.Cog):
         else:
             await ctx.send(f"Set linkEdits to {value} for {starboard.mention}")
 
-    @commands.command(
+    @sb_settings.command(
         name='linkDeletes', aliases=['ld'],
         description='Sets wether or not the bot should delete the starboard '
         'message if the original is deleted',
@@ -325,7 +326,7 @@ class Starboard(commands.Cog):
                 f"Set linkDeletes to {value} for {starboard.mention}"
             )
 
-    @commands.command(
+    @sb_settings.command(
         name='botsOnStarboard', aliases=['botsOnSb', 'bos'],
         description="Sets wether or not to allow bot messages "
         "to be put on the starboard",
@@ -348,49 +349,3 @@ class Starboard(commands.Cog):
             await ctx.send(
                 f"Set botsOnStarboard to {value} for {starboard.mention}"
             )
-
-    @commands.command(
-        name='setup', aliases=['configure', 'config'],
-        description="A setup wizard to make things easier for you",
-        brief='A setup wizard'
-    )
-    @commands.has_permissions(manage_channels=True, manage_messages=True)
-    @commands.bot_has_permissions(
-        manage_messages=True, embed_links=True,
-        add_reactions=True, read_messages=True,
-        read_message_history=True
-    )
-    @commands.bot_has_guild_permissions(
-        manage_channels=True, manage_roles=True
-    )
-    @commands.guild_only()
-    async def run_setup_wizard(self, ctx):
-        async with self.bot.db.lock:
-            conn = self.bot.db.conn
-            async with conn.transaction():
-                await functions.check_or_create_existence(
-                    self.db, conn, self.bot, guild_id=ctx.guild.id,
-                    user=ctx.message.author, do_member=True
-                )
-
-        wizard = SetupWizard(ctx, self.bot)
-        can_run = True
-        async with self.bot.wizzard_lock():
-            if ctx.guild.id in self.bot.running_wizzards:
-                can_run = False
-            else:
-                self.bot.running_wizzards.append(ctx.guild.id)
-
-        try:
-            if can_run:
-                await wizard.run()
-            else:
-                await ctx.send(
-                    "A setup wizard is already running for this server!"
-                )
-        except Exception:
-            await ctx.send("Wizard exited due to a problem.")
-
-        if can_run:
-            async with self.bot.wizzard_lock():
-                self.bot.running_wizzards.remove(ctx.guild.id)
