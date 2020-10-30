@@ -2,6 +2,7 @@
 import discord
 import bot_config
 from discord.ext import commands
+from typing import Union
 
 
 class AutoStarChannels(commands.Cog):
@@ -44,3 +45,25 @@ class AutoStarChannels(commands.Cog):
         )
 
         await ctx.send(embed=embed)
+
+    @list_aschannels.command(
+        name='add', aliases=['a'],
+        description='Sets a channel as an AutoStarChannel',
+        breif='Add an AutoStarChannel'
+    )
+    @commands.has_permissions(manage_channels=True)
+    @commands.guild_only()
+    async def add_aschannel(self, ctx, channel: discord.TextChannel):
+        pass
+
+    @list_aschannels.command(
+        name='remove', aliases=['r', 'delete', 'del', 'd'],
+        description="Remove an AutoStarChannel",
+        brief="Remove an AutoStarChannel"
+    )
+    @commands.has_permissions(manage_channel=True)
+    @commands.guild_only()
+    async def remove_aschannel(
+        self, ctx, channel: Union[discord.TextChannel, int]
+    ):
+        pass
