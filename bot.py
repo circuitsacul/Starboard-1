@@ -31,6 +31,7 @@ from cogs.utility import Utility
 from cogs.patron import PatronCommands, HttpWebHook
 from cogs.levels import Levels
 from cogs.settings import Settings
+from cogs.aschannels import AutoStarChannels
 
 _TOKEN = os.getenv('TOKEN')
 _BETA_TOKEN = os.getenv('BETA_TOKEN')
@@ -414,6 +415,7 @@ async def main():
         bot.loop.create_task(post_guild_count.loop_post(bot))
 
     bot.add_cog(Starboard(bot, db))
+    bot.add_cog(AutoStarChannels(bot))
     bot.add_cog(Owner(bot, db))
     bot.add_cog(Utility(bot, db))
     bot.add_cog(PatronCommands(bot, db))
