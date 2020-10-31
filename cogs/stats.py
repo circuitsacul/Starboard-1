@@ -35,7 +35,7 @@ class TopGG(commands.Cog):
         # Autopost will post your guild count every 30 minutes
 
     async def on_guild_post():
-        pass
+        print("Posted to top.gg")
 
     @commands.Cog.listener()
     async def on_dbl_vote(self, data):
