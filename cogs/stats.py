@@ -41,3 +41,8 @@ class TopGG(commands.Cog):
     async def on_dbl_vote(self, data):
         pprint(data)
         print(dir(data))
+
+    @commands.Cog.listener()
+    async def on_dbl_test(data):
+        print("Test!")
+        pprint(data)
