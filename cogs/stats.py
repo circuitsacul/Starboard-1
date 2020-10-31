@@ -4,6 +4,7 @@ from bot_config import OWNER_ID
 import statcord
 import os
 import dbl
+from pprint import pprint
 
 
 STATCORD_TOKEN = os.getenv("STATCORD_TOKEN")
@@ -34,4 +35,9 @@ class TopGG(commands.Cog):
         # Autopost will post your guild count every 30 minutes
 
     async def on_guild_post():
-        print("Server count posted successfully")
+        pass
+
+    @commands.Cog.listener()
+    async def on_dbl_vote(self, data):
+        pprint(data)
+        print(dir(data))
