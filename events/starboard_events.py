@@ -28,6 +28,8 @@ async def handle_reaction(
         """SELECT * FROM messages WHERE id=$1"""
     get_user = \
         """SELECT * FROM users WHERE id=$1"""
+    get_member = \
+        """SELECT * FROM members WHERE user_id=$1 and guild_id=$2"""
 
     async with db.lock:
         conn = await db.connect()
@@ -36,6 +38,7 @@ async def handle_reaction(
                 db, conn, _message_id
             )
             sql_user = await conn.fetchrow(get_user, user_id)
+            sql_member = await conn.fetchrow(get_member, user_id, guild_id)
 
     channel_id = orig_channel_id if orig_channel_id is not None \
         else _channel_id
@@ -45,7 +48,7 @@ async def handle_reaction(
     # user = utils.get(guild.members, id=user_id)
 
     user = None
-    if sql_user is None:
+    if sql_user is None or sql_member is None:
         _users = await functions.get_members([user_id], guild)
         if len(_users) == 0:
             user = None
@@ -62,7 +65,7 @@ async def handle_reaction(
 
         if user is not None and user.bot:
             return
-    else:
+    elif sql_user is not None:
         if sql_user['is_bot']:
             return
 
