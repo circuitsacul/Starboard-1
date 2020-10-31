@@ -179,6 +179,11 @@ async def stats_for_bot(ctx):
 
 # Events
 @bot.event
+async def on_dbl_test(data):
+    print("Test!")
+
+
+@bot.event
 async def on_guild_join(guild):
     support_server = bot.get_guild(
         bot_config.SUPPORT_SERVER_ID
