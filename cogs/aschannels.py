@@ -1,6 +1,7 @@
 # aschannels stand for auto-star channels
 import discord
 import bot_config
+import settings
 from discord.ext import commands
 from typing import Union
 
@@ -54,16 +55,24 @@ class AutoStarChannels(commands.Cog):
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
     async def add_aschannel(self, ctx, channel: discord.TextChannel):
-        pass
+        await settings.add_aschannel(self.bot, channel)
+        await ctx.send(
+            f"Created AutoStarChannel {channel.mention}"
+        )
 
     @aschannels.command(
         name='remove', aliases=['r', 'delete', 'del', 'd'],
         description="Remove an AutoStarChannel",
         brief="Remove an AutoStarChannel"
     )
-    @commands.has_permissions(manage_channel=True)
+    @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
     async def remove_aschannel(
         self, ctx, channel: Union[discord.TextChannel, int]
     ):
-        pass
+        channel_id = channel.id if isinstance(channel, discord.TextChannel)\
+            else channel
+        await settings.remove_aschannel(self.bot, channel_id, ctx.guild.id)
+        await ctx.send(
+            f"Removed AutoStar Channel {channel}"
+        )
