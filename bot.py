@@ -19,6 +19,7 @@ dotenv.load_dotenv()
 
 import bot_config
 from events import starboard_events
+from events import autostar_events
 
 from database.database import Database
 from api import post_guild_count
@@ -267,6 +268,10 @@ async def on_raw_reaction_remove(payload):
 @bot.event
 async def on_message(message):
     if message.author.bot:
+        return
+
+    was_aschannel = await autostar_events.handle_message(bot, message)
+    if was_aschannel:
         return
 
     elif message.content.replace('!', '') == bot.user.mention:

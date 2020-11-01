@@ -73,6 +73,41 @@ async def change_starboard_settings(
     return status
 
 
+async def change_aschannel_settings(
+    db, aschannel_id, min_chars=None, require_image=None,
+    delete_invalid=None
+):
+    get_aschannel = \
+        """SELECT * FROM aschannels WHERE id=$1"""
+    update_aschannel = \
+        """UPDATE aschannels
+        SET min_chars=$1,
+        require_image=$2,
+        delete_invalid=$3
+        WHERE id=$4"""
+
+    conn = db.conn
+    async with db.lock:
+        async with conn.transaction():
+            sasc = await conn.fetchrow(
+                get_aschannel, aschannel_id
+            )
+            if sasc is None:
+                raise errors.DoesNotExist("That is not an AutoStar Channel!")
+
+            s = {}
+            s['mc'] = min_chars if min_chars is not None else sasc['min_chars']
+            s['ri'] = require_image if require_image is not None\
+                else sasc['require_image']
+            s['di'] = delete_invalid if delete_invalid is not None\
+                else sasc['delete_invalid']
+
+            await conn.execute(
+                update_aschannel, s['mc'], s['ri'], s['di'],
+                aschannel_id
+            )
+
+
 async def add_aschannel(bot: commands.Bot, channel: discord.TextChannel):
     check_aschannel = \
         """SELECT * FROM aschannels WHERE id=$1"""
@@ -148,6 +183,70 @@ async def remove_aschannel(bot: commands.Bot, channel_id: int, guild_id: int):
                 raise errors.DoesNotExist("That is not an AutoStar Channel!")
 
             await conn.execute(del_aschannel, channel_id)
+
+
+async def add_asemoji(
+    bot: commands.Bot, aschannel: discord.TextChannel, name: str
+):
+    check_aschannel = \
+        """SELECT * FROM aschannels WHERE id=$1"""
+    check_asemoji = \
+        """SELECT * FROM asemojis WHERE name=$1 and aschannel_id=$2"""
+
+    conn = bot.db.conn
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            sasc = await conn.fetchrow(
+                check_aschannel, aschannel.id
+            )
+            if sasc is None:
+                raise errors.DoesNotExist("That is not an AutoStar Channel!")
+
+            se = await conn.fetchrow(
+                check_asemoji, name, aschannel.id
+            )
+            if se is not None:
+                raise errors.AlreadyExists(
+                    "That emoji is already on this AutoStar Channel!"
+                )
+
+            await bot.db.q.create_asemoji.fetch(
+                aschannel.id, name
+            )
+
+
+async def remove_asemoji(
+    bot: commands.Bot, aschannel: discord.TextChannel, name: str
+):
+    check_aschannel = \
+        """SELECT * FROM aschannels WHERE id=$1"""
+    check_asemoji = \
+        """SELECT * FROM asemojis WHERE name=$1 AND aschannel_id=$2"""
+    del_asemojis = \
+        """DELETE FROM asemojis WHERE id=$1"""
+
+    conn = bot.db.conn
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            sasc = await conn.fetchrow(
+                check_aschannel, aschannel.id
+            )
+            if sasc is None:
+                raise errors.DoesNotExist("That is not an AutoStar Channel!")
+
+            se = await conn.fetchrow(
+                check_asemoji, name, aschannel.id
+            )
+            if se is None:
+                raise errors.DoesNotExist(
+                    "That emoji is not on that AutoStar Channel!"
+                )
+
+            await conn.execute(
+                del_asemojis, se['id']
+            )
 
 
 async def add_starboard(bot: commands.Bot, channel: discord.TextChannel):

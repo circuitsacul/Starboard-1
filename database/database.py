@@ -303,7 +303,7 @@ class Database:
                 id numeric PRIMARY KEY,
                 guild_id numeric NOT NULL,
 
-                min_chars int NOT NULL DEFAULT 32,
+                min_chars int NOT NULL DEFAULT 0,
                 require_image bool NOT NULL DEFAULT False,
                 delete_invalid bool NOT NULL DEFAULT False
             )"""

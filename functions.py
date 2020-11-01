@@ -206,14 +206,20 @@ async def get_limit(db, item, guild):
 
 async def pretty_emoji_string(emojis, guild):
     string = ""
-    for sbemoji in emojis:
-        is_custom = sbemoji['d_id'] is not None
+    for demoji in emojis:
+        emoji_name = demoji['name']
+        try:
+            emoji_id = int(emoji_name)
+        except ValueError:
+            emoji_id = None
+
+        is_custom = emoji_id is not None
         if is_custom:
             emoji_string = str(discord.utils.get(
-                guild.emojis, id=int(sbemoji['d_id']))
+                guild.emojis, id=int(emoji_id))
             )
         else:
-            emoji_string = sbemoji['name']
+            emoji_string = emoji_name
         string += emoji_string + " "
     return string
 
