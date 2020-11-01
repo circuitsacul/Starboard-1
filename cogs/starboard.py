@@ -28,106 +28,100 @@ class Starboard(commands.Cog):
         self.bot = bot
         self.db = db
 
-    @commands.command(
-        name='starboards', aliases=['boards', 'b'],
-        description='List all the starboars for this server',
+    @commands.group(
+        name='starboards', aliases=['boards', 's', 'sb'],
+        description='List and manage starboards',
         brief='List starboards', invoke_without_command=True
     )
     @commands.guild_only()
-    async def list_starboards(self, ctx):
+    async def sb_settings(
+        self, ctx, starboard: discord.TextChannel = None
+    ):
         get_starboards = """SELECT * FROM starboards WHERE guild_id=$1"""
         get_emojis = """SELECT * FROM sbemojis WHERE starboard_id=$1"""
-
+        get_starboard = """SELECT * FROM starboards WHERE id=$1"""
         p = await functions.get_one_prefix(self.bot, ctx.guild.id)
 
-        async with self.db.lock:
-            conn = await self.db.connect()
-            async with conn.transaction():
-                _ = await functions.check_or_create_existence(
-                    self.db, conn, self.bot, guild_id=ctx.guild.id,
-                    user=ctx.message.author, do_member=True
-                )
-                rows = await conn.fetch(get_starboards, ctx.guild.id)
+        if starboard is None:
+            async with self.db.lock:
+                conn = await self.db.connect()
+                async with conn.transaction():
+                    _ = await functions.check_or_create_existence(
+                        self.db, conn, self.bot, guild_id=ctx.guild.id,
+                        user=ctx.message.author, do_member=True
+                    )
+                    rows = await conn.fetch(get_starboards, ctx.guild.id)
 
-                if len(rows) == 0:
-                    message = "You don't have any starboards"
-                    embed = None
-                else:
-                    message = None
-                    title = f'Starboards: {len(rows)}\n'
-                    msg = ''
-                    for row in rows:
-                        sb_id = row['id']
-                        starboard = self.bot.get_channel(int(sb_id))
-                        sb_title = starboard.mention if starboard \
-                            else f"Deleted Channel {sb_id}"
-                        emojis = await conn.fetch(get_emojis, sb_id)
-                        emoji_string = await pretty_emoji_string(
+                    if len(rows) == 0:
+                        message = "You don't have any starboards"
+                        embed = None
+                    else:
+                        message = None
+                        title = f'Starboards: {len(rows)}\n'
+                        msg = ''
+                        for row in rows:
+                            sb_id = row['id']
+                            starboard = self.bot.get_channel(int(sb_id))
+                            sb_title = starboard.mention if starboard \
+                                else f"Deleted Channel {sb_id}"
+                            emojis = await conn.fetch(get_emojis, sb_id)
+                            emoji_string = await pretty_emoji_string(
+                                emojis, ctx.guild
+                            )
+                            msg += f"{sb_title} {emoji_string}\n"
+
+                        embed = discord.Embed(
+                            title=title, description=msg,
+                            color=bot_config.COLOR
+                        )
+                        embed.set_footer(
+                            text=f'Do {p}starboards <channel>'
+                            '\nto view starboard settings.'
+                        )
+
+            if message is not None:
+                await ctx.send(message)
+            else:
+                await ctx.send(embed=embed)
+        else:
+            async with self.db.lock:
+                conn = await self.db.connect()
+                async with conn.transaction():
+                    await functions.check_or_create_existence(
+                        self.db, conn, self.bot, guild_id=ctx.guild.id,
+                        user=ctx.message.author, do_member=True
+                    )
+                    sql_starboard = await conn.fetchrow(
+                        get_starboard, starboard.id
+                    )
+                    if sql_starboard is None:
+                        await ctx.send("That is not a starboard!")
+                    else:
+                        starboard = self.bot.get_channel(starboard.id)
+                        emojis = await conn.fetch(get_emojis, starboard.id)
+                        pretty_emojis = await pretty_emoji_string(
                             emojis, ctx.guild
                         )
-                        msg += f"{sb_title} {emoji_string}\n"
+                        title = f"Settings for {starboard.name}:"
+                        string = f"**emojis: {pretty_emojis}**"\
+                            "\n**requiredStars: "\
+                            f"{sql_starboard['required']}**"\
+                            f"\n**requiredToLose: {sql_starboard['rtl']}**"\
+                            "\n**selfStar: "\
+                            f"{bool(sql_starboard['self_star'])}**"\
+                            "\n**linkEdits: "\
+                            f"{bool(sql_starboard['link_edits'])}**"\
+                            "\n**linkDeletes: "\
+                            f"{bool(sql_starboard['link_deletes'])}**"\
+                            "\n**botsOnStarboard: "\
+                            f"{bool(sql_starboard['bots_on_sb'])}**"\
+                            f"\n**locked: {bool(sql_starboard['locked'])}**"
 
-                    embed = discord.Embed(
-                        title=title, description=msg, color=bot_config.COLOR
-                    )
-                    embed.set_footer(
-                        text=f'Do {p}settings <channel>'
-                        '\nto view starboard settings.'
-                    )
-
-        if message is not None:
-            await ctx.send(message)
-        else:
-            await ctx.send(embed=embed)
-
-    @commands.group(
-        name='settings', aliases=['s', 'changeSetting', 'cs'],
-        description='View and change all of the settings for a specific '
-        'starboards',
-        brief='View settings for startboard', invoke_without_command=True
-    )
-    @commands.guild_only()
-    async def sb_settings(
-        self, ctx, starboard: discord.TextChannel
-    ):
-        get_starboard = """SELECT * FROM starboards WHERE id=$1"""
-        get_emojis = """SELECT * FROM sbemojis WHERE starboard_id=$1"""
-
-        async with self.db.lock:
-            conn = await self.db.connect()
-            async with conn.transaction():
-                await functions.check_or_create_existence(
-                    self.db, conn, self.bot, guild_id=ctx.guild.id,
-                    user=ctx.message.author, do_member=True
-                )
-                sql_starboard = await conn.fetchrow(
-                    get_starboard, starboard.id
-                )
-                if sql_starboard is None:
-                    await ctx.send("That is not a starboard!")
-                else:
-                    starboard = self.bot.get_channel(starboard.id)
-                    emojis = await conn.fetch(get_emojis, starboard.id)
-                    pretty_emojis = await pretty_emoji_string(
-                        emojis, ctx.guild
-                    )
-                    title = f"Settings for {starboard.name}:"
-                    string = f"**emojis: {pretty_emojis}**"\
-                        f"\n**requiredStars: {sql_starboard['required']}**"\
-                        f"\n**requiredToLose: {sql_starboard['rtl']}**"\
-                        f"\n**selfStar: {bool(sql_starboard['self_star'])}**"\
-                        "\n**linkEdits: "\
-                        f"{bool(sql_starboard['link_edits'])}**"\
-                        "\n**linkDeletes: "\
-                        f"{bool(sql_starboard['link_deletes'])}**"\
-                        "\n**botsOnStarboard: "\
-                        f"{bool(sql_starboard['bots_on_sb'])}**"\
-                        f"\n**locked: {bool(sql_starboard['locked'])}**"
-
-                    embed = discord.Embed(
-                        title=title, description=string, color=bot_config.COLOR
-                    )
-                    await ctx.send(embed=embed)
+                        embed = discord.Embed(
+                            title=title, description=string,
+                            color=bot_config.COLOR
+                        )
+                        await ctx.send(embed=embed)
 
     @sb_settings.command(
         name='add', aliases=['a'],
