@@ -6,7 +6,7 @@ import settings
 from discord.ext import commands
 from typing import Union
 from .wizard import SetupWizard
-from functions import change_starboard_settings
+from settings import change_starboard_settings
 
 
 async def pretty_emoji_string(emojis, guild):
