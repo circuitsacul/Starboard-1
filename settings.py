@@ -102,6 +102,11 @@ async def change_aschannel_settings(
             s['di'] = delete_invalid if delete_invalid is not None\
                 else sasc['delete_invalid']
 
+            if s['mc'] < 0:
+                s['mc'] = 0
+            elif s['mc'] > 1024:
+                s['mc'] = 1024
+
             await conn.execute(
                 update_aschannel, s['mc'], s['ri'], s['di'],
                 aschannel_id
