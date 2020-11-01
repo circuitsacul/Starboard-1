@@ -114,16 +114,16 @@ class CommonSql(aobject):
                 name, is_downvote)
                 VALUES($1,$2,$3,$4)"""
             )
-        #self.create_aschannel = \
-        #    await conn.prepare(
-        #        """INSERT INTO aschannels (id, guild_id)
-        #        VALUES($1, $2)"""
-        #    )
-        #self.create_asemoji = \
-        #    await conn.prepare(
-        #        """INSERT INTO asemojis (aschannel_id, name)
-        #        VALUES($1, $2)"""
-        #    )
+        self.create_aschannel = \
+            await conn.prepare(
+                """INSERT INTO aschannels (id, guild_id)
+                VALUES($1, $2)"""
+            )
+        self.create_asemoji = \
+            await conn.prepare(
+                """INSERT INTO asemojis (aschannel_id, name)
+                VALUES($1, $2)"""
+            )
         self.create_message = \
             await conn.prepare(
                 """INSERT INTO messages (id, guild_id,
@@ -303,7 +303,7 @@ class Database:
                 id numeric PRIMARY KEY,
                 guild_id numeric NOT NULL,
 
-                min_chars int NOT NULL DEFAULT 32,
+                min_chars int NOT NULL DEFAULT 0,
                 require_image bool NOT NULL DEFAULT False,
                 delete_invalid bool NOT NULL DEFAULT False
             )"""
@@ -313,9 +313,9 @@ class Database:
                 id SERIAL PRIMARY KEY,
                 aschannel_id numeric NOT NULL,
 
-                name text NOT NULL
+                name text NOT NULL,
 
-                FOREIGN KEY (aschannel_id) REFERENCED aschannels (id)
+                FOREIGN KEY (aschannel_id) REFERENCES aschannels (id)
                     ON DELETE CASCADE
             )"""
 
@@ -365,8 +365,8 @@ class Database:
         await self._create_table(members_table)
         await self._create_table(starboards_table)
         await self._create_table(sbemoijs_table)
-        #await self._create_table(aschannels_table)
-        #await self._create_table(asemojis_table)
+        await self._create_table(aschannels_table)
+        await self._create_table(asemojis_table)
         await self._create_table(messages_table)
         await self._create_table(reactions_table)
         self.lock.release()
