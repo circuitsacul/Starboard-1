@@ -15,7 +15,7 @@ class AutoStarChannels(commands.Cog):
         brief="Manage AutoStar Channels", invoke_without_command=True
     )
     @commands.guild_only()
-    async def aschannels(self, ctx):
+    async def aschannels(self, ctx, aschannel: discord.TextChannel = None):
         get_aschannels = \
             """SELECT * FROM aschannels WHERE guild_id=$1"""
 
