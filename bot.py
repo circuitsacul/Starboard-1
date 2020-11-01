@@ -420,7 +420,11 @@ async def main():
     bot.add_cog(Levels(bot, db))
     bot.add_cog(Settings(bot, db))
     bot.add_cog(StatcordPost(bot))
-    bot.add_cog(TopGG(bot))
+    if not BETA:
+        print("Loading TopGG")
+        bot.add_cog(TopGG(bot))
+    else:
+        print("Not loading TopGG")
     await bot.start(TOKEN)
 
 
