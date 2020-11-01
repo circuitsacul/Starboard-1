@@ -7,7 +7,7 @@ import emoji as emojilib
 import settings
 from asyncio import sleep
 from discord import utils
-from functions import change_starboard_settings
+from settings import change_starboard_settings
 from functions import pretty_emoji_string
 from functions import get_limit
 
