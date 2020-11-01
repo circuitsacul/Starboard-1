@@ -73,6 +73,83 @@ async def change_starboard_settings(
     return status
 
 
+async def add_aschannel(bot: commands.Bot, channel: discord.TextChannel):
+    check_aschannel = \
+        """SELECT * FROM aschannels WHERE id=$1"""
+    get_aschannels = \
+        """SELECT * FROM aschannels WHERE guild_id=$1"""
+
+    guild = channel.guild
+    perms = channel.permissions_for(guild.me)
+    limit = await functions.get_limit(
+        bot.db, 'aschannels', guild
+    )
+    conn = bot.db.conn
+
+    if not perms.read_messages:
+        raise errors.BotNeedsPerms(
+            "I need the 'READ MESSAGES' permission in that channel."
+        )
+    elif not perms.manage_messages:
+        raise errors.BotNeedsPerms(
+            "I need the `MANAGE MESSAGES` permission in that channel."
+        )
+    elif not perms.add_reactions:
+        raise errors.BotNeedsPerms(
+            "I need the `ADD REACTIONS` permission in that channel."
+        )
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            await functions.check_or_create_existence(
+                bot.db, conn, bot, guild_id=guild.id
+            )
+
+            all_aschannels = await conn.fetch(
+                get_aschannels, guild.id
+            )
+
+            if len(all_aschannels) >= limit:
+                raise errors.NoPremiumError(
+                    "You have reached your limit for AutoStar Channels"
+                    " in this server.\nTo add more AutoStar channels, "
+                    "the server owner must become a patron."
+                )
+
+            sql_aschannel = await conn.fetchrow(
+                check_aschannel, channel.id
+            )
+
+            if sql_aschannel is not None:
+                raise errors.AlreadyExists(
+                    "That is already an AutoStar Channel!"
+                )
+
+            await bot.db.q.create_aschannel.fetch(
+                channel.id, guild.id
+            )
+
+
+async def remove_aschannel(bot: commands.Bot, channel_id: int, guild_id: int):
+    check_aschannel = \
+        """SELECT * FROM aschannels WHERE id=$1 AND guild_id=$2"""
+    del_aschannel = \
+        """DELETE FROM aschannels WHERE id=$1"""
+
+    conn = bot.db.conn
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            sql_aschannel = await conn.fetchrow(
+                check_aschannel, channel_id, guild_id
+            )
+
+            if sql_aschannel is None:
+                raise errors.DoesNotExist("That is not an AutoStar Channel!")
+
+            await conn.execute(del_aschannel, channel_id)
+
+
 async def add_starboard(bot: commands.Bot, channel: discord.TextChannel):
     check_starboard = \
         """SELECT * FROM starboards WHERE id=$1"""
