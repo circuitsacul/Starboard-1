@@ -11,7 +11,7 @@ class AutoStarChannels(commands.Cog):
         self.bot = bot
 
     @commands.group(
-        name='aschannels', aliases=['asc', 'as'],
+        name='aschannels', aliases=['asc', 'as', 'a'],
         description="Manage AutoStar Channels",
         brief="Manage AutoStar Channels", invoke_without_command=True
     )
