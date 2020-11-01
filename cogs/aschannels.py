@@ -139,6 +139,13 @@ class AutoStarChannels(commands.Cog):
         self, ctx, aschannel: discord.TextChannel,
         emoji: Union[discord.Emoji, str]
     ):
+        if type(emoji) is str:
+            if not functions.is_emoji(emoji):
+                await ctx.send(
+                    "I don't recoginize that emoji. If it"
+                    " is a custom emoji, it must be in this server."
+                )
+                return
         emoji_name = emoji if type(emoji) is str else str(emoji.id)
         await settings.add_asemoji(
             self.bot, aschannel, emoji_name

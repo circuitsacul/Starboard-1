@@ -111,6 +111,8 @@ async def change_aschannel_settings(
 async def add_aschannel(bot: commands.Bot, channel: discord.TextChannel):
     check_aschannel = \
         """SELECT * FROM aschannels WHERE id=$1"""
+    check_starboard = \
+        """SELECT * FROM starboards WHERE id=$1"""
     get_aschannels = \
         """SELECT * FROM aschannels WHERE guild_id=$1"""
 
@@ -158,6 +160,17 @@ async def add_aschannel(bot: commands.Bot, channel: discord.TextChannel):
             if sql_aschannel is not None:
                 raise errors.AlreadyExists(
                     "That is already an AutoStar Channel!"
+                )
+
+            sql_starboard = await conn.fetchrow(
+                check_starboard, channel.id
+            )
+
+            if sql_starboard is not None:
+                raise errors.AlreadyExists(
+                    "That channel is already a starboard!\n"
+                    "A channel can't be both a starboard and an "
+                    "AutoStar channel."
                 )
 
             await bot.db.q.create_aschannel.fetch(
@@ -252,6 +265,8 @@ async def remove_asemoji(
 async def add_starboard(bot: commands.Bot, channel: discord.TextChannel):
     check_starboard = \
         """SELECT * FROM starboards WHERE id=$1"""
+    check_aschannel = \
+        """SELECT * FROM aschannels WHERE id=$1"""
     get_starboards = \
         """SELECT * FROM starboards WHERE guild_id=$1"""
 
@@ -308,6 +323,17 @@ async def add_starboard(bot: commands.Bot, channel: discord.TextChannel):
             if sql_starboard is not None:
                 raise errors.AlreadyExists(
                     "That is already a starboard!"
+                )
+
+            sql_aschannel = await conn.fetchrow(
+                check_aschannel, channel.id
+            )
+
+            if sql_aschannel is not None:
+                raise errors.AlreadyExists(
+                    "That channel is already an AutoStar channel!\n"
+                    "A channel can't be both an AutoStar channel "
+                    "and a starboard."
                 )
 
             await bot.db.q.create_starboard.fetch(channel.id, guild.id)
