@@ -26,6 +26,10 @@ async def handle_reaction(
         AND name=$3"""
     get_message = \
         """SELECT * FROM messages WHERE id=$1"""
+    get_user = \
+        """SELECT * FROM users WHERE id=$1"""
+    get_member = \
+        """SELECT * FROM members WHERE user_id=$1 and guild_id=$2"""
 
     async with db.lock:
         conn = await db.connect()
@@ -33,21 +37,37 @@ async def handle_reaction(
             message_id, orig_channel_id = await functions.orig_message_id(
                 db, conn, _message_id
             )
+            sql_user = await conn.fetchrow(get_user, user_id)
+            sql_member = await conn.fetchrow(get_member, user_id, guild_id)
 
     channel_id = orig_channel_id if orig_channel_id is not None \
         else _channel_id
 
     guild = bot.get_guild(guild_id)
     channel = utils.get(guild.channels, id=int(channel_id))
-    #user = utils.get(guild.members, id=user_id)
-    _users = await functions.get_members([user_id], guild)
-    if len(_users) == 0:
-        user = None
-    else:
-        user = _users[0]
+    # user = utils.get(guild.members, id=user_id)
 
-    if user is not None and user.bot:
-        return
+    user = None
+    if sql_user is None or sql_member is None:
+        _users = await functions.get_members([user_id], guild)
+        if len(_users) == 0:
+            user = None
+        else:
+            user = _users[0]
+
+        async with db.lock:
+            conn = db.conn
+            async with conn.transaction():
+                await functions.check_or_create_existence(
+                    db, conn, bot, guild_id=guild_id,
+                    user=user, do_member=True
+                )
+
+        if user is not None and user.bot:
+            return
+    elif sql_user is not None:
+        if sql_user['is_bot']:
+            return
 
     try:
         message = await functions.fetch(bot, int(message_id), channel)
@@ -64,7 +84,7 @@ async def handle_reaction(
                 )
             await functions.check_or_create_existence(
                 db, conn, bot,
-                guild_id=guild_id, user=user, do_member=True
+                guild_id=guild_id
             )
 
             rows = await conn.fetch(get_message, message_id)
@@ -93,10 +113,19 @@ async def handle_reaction(
             except asyncpg.exceptions.ForeignKeyViolationError:
                 pass
 
-    if message is not None and user is not None and not user.bot:
-        await leveling.handle_reaction(
-            db, user.id, message.author, guild, _emoji, is_add
-        )
+    if message is not None:
+        handle_level = False
+        if user is None:
+            if sql_user is not None:
+                if not sql_user['is_bot']:
+                    handle_level = True
+        elif not user.bot:
+            handle_level = True
+
+        if handle_level:
+            await leveling.handle_reaction(
+                db, user_id, message.author, guild, _emoji, is_add
+            )
 
     await handle_starboards(db, bot, message_id, channel, message)
 

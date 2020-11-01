@@ -144,6 +144,9 @@ async def add_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
 
     conn = await bot.db.connect()
     async with conn.transaction():
+        await check_or_create_existence(
+            bot.db, conn, bot, guild_id=guild_id
+        )
         await bot.db.q.create_prefix.fetch(guild_id, prefix)
     return True, ''
 

@@ -28,7 +28,7 @@ class Starboard(commands.Cog):
         self.bot = bot
         self.db = db
 
-    @commands.group(
+    @commands.command(
         name='starboards', aliases=['boards', 'b'],
         description='List all the starboars for this server',
         brief='List starboards', invoke_without_command=True
@@ -129,7 +129,7 @@ class Starboard(commands.Cog):
                     )
                     await ctx.send(embed=embed)
 
-    @list_starboards.command(
+    @sb_settings.command(
         name='add', aliases=['a'],
         description='Add a starboard',
         brief='Add a starboard'
@@ -141,7 +141,7 @@ class Starboard(commands.Cog):
         await settings.add_starboard(self.bot, starboard)
         await ctx.send(f"Created starboard {starboard.mention}")
 
-    @list_starboards.command(
+    @sb_settings.command(
         name='remove', aliases=['r'],
         description='Remove a starboard',
         brief='Remove a starboard'
