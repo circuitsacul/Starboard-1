@@ -41,15 +41,24 @@ async def handle_message(bot, message):
         return False
 
     valid = True
-
+    reason = None
+    
     if len(message.content) < sasc['min_chars']:
         valid = False
+        reason = f"messages must be at least {sasc['min_chars']} characters"
     elif len(message.attachments) == 0 and sasc['require_image']:
         valid = False
+        reason = "messages must have an image attached"
 
     if sasc['delete_invalid'] and not valid:
         try:
             await message.delete()
+            await message.author.send(
+                f"Your message in {channel.mention} "
+                f"was deleted because {reason}.\n"
+                "I saved your message for you though, here it is:\n"
+                f"```\n{message.content}\n```"
+            )
         except Exception:
             pass
         finally:
