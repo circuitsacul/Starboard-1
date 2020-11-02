@@ -14,6 +14,7 @@ This documentation gives you a quick start to using the bot. If you see a proble
 
 ## Starboard's Features
  - Supports multiple starboards
+ - AutoStar Channels (media channels)
  - Supports multiple normal and custom emojis for *each* starboard
  - Leveling, rank, and leaderboard
  - Starboard moderation, such as:
