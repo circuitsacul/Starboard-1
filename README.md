@@ -28,8 +28,8 @@ If you have any suggestions or found any bugs, please [create an issue](https://
 Note: Don't actually type out `< > [ ]` when I give you commands to run. Replace `[p]` with the actual bot prefix. `channel` means type "channel", where as `<channel>` means replace "\<channel\>" with the name of the channel.
  1. [Invite the bot to your server](https://discord.com/api/oauth2/authorize?client_id=700796664276844612&permissions=388160&scope=bot)
  2. Create a channel for the bot (name it something like #starboard).
- 3. Type `[p]add <channel>` ("\<channel\>" is the name of the channel you just created)
- 4. Type `[p]addEmoji <channel> <emoji>` (`<emoji>` is usually ":star:")
+ 3. Type `[p]starboards add <channel>` ("\<channel\>" is the name of the channel you just created)
+ 4. Type `[p]starboards <channel>` to view all the settings for this starboard!
 
 The starboard is now good to go, but you might want to change more settings (like the number of reactions needed). A complete list of setting in the [wiki](https://github.com/CircuitsBots/Starboard/wiki).
 
