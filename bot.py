@@ -345,6 +345,8 @@ async def on_command_error(ctx, error):
         pass
     elif type(error) is discord.ext.commands.errors.BotMissingPermissions:
         pass
+    elif type(error) is ValueError:
+        pass
     elif type(error) is Forbidden:
         error = "I don't have the permissions to do that!"
     elif type(error) is discord.http.Forbidden:
