@@ -232,7 +232,7 @@ class Utility(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def trash_message(self, ctx, _messsage_id):
+    async def trash_message(self, ctx, _messsage_id: int):
         status = await handle_trashing(
             self.db, self.bot, ctx, _messsage_id, True
         )
