@@ -1,6 +1,8 @@
 import discord
 import functions
 import bot_config
+import checks
+from events import leveling
 from discord.ext import commands
 from events import starboard_events
 from disputils import BotEmbedPaginator
@@ -49,6 +51,48 @@ class Utility(commands.Cog):
     def __init__(self, bot, db):
         self.bot = bot
         self.db = db
+
+    @commands.command(
+        name='setxp', aliases=['setlvl'],
+        brief="Set the XP of a user",
+        description="Set the XP of a user"
+    )
+    @commands.guild_only()
+    @checks.is_owner()
+    async def set_member_xp(self, ctx, user: discord.User, xp: int):
+        get_member = \
+            """SELECT * FROM members WHERE user_id=$1 and guild_id=$2"""
+        update_member = \
+            """UPDATE members
+            SET xp=$1,
+            lvl=$2
+            WHERE id=$3"""
+
+        conn = self.bot.db.conn
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                sql_member = await conn.fetchrow(
+                    get_member, user.id, ctx.guild.id
+                )
+
+        if sql_member is None:
+            await ctx.send("Couldn't find that user.")
+            return
+
+        level = await leveling.current_level(xp)
+
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                await conn.execute(
+                    update_member, xp, level,
+                    sql_member['id']
+                )
+
+        await ctx.send(
+            f"Set XP to {xp} and level to {level}."
+            f" (Was {sql_member['xp']} XP and "
+            f"level {sql_member['lvl']})"
+        )
 
     @commands.command(
         name='frozen', aliases=['f'],

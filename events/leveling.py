@@ -1,11 +1,14 @@
-import discord
-import bot_config
 import datetime
+from math import sqrt
 
 
 async def next_level_xp(current_level):
     current_level += 1
     return int(current_level**2)
+
+
+async def current_level(xp):
+    return int(sqrt(xp))
 
 
 async def is_starboard_emoji(db, guild_id, emoji):
