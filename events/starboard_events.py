@@ -195,10 +195,13 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
                 )
             except discord.errors.NotFound:
                 starboard_message = None
-                await conn.execute(
-                    delete_starboard_message, sql_message['id'],
-                    sql_starboard['id']
-                )
+                async with db.lock:
+                    conn = await db.connect()
+                    async with conn.transaction():
+                        await conn.execute(
+                            delete_starboard_message, sql_message['id'],
+                            sql_starboard['id']
+                        )
         else:
             starboard_message = None
             delete = True
