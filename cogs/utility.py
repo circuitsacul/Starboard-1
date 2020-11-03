@@ -59,7 +59,9 @@ class Utility(commands.Cog):
     )
     @commands.guild_only()
     @checks.is_owner()
-    async def set_member_xp(self, ctx, user: discord.User, xp: int):
+    async def set_member_xp(self, ctx, _user: int, xp: int):
+        user = await functions.get_members([_user], ctx.guild)
+        user = user[0]
         get_member = \
             """SELECT * FROM members WHERE user_id=$1 and guild_id=$2"""
         update_member = \
@@ -71,6 +73,11 @@ class Utility(commands.Cog):
         conn = self.bot.db.conn
         async with self.bot.db.lock:
             async with conn.transaction():
+                await functions.check_or_create_existence(
+                    self.db, conn, self.bot,
+                    guild_id=ctx.guild.id, user=user,
+                    do_member=True
+                )
                 sql_member = await conn.fetchrow(
                     get_member, user.id, ctx.guild.id
                 )
