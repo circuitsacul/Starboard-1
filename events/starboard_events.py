@@ -395,14 +395,15 @@ async def get_embed_from_message(message):
 
     value_string = f"{message.content}\n{embed_text}"
     context_string = f"\n[**Jump to Message**]({message.jump_url})"
-    if len(value_string + context_string) >= 2049:
-        clip_msg = "... *message clipped*\n"
-        to_clip = len(value_string+context_string+clip_msg)-(2048)
-        full_string = value_string[0:-to_clip] + clip_msg +\
-            context_string
+    if len(value_string) > 2048:
+        clip_msg = "... *message clipped*"
+        to_clip = len(value_string+clip_msg)-2048
+        full_string = value_string[0:-1*to_clip] + clip_msg
     else:
-        full_string = value_string + context_string
+        full_string = value_string
     embed.description = full_string
+
+    embed.add_field(name="Original", value=context_string)
 
     if len(urls) > 0:
         url_string = ''
