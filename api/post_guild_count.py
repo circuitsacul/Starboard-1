@@ -8,6 +8,7 @@ DBL_TOKEN = os.getenv("DBL_TOKEN")
 BOATS_TOKEN = os.getenv("BOATS_TOKEN")
 DBGG_TOKEN = os.getenv("DBGG_TOKEN")
 DEL_TOKEN = os.getenv("DEL_TOKEN")
+LABS_TOKEN = os.getenv("LABS_TOKEN")
 
 
 async def post_bod(guilds: int, bot_user_id: int):
@@ -67,18 +68,32 @@ async def post_del(guilds: int, bot_user_id: int):
     return await r.text()
 
 
+async def post_labs(guilds: int, bot_user_id: int):
+    headers = {"Content-Type": "application/json"}
+    data = json.dumps({
+        "token": LABS_TOKEN,
+        "server_count": str(guilds)
+    })
+    url = f"https://bots.discordlabs.org/v2/bot/{bot_user_id}/stats"
+
+    r = await requests.post(url, data=data, headers=headers)
+    return await r.text()
+
+
 async def post_all(guilds: int, users: int, bot_user_id: int):
     bod = await post_bod(guilds, bot_user_id)
     dbl = await post_dbl(guilds, users, bot_user_id)
     boats = await post_boats(guilds, bot_user_id)
     dbgg = await post_dbgg(guilds, bot_user_id)
     bdel = await post_del(guilds, bot_user_id)
+    labs = await post_labs(guilds, bot_user_id)
     return {
         'bots.ondiscord.xyz': bod,
         'discordbotlist.com': dbl,
         'discord.boats': boats,
         'discord.bots.gg': dbgg,
-        'discordextremelist.xyz': bdel
+        'discordextremelist.xyz': bdel,
+        'bots.discordlabs.org': labs
     }
 
 
