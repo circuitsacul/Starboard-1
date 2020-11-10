@@ -5,6 +5,7 @@ SUPPORT_SERVER = "permanent invite to your support server" # str
 SOURCE_CODE = "(optional) link to the bots source code" # str or None
 DONATE = "(optional) link to donatebot.io donation page" # str or None
 ISSUES_PAGE = "link to github issues page"
+VOTE = "bot list vote link"
 
 SUPPORT_SERVER_ID = 0 #your-server-id
 SERVER_LOG_ID = 0 #the channel to send server joins and leaves to. Must be in support server

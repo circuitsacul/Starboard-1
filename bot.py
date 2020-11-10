@@ -92,7 +92,27 @@ async def show_links(ctx):
         f"\n**[Invite Me]({bot_config.INVITE})**"\
         f"\n**[Submit Bug Report or Suggestion]({bot_config.ISSUES_PAGE})**"\
         f"\n**[Source Code]({bot_config.SOURCE_CODE})**"\
-        f"\n**[Donate/Become a Patron]({bot_config.DONATE})**"
+        f"\n**[Donate/Become a Patron]({bot_config.DONATE})**"\
+        f"\n**[Vote for Starboard]({bot_config.VOTE})**"
+    embed.description = description
+    await ctx.send(embed=embed)
+
+
+@bot.command(
+    name='vote',
+    description='Vote for Starboard',
+    brief='Vote for Starboard'
+)
+async def show_vote_info(ctx):
+    embed = discord.Embed(
+        title="Vote for Starboard!",
+        color=bot_config.COLOR
+    )
+    description = \
+        "If you vote for this bot, you will receive the "\
+        "**@Voter** role in the **[Official Starboard Support Server]"\
+        f"({bot_config.SUPPORT_SERVER}).**"\
+        f"\n\n**[Click Here to Vote For Starboard!]({bot_config.VOTE})**"
     embed.description = description
     await ctx.send(embed=embed)
 
