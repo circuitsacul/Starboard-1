@@ -4,7 +4,7 @@ Starboard is an advanced, reliable, and highly customizable starboard bot, which
 This documentation gives you a quick start to using the bot. If you see a problem, please let me know, either by using the bots suggest command or joining the support server. My discord username is `@Circuit#5585`.
 
 ## Useful Links
-[Click here for a demonstration](https://drive.google.com/file/d/1hIeeL8Y_PweQIovyAzsXJX4_-gZiqstU/view?usp=sharing)
+[Click here for a demonstration](https://drive.google.com/file/d/1fMx3cTMYGtpgWtW-ZrovJL3nOFBBQrzu/view?usp=sharing)
 
 [Invite Starboard to your server](https://discord.com/api/oauth2/authorize?client_id=700796664276844612&permissions=388160&scope=bot)
 
