@@ -190,10 +190,11 @@ async def bot_ping(ctx):
     description='Bot stats', brief='Bot stats'
 )
 async def stats_for_bot(ctx):
+    total = sum([g.member_count for g in bot.guilds])
     embed = discord.Embed(
         title='Bot Stats', colour=bot_config.COLOR,
         description=f"**Guilds:** {len(bot.guilds)}"
-        f"\n**Users:** {len(bot.users)}"
+        f"\n**Users:** {total}"
         f"\n**Ping:** {int(bot.latency*1000)} ms"
     )
     await ctx.send(embed=embed)
@@ -210,22 +211,17 @@ async def on_guild_join(guild):
         id=bot_config.SERVER_LOG_ID
     )
 
-    members = 0
-    bots = 0
-    for u in guild.members:
-        if u.bot:
-            bots += 1
-        else:
-            members += 1
+    members = guild.member_count
+    total = sum([g.member_count for g in bot.guilds])
 
     embed = discord.Embed(
         description=f"Joined **{guild.name}**!\n"
-        f"**{members}** Members | **{bots}** Bots",
+        f"**{members}** Members",
         color=bot_config.GUILD_JOIN_COLOR
     )
     embed.set_footer(
         text=f"We now have {len(bot.guilds)} servers and "
-        f"{len(bot.users)} users"
+        f"{total} users"
     )
 
     await log_channel.send(embed=embed)
@@ -241,13 +237,15 @@ async def on_guild_remove(guild):
         id=bot_config.SERVER_LOG_ID
     )
 
+    total = sum([g.member_count for g in bot.guilds])
+
     embed = discord.Embed(
         description=f"Left **{guild.name}**.",
         color=bot_config.GUILD_LEAVE_COLOR
     )
     embed.set_footer(
         text=f"We now have {len(bot.guilds)} servers and "
-        f"{len(bot.users)} users"
+        f"{total} users"
     )
 
     await log_channel.send(embed=embed)
