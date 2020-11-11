@@ -308,12 +308,15 @@ async def on_message(message):
             p = await functions.get_one_prefix(bot, message.guild.id)
         else:
             p = bot_config.DEFAULT_PREFIX
-        await message.channel.send(
-            f"To get started, run `{p}setup`.\n"
-            f"To see all my commands, run `{p}help`\n"
-            "If you need help, you can join the support "
-            f"server {SUPPORT_SERVER}"
-        )
+        try:
+            await message.channel.send(
+                f"To get started, run `{p}setup`.\n"
+                f"To see all my commands, run `{p}help`\n"
+                "If you need help, you can join the support "
+                f"server {SUPPORT_SERVER}"
+            )
+        except Exception:
+            pass
     else:
         await bot.process_commands(message)
 
