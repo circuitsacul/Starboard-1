@@ -39,3 +39,8 @@ class TopGG(commands.Cog):
 
     async def on_guild_post():
         print("Posted to top.gg")
+
+
+def setup(bot):
+    bot.add_cog(StatcordPost(bot))
+    bot.add_cog(TopGG(bot))

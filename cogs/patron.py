@@ -137,3 +137,7 @@ class PatronCommands(commands.Cog):
                 await ctx.send(f"Gave product **{product_id}** to {user}")
             else:
                 await ctx.send(f"Removed product **{product_id}** from {user}")
+
+
+def setup(bot):
+    bot.add_cog(PatronCommands(bot, bot.db))

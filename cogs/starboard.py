@@ -343,3 +343,7 @@ class Starboard(commands.Cog):
             await ctx.send(
                 f"Set botsOnStarboard to {value} for {starboard.mention}"
             )
+
+
+def setup(bot):
+    bot.add_cog(Starboard(bot, bot.db))

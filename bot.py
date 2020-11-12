@@ -24,16 +24,16 @@ from events import autostar_events
 from database.database import Database
 from api import post_guild_count
 
-from cogs.stats import StatcordPost, TopGG
+# from cogs.stats import StatcordPost, TopGG
 
-from cogs.starboard import Starboard
-from cogs.owner import Owner
-from cogs.utility import Utility
-from cogs.patron import PatronCommands
+# from cogs.starboard import Starboard
+# from cogs.owner import Owner
+# from cogs.utility import Utility
+# from cogs.patron import PatronCommands
 from cogs.webhook import HttpWebHook
-from cogs.levels import Levels
-from cogs.settings import Settings
-from cogs.aschannels import AutoStarChannels
+# from cogs.levels import Levels
+# from cogs.settings import Settings
+# from cogs.aschannels import AutoStarChannels
 
 _TOKEN = os.getenv('TOKEN')
 _BETA_TOKEN = os.getenv('BETA_TOKEN')
@@ -443,19 +443,19 @@ async def main():
     if not BETA:
         bot.loop.create_task(post_guild_count.loop_post(bot))
 
-    bot.add_cog(Starboard(bot, db))
-    bot.add_cog(AutoStarChannels(bot))
-    bot.add_cog(Owner(bot, db))
-    bot.add_cog(Utility(bot, db))
-    bot.add_cog(PatronCommands(bot, db))
-    bot.add_cog(Levels(bot, db))
-    bot.add_cog(Settings(bot, db))
-    bot.add_cog(StatcordPost(bot))
-    if not BETA:
-        print("Loading TopGG")
-        bot.add_cog(TopGG(bot))
-    else:
-        print("Not loading TopGG")
+    extensions = [
+        'cogs.aschannels',
+        'cogs.levels',
+        'cogs.patron',
+        'cogs.settings',
+        'cogs.starboard',
+        'cogs.stats',
+        'cogs.utility'
+    ]
+
+    for ext in extensions:
+        bot.load_extension(ext)
+
     await bot.start(TOKEN)
 
 

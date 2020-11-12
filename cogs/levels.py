@@ -162,3 +162,7 @@ class Levels(commands.Cog):
                 await conn.execute(set_points, user.id, ctx.guild.id)
 
         await ctx.send(f"Reset {user.name}'s levels and xp.")
+
+
+def setup(bot):
+    bot.add_cog(Levels(bot, bot.db))

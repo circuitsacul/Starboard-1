@@ -106,3 +106,6 @@ class Owner(commands.Cog):
             msg = errors[bl]
             string += f"{bl}: {msg}\n"
         await ctx.send(string)
+
+def setup(bot):
+    bot.add_cog(Owner(bot, bot.db))

@@ -199,3 +199,7 @@ class Settings(commands.Cog):
         if can_run:
             async with self.bot.wizzard_lock():
                 self.bot.running_wizzards.remove(ctx.guild.id)
+
+
+def setup(bot):
+    bot.add_cog(Settings(bot, bot.db))

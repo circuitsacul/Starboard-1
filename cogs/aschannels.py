@@ -216,3 +216,7 @@ class AutoStarChannels(commands.Cog):
             self.bot.db, aschannel.id, delete_invalid=value
         )
         await ctx.send(f"Set deleteInvalid to {value} for {aschannel.mention}")
+
+
+def setup(bot):
+    bot.add_cog(AutoStarChannels(bot))
