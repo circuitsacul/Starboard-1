@@ -173,7 +173,10 @@ class HttpWebHook():
 
         @self.routes.post('/dblvote')
         async def vote(request):
+            if request.headers['authorization'] != HOOK_AUTH:
+                return web.Response(body='Invalid Token', status=500)
             print(await request.json())
+            return web.Response(body='Vote caught', status=200)
 
         @self.routes.get('')
         async def ping(request):
