@@ -450,6 +450,13 @@ class Utility(commands.Cog):
         conn = self.bot.db.conn
         async with self.bot.db.lock:
             async with conn.transaction():
+                await functions.check_or_create_existence(
+                    self.bot.db, conn, self.bot,
+                    guild_id=ctx.guild.id,
+                    user=message.author,
+                    do_member=True
+                )
+
                 sql_message = await conn.fetchrow(
                     check_message, message.id
                 )
