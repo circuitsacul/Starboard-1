@@ -185,7 +185,7 @@ class HttpWebHook():
                 channel = self.bot.get_channel(bot_config.VOTE_LOG_ID)
                 if channel is not None:
                     await channel.send(
-                        f"User <@{user_id}> voted for Starboard!"
+                        f"<@{user_id}> voted for Starboard!"
                     )
                 print(f"User {data['user']} voted!")
 
