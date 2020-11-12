@@ -34,21 +34,8 @@ class TopGG(commands.Cog):
         self.token = TOP_TOKEN
         self.dblpy = dbl.DBLClient(
             self.bot, self.token, autopost=True,
-            webhook_port=5000,
-            webhook_auth=TOP_AUTH,
-            webhook_path='/dbl'
         )
         # Autopost will post your guild count every 30 minutes
 
     async def on_guild_post():
         print("Posted to top.gg")
-
-    @commands.Cog.listener()
-    async def on_dbl_vote(self, data):
-        pprint(data)
-        print(dir(data))
-
-    @commands.Cog.listener()
-    async def on_dbl_test(self, data):
-        print("Test!")
-        pprint(data)

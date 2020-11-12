@@ -12,6 +12,7 @@ from bot_config import COLOR, SUPPORT_SERVER_ID, PATRON_LEVELS
 dotenv.load_dotenv()
 
 DONATEBOT_TOKEN = os.getenv("DONATEBOT_TOKEN")
+HOOK_AUTH = os.getenv("TOP_HOOK_AUTH")
 
 
 async def update_patron_for_user(bot, db, user_id, product_id, add: bool):
@@ -169,6 +170,10 @@ class HttpWebHook():
                 print(f"Error in donation event: {type(e)}: {e}")
                 return web.Response(body="Error!", status=500)
             return web.Response(body="Caught!", status=200)
+
+        @self.routes.post('/dblvote')
+        async def vote(request):
+            print(await request.json)
 
         @self.routes.get('')
         async def ping(request):
