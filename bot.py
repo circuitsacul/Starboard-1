@@ -24,16 +24,7 @@ from events import autostar_events
 from database.database import Database
 from api import post_guild_count
 
-# from cogs.stats import StatcordPost, TopGG
-
-# from cogs.starboard import Starboard
-# from cogs.owner import Owner
-# from cogs.utility import Utility
-# from cogs.patron import PatronCommands
 from cogs.webhook import HttpWebHook
-# from cogs.levels import Levels
-# from cogs.settings import Settings
-# from cogs.aschannels import AutoStarChannels
 
 _TOKEN = os.getenv('TOKEN')
 _BETA_TOKEN = os.getenv('BETA_TOKEN')
