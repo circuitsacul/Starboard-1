@@ -175,7 +175,20 @@ class HttpWebHook():
         async def vote(request):
             if request.headers['authorization'] != HOOK_AUTH:
                 return web.Response(body='Invalid Token', status=500)
-            print(await request.json())
+
+            data = await request.json()
+            if data['type'] == 'test':
+                print("Test Worked:")
+                print(data)
+            elif data['type'] == 'vote':
+                user_id = int(data['user'])
+                channel = self.bot.get_channel(bot_config.VOTE_LOG_ID)
+                if channel is not None:
+                    await channel.send(
+                        f"User <@{user_id}> voted for Starboard!"
+                    )
+                print(f"User {data['user']} voted!")
+
             return web.Response(body='Vote caught', status=200)
 
         @self.routes.get('')
