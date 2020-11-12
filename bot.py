@@ -29,7 +29,8 @@ from cogs.stats import StatcordPost, TopGG
 from cogs.starboard import Starboard
 from cogs.owner import Owner
 from cogs.utility import Utility
-from cogs.patron import PatronCommands, HttpWebHook
+from cogs.patron import PatronCommands
+from cogs.webhook import HttpWebHook
 from cogs.levels import Levels
 from cogs.settings import Settings
 from cogs.aschannels import AutoStarChannels
