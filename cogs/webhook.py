@@ -48,12 +48,7 @@ class HttpWebHook():
                 print(data)
             else:
                 user_id = int(data['user'])
-                channel = self.bot.get_channel(bot_config.VOTE_LOG_ID)
-                if channel is not None:
-                    await channel.send(
-                        f"<@{user_id}> voted for Starboard!"
-                    )
-                print(f"User {data['user']} voted!")
+                await self.bot.dispatch('top_vote', user_id)
 
             return web.Response(body='Vote caught', status=200)
 

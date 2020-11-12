@@ -91,6 +91,11 @@ class CommonSql(aobject):
                 """INSERT INTO patrons (user_id, product_id)
                 VALUES($1, $2)"""
             )
+        self.create_vote = \
+            await conn.prepare(
+                """INSERT INTO votes (user_id, expires)
+                VALUES($1, $2)"""
+            )
         self.create_donation = \
             await conn.prepare(
                 """INSERT INTO donations
@@ -231,6 +236,17 @@ class Database:
                 product_id text NOT NULL
             )"""
 
+        votes_table = \
+            """CREATE TABLE IF NOT EXISTS votes (
+                id SERIAL PRIMARY KEY,
+                user_id numeric NOT NULL,
+                expires numeric NOT NULL,
+                expired bool DEFAULT false,
+
+                FOREIGN KEY (user_id) REFERENCES users (id)
+                    ON DELETE CASCADE
+            )"""
+
         donations_table = \
             """CREATE TABLE IF NOT EXISTS donations (
                 id SERIAL PRIMARY KEY,
@@ -361,6 +377,7 @@ class Database:
         await self._create_table(prefixes_table)
         await self._create_table(users_table)
         await self._create_table(patrons_table)
+        await self._create_table(votes_table)
         await self._create_table(donations_table)
         await self._create_table(members_table)
         await self._create_table(starboards_table)
