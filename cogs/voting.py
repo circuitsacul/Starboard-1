@@ -31,10 +31,13 @@ async def handle_vote_role(bot, user_id: int, add: bool):
     if role is None:
         return
 
-    if add:
-        await user.add_roles(role)
-    else:
-        await user.remove_roles(role)
+    try:
+        if add:
+            await user.add_roles(role)
+        else:
+            await user.remove_roles(role)
+    except Exception:
+        pass
 
 
 async def add_vote(bot, user_id: int):
