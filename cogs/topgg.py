@@ -16,7 +16,7 @@ class TopGG(commands.Cog):
         self.token = TOP_TOKEN
         self.dblpy = dbl.DBLClient(
             self.bot, self.token, webhook_path='/dbl',
-            webhook_auth=HOOK_AUTH, webhook_port=5000
+            webhook_auth=HOOK_AUTH, webhook_port=8080
         )
 
     @tasks.loop(minutes=30.0)
