@@ -6,6 +6,8 @@ from events import leveling
 from discord.ext import commands
 from events import starboard_events
 from disputils import BotEmbedPaginator
+from events import retotal
+from events.starboard_events import handle_starboards
 
 
 async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
@@ -418,6 +420,71 @@ class Utility(commands.Cog):
         )
 
         await ctx.send(embed=embed)
+
+    @commands.command(
+        name='recount', aliases=['recalc', 'refresh'],
+        description="Recount the reactions on a message",
+        brief="Recount the reaactions on a message"
+    )
+    @commands.max_concurrency(2, wait=True)
+    @commands.has_permissions(manage_messages=True)
+    @commands.guild_only()
+    async def recount_msg_reactions(
+        self, ctx,
+        message_id: int,
+        channel: discord.TextChannel = None
+    ):
+        if channel is None:
+            channel = ctx.channel
+        try:
+            message = await channel.fetch_message(message_id)
+        except discord.errors.NotFound:
+            await ctx.send("I couldn't find that message.")
+            return
+        total_reactions = sum([r.count for r in message.reactions])
+        eta = int((total_reactions / 100 * 5 + total_reactions * 0.1) / 60)
+
+        check_message = \
+            """SELECT * FROM messages WHERE id=$1"""
+
+        conn = self.bot.db.conn
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                sql_message = await conn.fetchrow(
+                    check_message, message.id
+                )
+                if sql_message is None:
+                    await self.bot.db.q.create_message.fetch(
+                        message.id, message.guild.id,
+                        message.author.id, None,
+                        message.channel.id, True,
+                        message.channel.is_nsfw()
+                    )
+
+        if sql_message is not None:
+            if not sql_message['is_orig']:
+                await ctx.send(
+                    "Please run this command on the"
+                    " original message, not the starboard"
+                    " message."
+                )
+                return
+
+        await ctx.send(
+            "Recounting reactions. Please note, that due to the nature "
+            "of this command, you can only run it one at a time, and "
+            "there is a delay of 5 seconds per 100 reactions.\n\n"
+            f"ETA: {eta} minutes"
+        )
+
+        async with ctx.typing():
+            await retotal.recount_reactions(self.bot, message)
+            await handle_starboards(
+                self.bot.db, self.bot, message.id,
+                message.channel, message
+            )
+
+        await ctx.send("Finished!")
 
 
 def setup(bot):
