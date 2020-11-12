@@ -9,6 +9,7 @@ from pprint import pprint
 
 STATCORD_TOKEN = os.getenv("STATCORD_TOKEN")
 TOP_TOKEN = os.getenv("TOP_TOKEN")
+TOP_AUTH = os.getenv("TOP_HOOK_AUTH")
 
 
 class StatcordPost(commands.Cog):
@@ -31,7 +32,12 @@ class TopGG(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.token = TOP_TOKEN
-        self.dblpy = dbl.DBLClient(self.bot, self.token, autopost=True)
+        self.dblpy = dbl.DBLClient(
+            self.bot, self.token, autopost=True,
+            webhook_port=5000,
+            webhook_auth=TOP_AUTH,
+            webhook_path='/dbl'
+        )
         # Autopost will post your guild count every 30 minutes
 
     async def on_guild_post():
