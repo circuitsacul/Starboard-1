@@ -173,7 +173,7 @@ class HttpWebHook():
 
         @self.routes.post('/dblvote')
         async def vote(request):
-            print(await request.json)
+            print(await request.json())
 
         @self.routes.get('')
         async def ping(request):
