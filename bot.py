@@ -437,6 +437,7 @@ async def main():
     extensions = [
         'cogs.aschannels',
         'cogs.levels',
+        'cogs.owner',
         'cogs.patron',
         'cogs.settings',
         'cogs.starboard',
