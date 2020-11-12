@@ -180,7 +180,7 @@ class HttpWebHook():
             if data['type'] == 'test':
                 print("Test Worked:")
                 print(data)
-            elif data['type'] == 'vote':
+            else:
                 user_id = int(data['user'])
                 channel = self.bot.get_channel(bot_config.VOTE_LOG_ID)
                 if channel is not None:
