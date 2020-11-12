@@ -49,6 +49,6 @@ class TopGG(commands.Cog):
         print(dir(data))
 
     @commands.Cog.listener()
-    async def on_dbl_test(data):
+    async def on_dbl_test(self, data):
         print("Test!")
         pprint(data)

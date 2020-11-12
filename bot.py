@@ -24,7 +24,7 @@ from events import autostar_events
 from database.database import Database
 from api import post_guild_count
 
-from cogs.stats import StatcordPost, TopGG
+from cogs.stats import StatcordPost
 
 from cogs.starboard import Starboard
 from cogs.owner import Owner
@@ -452,7 +452,7 @@ async def main():
     bot.add_cog(StatcordPost(bot))
     if not BETA:
         print("Loading TopGG")
-        bot.add_cog(TopGG(bot))
+        bot.load_extension('cogs.topgg')
     else:
         print("Not loading TopGG")
     await bot.start(TOKEN)
