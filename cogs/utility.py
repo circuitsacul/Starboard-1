@@ -442,7 +442,7 @@ class Utility(commands.Cog):
             await ctx.send("I couldn't find that message.")
             return
         total_reactions = sum([r.count for r in message.reactions])
-        eta = int((total_reactions / 100 * 5 + total_reactions * 0.1) / 60)
+        eta = int(total_reactions / 100 * 5 + total_reactions * 0.1)
 
         check_message = \
             """SELECT * FROM messages WHERE id=$1"""
@@ -478,10 +478,8 @@ class Utility(commands.Cog):
                 return
 
         await ctx.send(
-            "Recounting reactions. Please note, that due to the nature "
-            "of this command, you can only run it one at a time, and "
-            "there is a delay of 5 seconds per 100 reactions.\n\n"
-            f"ETA: {eta} minutes"
+            "Recounting reactions. "
+            f"(ETA: {eta} seconds)"
         )
 
         async with ctx.typing():
