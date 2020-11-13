@@ -109,15 +109,19 @@ async def show_vote_info(ctx):
     await ctx.send(embed=embed)
     
     # literally ignore everything below this
-    await asyncio.sleep(2)
-    
     def check(m):
         if m.author.id != 772492831138775050:
             return False
         return True
 
-    await ctx.channel.purge(limit=1, check=check)
-    await ctx.send(embed=embed)
+    try:
+        m = await bot.wait_for('message', check=check, timeout=5)
+        await m.delete()
+        await ctx.send(embed=embed)
+        await ctx.send("Nice try")
+    except asyncio.TimeoutError:
+        pass
+
 
 
 @bot.command(
