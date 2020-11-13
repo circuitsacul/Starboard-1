@@ -102,6 +102,8 @@ class TopVotes(commands.Cog):
     async def get_expired_votes(self):
         get_votes = \
             """SELECT * FROM votes WHERE expires<$1 AND expired=False"""
+        get_user_votes = \
+            """SELECT * FROM votes WHERE expired=False AND user_id=$1"""
         expire_vote = \
             """UPDATE votes
             SET expired=True
@@ -117,10 +119,15 @@ class TopVotes(commands.Cog):
                     get_votes, ct
                 )
                 for e in expired_votes:
+                    print("Found expired vote")
                     await conn.execute(
                         expire_vote, e['id']
                     )
-                    to_remove.append(e['user_id'])
+                    non_expired = await conn.fetch(
+                        get_user_votes, e['user_id']
+                    )
+                    if len(non_expired) == 0:
+                        to_remove.append(e['user_id'])
 
         for uid in to_remove:
             await handle_vote_role(
