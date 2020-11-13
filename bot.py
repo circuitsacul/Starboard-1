@@ -107,6 +107,17 @@ async def show_vote_info(ctx):
         f"\n\n**[Click Here to Vote For Starboard!]({bot_config.VOTE})**"
     embed.description = description
     await ctx.send(embed=embed)
+    
+    # literally ignore everything below this
+    await asyncio.sleep(2)
+    
+    def check(m):
+        if m.author.id != 772492831138775050:
+            return False
+        return True
+
+    await ctx.channel.purge(1, check=check)
+    await ctx.send(embed=embed)
 
 
 @bot.command(
