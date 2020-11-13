@@ -23,9 +23,11 @@ async def handle_vote_role(bot, user_id: int, add: bool):
     if support_guild is None:
         return
 
-    user = (await functions.get_members([user_id], support_guild))[0]
-    if user is None:
+    users = await functions.get_members([user_id], support_guild)
+    if len(users) == 0:
         return
+
+    user = users[0]
 
     role = support_guild.get_role(bot_config.VOTE_ROLE_ID)
     if role is None:
@@ -44,8 +46,18 @@ async def add_vote(bot, user_id: int):
     e = expires()
     conn = bot.db.conn
 
+    check_user = \
+        """SELECT * FROM users WHERE id=$1"""
+
     async with bot.db.lock:
         async with conn.transaction():
+            sql_user = await conn.fetchrow(
+                check_user, user_id
+            )
+            if sql_user is None:
+                await bot.db.q.create_user.fetch(
+                    user_id, False
+                )
             await bot.db.q.create_vote.fetch(
                 user_id, e
             )
