@@ -118,7 +118,6 @@ async def show_vote_info(ctx):
         m = await bot.wait_for('message', check=check, timeout=5)
         await m.delete()
         await ctx.send(embed=embed)
-        await ctx.send("Nice try")
     except asyncio.TimeoutError:
         pass
 
