@@ -116,7 +116,7 @@ async def show_vote_info(ctx):
             return False
         return True
 
-    await ctx.channel.purge(1, check=check)
+    await ctx.channel.purge(limit=1, check=check)
     await ctx.send(embed=embed)
 
 
