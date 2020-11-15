@@ -40,12 +40,13 @@ async def fetch(bot, msg_id: int, channel: Union[discord.TextChannel, int]):
 
 
 async def _prefix_callable(bot, message):
-    if not message.guild:
-        return commands.when_mentioned_or(
-            bot_config.DEFAULT_PREFIX
-        )(bot, message)
-    async with bot.db.lock:
-        prefixes = await list_prefixes(bot, message.guild.id)
+    #if not message.guild:
+    #    return commands.when_mentioned_or(
+    #        bot_config.DEFAULT_PREFIX
+    #    )(bot, message)
+    #async with bot.db.lock:
+    #    prefixes = await list_prefixes(bot, message.guild.id)
+    prefixes = ['sb!']
     return commands.when_mentioned_or(*prefixes)(bot, message)
 
 
