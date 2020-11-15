@@ -202,6 +202,10 @@ class Database:
         conn = await self.connect()
         await conn.execute(sql)
 
+    async def _create_index(self, sql):
+        conn = await self.connect()
+        await conn.execute(sql)
+
     async def _create_tables(self):
         guilds_table = \
             """CREATE TABLE IF NOT EXISTS guilds (
@@ -372,6 +376,10 @@ class Database:
                 FOREIGN KEY (message_id) REFERENCES messages (id)
             )"""
 
+        delete_reaction_index = \
+            """CREATE INDEX IF NOT EXISTS delete_reaction
+            ON reactions(message_id, user_id, name)"""
+
         await self.lock.acquire()
         await self._create_table(guilds_table)
         await self._create_table(prefixes_table)
@@ -386,4 +394,6 @@ class Database:
         await self._create_table(asemojis_table)
         await self._create_table(messages_table)
         await self._create_table(reactions_table)
+
+        await self._create_index(delete_reaction_index)
         self.lock.release()

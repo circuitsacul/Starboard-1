@@ -294,24 +294,24 @@ async def on_message(message):
     if message.author.bot:
         return
 
-    #was_aschannel = await autostar_events.handle_message(bot, message)
-    #if was_aschannel:
-    #    return
+    was_aschannel = await autostar_events.handle_message(bot, message)
+    if was_aschannel:
+        return
 
     elif message.content.replace('!', '') == bot.user.mention:
-        #async with db.lock:
-            #conn = await db.connect()
-            #if message.guild is not None:
-            #    async with conn.transaction():
-            #        await functions.check_or_create_existence(
-            #            db, conn, bot, message.guild.id, message.author,
-            #            do_member=True
-            #        )
+        async with db.lock:
+            conn = await db.connect()
+            if message.guild is not None:
+                async with conn.transaction():
+                    await functions.check_or_create_existence(
+                        db, conn, bot, message.guild.id, message.author,
+                        do_member=True
+                    )
 
-        #if message.guild is not None:
-        #    p = await functions.get_one_prefix(bot, message.guild.id)
-        #else:
-        #    p = bot_config.DEFAULT_PREFIX
+        if message.guild is not None:
+            p = await functions.get_one_prefix(bot, message.guild.id)
+        else:
+            p = bot_config.DEFAULT_PREFIX
         p = 'sb!'
         try:
             await message.channel.send(
