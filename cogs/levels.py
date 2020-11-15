@@ -68,7 +68,8 @@ class Levels(commands.Cog):
         if isinstance(_user, discord.Member):
             _user = _user.id
         user = await functions.get_members([_user], ctx.guild)
-        user = user[0]
+        username = user[0].name
+        user = user[0].id
         get_member = \
             """SELECT * FROM members WHERE user_id=$1 and guild_id=$2"""
         update_member = \
@@ -83,10 +84,10 @@ class Levels(commands.Cog):
                 await functions.check_or_create_existence(
                     self.db, conn, self.bot,
                     guild_id=ctx.guild.id, user=user,
-                    do_member=True
+                    do_member=True, user_is_id=True
                 )
                 sql_member = await conn.fetchrow(
-                    get_member, user.id, ctx.guild.id
+                    get_member, user, ctx.guild.id
                 )
 
         if sql_member is None:
@@ -103,7 +104,7 @@ class Levels(commands.Cog):
                 )
 
         await ctx.send(
-            f"Set **{user}**'s XP to {xp} and level to {level}."
+            f"Set **{username}**'s XP to {xp} and level to {level}."
             f" (It was {sql_member['xp']} XP and "
             f"level {sql_member['lvl']})"
         )
@@ -119,7 +120,8 @@ class Levels(commands.Cog):
         if isinstance(_user, discord.Member):
             _user = _user.id
         user = await functions.get_members([_user], ctx.guild)
-        user = user[0]
+        username = user[0].name
+        user = user[0].id
         get_member = \
             """SELECT * FROM members WHERE user_id=$1 and guild_id=$2"""
         update_member = \
@@ -134,10 +136,10 @@ class Levels(commands.Cog):
                 await functions.check_or_create_existence(
                     self.db, conn, self.bot,
                     guild_id=ctx.guild.id, user=user,
-                    do_member=True
+                    do_member=True, user_is_id=True
                 )
                 sql_member = await conn.fetchrow(
-                    get_member, user.id, ctx.guild.id
+                    get_member, user, ctx.guild.id
                 )
 
         if sql_member is None:
@@ -156,10 +158,11 @@ class Levels(commands.Cog):
                 )
 
         await ctx.send(
-            f"Gave **{user}** XP, which made their XP {xp} and level {level}."
+            f"Gave **{username}** XP, which made their XP {xp} and level {level}."
             f" (They had {sql_member['xp']} XP and were at "
             f"level {sql_member['lvl']})"
         )
+
 
     @commands.command(
         name='rank',
