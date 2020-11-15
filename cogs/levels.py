@@ -58,6 +58,110 @@ class Levels(commands.Cog):
         self.db = db
 
     @commands.command(
+        name='setxp', aliases=['setlvl'],
+        brief="Set the XP of a user",
+        description="Set the XP of a user; sb!setxp (user) (xp)"
+    )
+    @commands.guild_only()
+    @commands.has_permissions(manage_guild=True)
+    async def set_member_xp(self, ctx, _user: Union[discord.Member, int], xp: int):
+        if isinstance(_user, discord.Member):
+            _user = _user.id
+        user = await functions.get_members([_user], ctx.guild)
+        user = user[0]
+        get_member = \
+            """SELECT * FROM members WHERE user_id=$1 and guild_id=$2"""
+        update_member = \
+            """UPDATE members
+            SET xp=$1,
+            lvl=$2
+            WHERE id=$3"""
+
+        conn = self.bot.db.conn
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                await functions.check_or_create_existence(
+                    self.db, conn, self.bot,
+                    guild_id=ctx.guild.id, user=user,
+                    do_member=True
+                )
+                sql_member = await conn.fetchrow(
+                    get_member, user.id, ctx.guild.id
+                )
+
+        if sql_member is None:
+            await ctx.send("Couldn't find that user.")
+            return
+
+        level = await leveling.current_level(xp)
+
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                await conn.execute(
+                    update_member, xp, level,
+                    sql_member['id']
+                )
+
+        await ctx.send(
+            f"Set **{user}**'s XP to {xp} and level to {level}."
+            f" (It was {sql_member['xp']} XP and "
+            f"level {sql_member['lvl']})"
+        )
+
+    @commands.command(
+        name='givexp', aliases=['givelvl'],
+        brief="Give a user XP",
+        description="Give a user XP; sb!givexp (user) (xp)"
+    )
+    @commands.guild_only()
+    @commands.has_permissions(manage_guild=True)
+    async def give_member_xp(self, ctx, _user: Union[discord.Member, int], xp: int):
+        if isinstance(_user, discord.Member):
+            _user = _user.id
+        user = await functions.get_members([_user], ctx.guild)
+        user = user[0]
+        get_member = \
+            """SELECT * FROM members WHERE user_id=$1 and guild_id=$2"""
+        update_member = \
+            """UPDATE members
+            SET xp=$1,
+            lvl=$2
+            WHERE id=$3"""
+
+        conn = self.bot.db.conn
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                await functions.check_or_create_existence(
+                    self.db, conn, self.bot,
+                    guild_id=ctx.guild.id, user=user,
+                    do_member=True
+                )
+                sql_member = await conn.fetchrow(
+                    get_member, user.id, ctx.guild.id
+                )
+
+        if sql_member is None:
+            await ctx.send("Couldn't find that user.")
+            return
+
+        xp = int(sql_member['xp']) + xp
+
+        level = await leveling.current_level(xp)
+
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                await conn.execute(
+                    update_member, xp, level,
+                    sql_member['id']
+                )
+
+        await ctx.send(
+            f"Gave **{user}** XP, which made their XP {xp} and level {level}."
+            f" (They had {sql_member['xp']} XP and were at "
+            f"level {sql_member['lvl']})"
+        )
+
+    @commands.command(
         name='rank',
         brief='View rank card',
         description='View rank card'
