@@ -438,7 +438,7 @@ async def on_command_error(ctx, error):
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=discord.Game("Having issues -- please be patient"))
+    await bot.change_presence(activity=discord.Game("Mention me for help"))
     print(f"Logged in as {bot.user.name} in {len(bot.guilds)} guilds!")
 
 
