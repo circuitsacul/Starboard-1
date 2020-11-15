@@ -48,7 +48,7 @@ class HttpWebHook():
                 print(data)
             else:
                 user_id = int(data['user'])
-                await self.bot.dispatch('top_vote', user_id)
+                self.bot.dispatch('top_vote', user_id)
 
             return web.Response(body='Vote caught', status=200)
 
