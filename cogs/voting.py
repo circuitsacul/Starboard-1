@@ -98,7 +98,7 @@ class TopVotes(commands.Cog):
 
         await vote_channel.send(embed=embed)
 
-    @tasks.loop(minutes=1, loop=True)
+    @tasks.loop(minutes=1)
     async def get_expired_votes(self):
         get_votes = \
             """SELECT * FROM votes WHERE expires<$1 AND expired=False"""
