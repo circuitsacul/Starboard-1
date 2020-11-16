@@ -1,6 +1,10 @@
 import ast
 import discord
 import checks
+import time
+import dotenv
+import os
+import asyncpg
 
 from api.post_guild_count import post_all
 from discord.ext import commands
@@ -106,6 +110,28 @@ class Owner(commands.Cog):
             msg = errors[bl]
             string += f"{bl}: {msg}\n"
         await ctx.send(string)
+
+    @commands.command(
+        name='runpg', aliases=['timepg', 'timeit', 'rpg', 'runtime'],
+        brief='Time postgres queries',
+        description='Time postgres queries'
+    )
+    async def time_postgres(self, ctx, query: str):
+        if ctx.author.id in ast.literal_eval(os.getenv('RUN_SQL', [])):
+            start_time = time.time()
+            conn = self.bot.db.conn
+            async with self.bot.db.lock:
+                async with conn.transaction():
+                    try:
+                        async with conn.transaction():
+                            no = await conn.fetch(query)
+                            await ctx.send("The query took " + str(round((time.time() - start_time) * 1000, 2)) + "ms! Here's the first 1000 characters returned:")
+                            raise ZeroDivisionError
+                    except ZeroDivisionError:
+                        await ctx.send(str(no)[:500])
+                    except Exception as e:
+                        await ctx.send("The query took " + str(round((time.time() - start_time) * 1000, 2)) + "ms! Here's the first 1000 characters returned:")
+                        await ctx.send("wow your thing errored smh **" + str(e) + "**")
 
 def setup(bot):
     bot.add_cog(Owner(bot, bot.db))
