@@ -8,6 +8,24 @@ import disputils
 import functions
 
 
+async def is_starboard_emoji(db, guild_id, emoji):
+    emoji = str(emoji)
+    get_starboards = \
+        """SELECT * FROM starboards WHERE guild_id=$1"""
+    get_sbeemojis = \
+        """SELECT * FROM sbemojis WHERE starboard_id=any($1::numeric[])"""
+
+    async with db.lock:
+        conn = await db.connect()
+        async with conn.transaction():
+            starboards = await conn.fetch(get_starboards, guild_id)
+            sql_all_emojis = await conn.fetch(
+                get_sbeemojis, [starboard['id'] for starboard in starboards]
+            )
+            all_emojis = [e['name'] for e in sql_all_emojis]
+    return str(emoji) in all_emojis
+
+
 async def get_members(user_ids: Iterable[int], guild: discord.Guild):
     unfound_ids = []
     users = []
