@@ -3,6 +3,7 @@ import sys
 import asyncio
 import os
 from discord.errors import Forbidden
+from discord.ext.commands.errors import * # bad practice but im lazy
 import dotenv
 from bot_config import SUPPORT_SERVER
 import functions
@@ -343,37 +344,14 @@ async def on_command_error(ctx, error):
         pass
     if type(error) is discord.ext.commands.errors.CommandNotFound:
         return
-    elif type(error) is errors.BotNeedsPerms:
+    elif type(error) in (errors.BotNeedsPerms, errors.DoesNotExist, errors.NoPremiumError, errors.AlreadyExists, errors.InvalidArgument, checks.WizzardRunningError):
+        # custom errors
         pass
-    elif type(error) is errors.DoesNotExist:
-        pass
-    elif type(error) is errors.NoPremiumError:
-        pass
-    elif type(error) is errors.AlreadyExists:
-        pass
-    elif type(error) is errors.InvalidArgument:
-        pass
-    elif type(error) is checks.WizzardRunningError:
-        pass
-    elif type(error) is discord.ext.commands.errors.BadArgument:
-        pass
-    elif type(error) is discord.ext.commands.errors.MissingRequiredArgument:
-        pass
-    elif type(error) is discord.ext.commands.errors.NoPrivateMessage:
-        pass
-    elif type(error) is discord.ext.commands.errors.MissingPermissions:
-        pass
-    elif type(error) is discord.ext.commands.errors.NotOwner:
-        pass
-    elif type(error) is discord.ext.commands.errors.CommandOnCooldown:
-        pass
-    elif type(error) is discord.ext.commands.errors.ChannelNotFound:
-        pass
-    elif type(error) is discord.ext.commands.errors.BadUnionArgument:
-        pass
-    elif type(error) is discord.ext.commands.errors.BotMissingPermissions:
+    elif type(error) in (BadArgument MissingRequiredArgument, NoPrivateMessage, MissingPermissions, NotOwner, CommandOnCooldown, ChannelNotFound, BadUnionArgument, BotMissingPermissions):
+        # discord errors
         pass
     elif type(error) is ValueError:
+        # builtin error
         pass
     elif type(error) is Forbidden:
         error = "I don't have the permissions to do that!"
