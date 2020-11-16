@@ -1,3 +1,5 @@
+.DS_Store
+
 .pickle
 .replit
 poetry.lock
