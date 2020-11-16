@@ -125,12 +125,12 @@ class Owner(commands.Cog):
                     try:
                         async with conn.transaction():
                             no = await conn.fetch(query)
-                            await ctx.send("The query took " + str(round((time.time() - start_time) * 1000, 2)) + "ms! Here's the first 1000 characters returned:")
+                            await ctx.send("The query took " + str(round((time.time() - start_time) * 1000, 2)) + "ms! Here's the first 500 characters returned:")
                             raise ZeroDivisionError
                     except ZeroDivisionError:
                         await ctx.send(str(no)[:500])
                     except Exception as e:
-                        await ctx.send("The query took " + str(round((time.time() - start_time) * 1000, 2)) + "ms! Here's the first 1000 characters returned:")
+                        await ctx.send("The query took " + str(round((time.time() - start_time) * 1000, 2)) + "ms! Here's the first 500 characters returned:")
                         await ctx.send("wow your thing errored smh **" + str(e) + "**")
 
 def setup(bot):
