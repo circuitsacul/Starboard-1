@@ -268,6 +268,14 @@ async def on_raw_reaction_add(payload):
     user_id = payload.user_id
     emoji = payload.emoji
 
+    emoji_name = str(emoji.id) if emoji.id is not None\
+        else emoji.name
+
+    if not await functions.is_starboard_emoji(
+        bot.db, guild_id, emoji_name
+    ):
+        return
+
     await starboard_events.handle_reaction(
         db, bot, guild_id, channel_id,
         user_id, message_id, emoji, True
@@ -283,6 +291,14 @@ async def on_raw_reaction_remove(payload):
     message_id = payload.message_id
     user_id = payload.user_id
     emoji = payload.emoji
+
+    emoji_name = emoji.id if emoji.id is not None\
+        else emoji.name
+
+    if not await functions.is_starboard_emoji(
+        bot.db, guild_id, emoji_name
+    ):
+        return
 
     await starboard_events.handle_reaction(
         db, bot, guild_id, channel_id,
