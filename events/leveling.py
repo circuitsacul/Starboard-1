@@ -1,4 +1,5 @@
 import datetime
+import functions
 from math import sqrt
 
 
@@ -11,35 +12,15 @@ async def current_level(xp):
     return int(sqrt(xp))
 
 
-async def is_starboard_emoji(db, guild_id, emoji):
-    emoji = str(emoji)
-    get_starboards = \
-        """SELECT * FROM starboards WHERE guild_id=$1"""
-    get_sbeemojis = \
-        """SELECT * FROM sbemojis WHERE starboard_id=$1"""
-
-    async with db.lock:
-        conn = await db.connect()
-        async with conn.transaction():
-            starboards = await conn.fetch(get_starboards, guild_id)
-            all_emojis = []
-            for starboard in starboards:
-                emojis = await conn.fetch(get_sbeemojis, starboard['id'])
-                all_emojis += [
-                    str(e['name']) if e['d_id'] is None
-                    else str(e['d_id']) for e in emojis
-                ]
-    return str(emoji) in all_emojis
-
-
 async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
     guild_id = guild.id
     receiver_id = receiver.id
     if reacter_id == receiver_id:
         return
     emoji = _emoji.id if _emoji.id is not None else _emoji.name
-    is_sbemoji = await is_starboard_emoji(db, guild_id, emoji)
+    is_sbemoji = await functions.is_starboard_emoji(db, guild_id, emoji)
     if not is_sbemoji:
+        print(emoji)
         return
 
     now = datetime.datetime.now()

@@ -2,28 +2,6 @@ import functions
 import asyncio
 
 
-async def is_starboard_emoji(db, guild_id, emoji):
-    emoji = str(emoji)
-    get_starboards = \
-        """SELECT * FROM starboards WHERE guild_id=$1"""
-    get_sbeemojis = \
-        """SELECT * FROM sbemojis WHERE starboard_id=$1"""
-
-    async with db.lock:
-        conn = await db.connect()
-        async with conn.transaction():
-            starboards = await conn.fetch(get_starboards, guild_id)
-            all_emojis = []
-            for starboard in starboards:
-                emojis = await conn.fetch(get_sbeemojis, starboard['id'])
-                #all_emojis += [
-                #    str(e['name']) if e['d_id'] is None
-                #    else str(e['d_id']) for e in emojis
-                #]
-                all_emojis += [e['name'] for e in emojis]
-    return str(emoji) in all_emojis
-
-
 # Check and recount stars on a message when necessary
 async def needs_recount(bot, message):
     get_reactions = \
@@ -38,7 +16,7 @@ async def needs_recount(bot, message):
             name = str(r.emoji.id)
         else:
             name = str(r.emoji)
-        if await is_starboard_emoji(bot.db, message.guild.id, name):
+        if await functions.is_starboard_emoji(bot.db, message.guild.id, name):
             total += r.count
 
     if total == 0:  # Don't recount if the message doesn't have reactions
@@ -80,7 +58,7 @@ async def recount_reactions(bot, message):
         else:
             name = str(reaction.emoji)
 
-        if not await is_starboard_emoji(bot.db, message.guild.id, name):
+        if not await functions.is_starboard_emoji(bot.db, message.guild.id, name):
             continue
 
         async for user in reaction.users():

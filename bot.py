@@ -3,6 +3,7 @@ import sys
 import asyncio
 import os
 from discord.errors import Forbidden
+from discord.ext.commands import errors
 import dotenv
 from bot_config import SUPPORT_SERVER
 import functions
@@ -10,7 +11,7 @@ import traceback
 import pretty_help
 import time
 import checks
-import errors
+import errors as cerrors
 from discord.ext import commands
 from pretty_help import PrettyHelp
 from asyncio import Lock
@@ -267,6 +268,14 @@ async def on_raw_reaction_add(payload):
     user_id = payload.user_id
     emoji = payload.emoji
 
+    emoji_name = str(emoji.id) if emoji.id is not None\
+        else emoji.name
+
+    if not await functions.is_starboard_emoji(
+        bot.db, guild_id, emoji_name
+    ):
+        return
+
     await starboard_events.handle_reaction(
         db, bot, guild_id, channel_id,
         user_id, message_id, emoji, True
@@ -282,6 +291,14 @@ async def on_raw_reaction_remove(payload):
     message_id = payload.message_id
     user_id = payload.user_id
     emoji = payload.emoji
+
+    emoji_name = emoji.id if emoji.id is not None\
+        else emoji.name
+
+    if not await functions.is_starboard_emoji(
+        bot.db, guild_id, emoji_name
+    ):
+        return
 
     await starboard_events.handle_reaction(
         db, bot, guild_id, channel_id,
@@ -343,35 +360,19 @@ async def on_command_error(ctx, error):
         pass
     if type(error) is discord.ext.commands.errors.CommandNotFound:
         return
-    elif type(error) is errors.BotNeedsPerms:
+    elif type(error) in [
+        cerrors.BotNeedsPerms, cerrors.DoesNotExist, cerrors.NoPremiumError,
+        cerrors.AlreadyExists, cerrors.InvalidArgument,
+        checks.WizzardRunningError
+    ]:
         pass
-    elif type(error) is errors.DoesNotExist:
-        pass
-    elif type(error) is errors.NoPremiumError:
-        pass
-    elif type(error) is errors.AlreadyExists:
-        pass
-    elif type(error) is errors.InvalidArgument:
-        pass
-    elif type(error) is checks.WizzardRunningError:
-        pass
-    elif type(error) is discord.ext.commands.errors.BadArgument:
-        pass
-    elif type(error) is discord.ext.commands.errors.MissingRequiredArgument:
-        pass
-    elif type(error) is discord.ext.commands.errors.NoPrivateMessage:
-        pass
-    elif type(error) is discord.ext.commands.errors.MissingPermissions:
-        pass
-    elif type(error) is discord.ext.commands.errors.NotOwner:
-        pass
-    elif type(error) is discord.ext.commands.errors.CommandOnCooldown:
-        pass
-    elif type(error) is discord.ext.commands.errors.ChannelNotFound:
-        pass
-    elif type(error) is discord.ext.commands.errors.BadUnionArgument:
-        pass
-    elif type(error) is discord.ext.commands.errors.BotMissingPermissions:
+    elif type(error) in [
+        errors.BadArgument, errors.MissingRequiredArgument,
+        errors.NoPrivateMessage, errors.MissingPermissions,
+        errors.NotOwner, errors.CommandOnCooldown,
+        errors.ChannelNotFound, errors.BadUnionArgument,
+        errors.BotMissingPermissions
+    ]:
         pass
     elif type(error) is discord.ext.commands.errors.MaxConcurrencyReached:
         pass

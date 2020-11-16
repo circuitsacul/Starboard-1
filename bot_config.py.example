@@ -1,4 +1,5 @@
 OWNER_ID = your_id_here
+RUN_SQL = [id1, id2]
 
 INVITE = "bot invite link" # str
 SUPPORT_SERVER = "permanent invite to your support server" # str
