@@ -12,7 +12,7 @@ async def converted_emojis(emojis, guild):
             emoji_id = None
 
         if emoji_id is not None:
-            emoji_obj = await utils.get(guild.emojis, emoji_id)
+            emoji_obj = await utils.get(guild.emojis, id=emoji_id)
             if emoji_obj is not None:
                 all_emojis.append(emoji_obj)
         else:
