@@ -136,7 +136,6 @@ async def check_or_create_existence(
 
     if user is not None:
         if user_is_id:
-            #user = await bot.get_guild(guild_id).query_members(user_ids=[user])
             guild = bot.get_guild(guild_id)
             users = await functions.get_members([user], guild)
             if len(users) == 0:
@@ -201,7 +200,6 @@ async def get_patron_levels(db, user_id):
 
 async def handle_role(bot, db, user_id, guild_id, role_id, add):
     guild = bot.get_guild(guild_id)
-    #member = utils.get(guild.members, id=user_id)
     member = (await functions.get_members([int(user_id)], guild))[0]
     role = utils.get(guild.roles, id=role_id)
     if add:

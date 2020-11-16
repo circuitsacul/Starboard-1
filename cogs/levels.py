@@ -27,7 +27,6 @@ async def get_leaderboard(bot, guild):
     )
 
     for m in members:
-        #mobject = bot.get_user(int(m['user_id']))
         mobject = utils.get(member_objects, id=m['user_id'])
         if mobject is None or mobject.bot:
             continue
@@ -118,7 +117,9 @@ class Levels(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
-    async def give_member_xp(self, ctx, _user: Union[discord.Member, int], xp: int):
+    async def give_member_xp(
+        self, ctx, _user: Union[discord.Member, int], xp: int
+    ):
         if isinstance(_user, discord.Member):
             _user = _user.id
         user = await functions.get_members([_user], ctx.guild)
@@ -160,11 +161,11 @@ class Levels(commands.Cog):
                 )
 
         await ctx.send(
-            f"Gave **{username}** XP, which made their XP {xp} and level {level}."
+            f"Gave **{username}** XP, which made their XP {xp} "
+            f"and level {level}."
             f" (They had {sql_member['xp']} XP and were at "
             f"level {sql_member['lvl']})"
         )
-
 
     @commands.command(
         name='rank',
