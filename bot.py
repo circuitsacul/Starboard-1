@@ -3,7 +3,7 @@ import sys
 import asyncio
 import os
 from discord.errors import Forbidden
-from discord.ext.commands.errors import * # bad practice but im lazy
+from discord.ext.commands import errors
 import dotenv
 from bot_config import SUPPORT_SERVER
 import functions
@@ -11,7 +11,7 @@ import traceback
 import pretty_help
 import time
 import checks
-import errors
+import errors as cerrors
 from discord.ext import commands
 from pretty_help import PrettyHelp
 from asyncio import Lock
@@ -344,14 +344,21 @@ async def on_command_error(ctx, error):
         pass
     if type(error) is discord.ext.commands.errors.CommandNotFound:
         return
-    elif type(error) in (errors.BotNeedsPerms, errors.DoesNotExist, errors.NoPremiumError, errors.AlreadyExists, errors.InvalidArgument, checks.WizzardRunningError):
-        # custom errors
+    elif type(error) in [
+        cerrors.BotNeedsPerms, cerrors.DoesNotExist, cerrors.NoPremiumError,
+        cerrors.AlreadyExists, cerrors.InvalidArgument,
+        checks.WizzardRunningError
+    ]:
         pass
-    elif type(error) in (BadArgument MissingRequiredArgument, NoPrivateMessage, MissingPermissions, NotOwner, CommandOnCooldown, ChannelNotFound, BadUnionArgument, BotMissingPermissions):
-        # discord errors
+    elif type(error) in [
+        errors.BadArgument, errors.MissingRequiredArgument,
+        errors.NoPrivateMessage, errors.MissingPermissions,
+        errors.NotOwner, errors.CommandOnCooldown,
+        errors.ChannelNotFound, errors.BadUnionArgument,
+        errors.BotMissingPermissions
+    ]:
         pass
     elif type(error) is ValueError:
-        # builtin error
         pass
     elif type(error) is Forbidden:
         error = "I don't have the permissions to do that!"
