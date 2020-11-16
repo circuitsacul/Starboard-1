@@ -55,55 +55,6 @@ class Utility(commands.Cog):
         self.db = db
 
     @commands.command(
-        name='setxp', aliases=['setlvl'],
-        brief="Set the XP of a user",
-        description="Set the XP of a user"
-    )
-    @commands.guild_only()
-    @checks.is_owner()
-    async def set_member_xp(self, ctx, _user: int, xp: int):
-        user = await functions.get_members([_user], ctx.guild)
-        user = user[0]
-        get_member = \
-            """SELECT * FROM members WHERE user_id=$1 and guild_id=$2"""
-        update_member = \
-            """UPDATE members
-            SET xp=$1,
-            lvl=$2
-            WHERE id=$3"""
-
-        conn = self.bot.db.conn
-        async with self.bot.db.lock:
-            async with conn.transaction():
-                await functions.check_or_create_existence(
-                    self.db, conn, self.bot,
-                    guild_id=ctx.guild.id, user=user,
-                    do_member=True
-                )
-                sql_member = await conn.fetchrow(
-                    get_member, user.id, ctx.guild.id
-                )
-
-        if sql_member is None:
-            await ctx.send("Couldn't find that user.")
-            return
-
-        level = await leveling.current_level(xp)
-
-        async with self.bot.db.lock:
-            async with conn.transaction():
-                await conn.execute(
-                    update_member, xp, level,
-                    sql_member['id']
-                )
-
-        await ctx.send(
-            f"Set XP to {xp} and level to {level}."
-            f" (Was {sql_member['xp']} XP and "
-            f"level {sql_member['lvl']})"
-        )
-
-    @commands.command(
         name='frozen', aliases=['f'],
         brief='Lists all frozen messages',
         description='Lists all frozen messages'

@@ -37,10 +37,10 @@ PATRON_LEVELS = {
             'description': """Description and perks for this level"""
         },
         'gives_role': None, #option id of role to give to user if they are in your support server,
-        'num': 1 # The level... Essentially means that level 2 will have all the features level 1 has. Can all be set to 0 if needed
+        'num': 1, # The level... Essentially means that level 2 will have all the features level 1 has. Can all be set to 0 if needed
         'perks': {
             'starboards': 4, # How many starboards do users get if they have this level
-            'emojis': 4 # How many emojis per starboard do users get if they have this level,
+            'emojis': 4, # How many emojis per starboard do users get if they have this level,
             'aschannels': 1,
             'asemojis': 1
         }

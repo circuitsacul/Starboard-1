@@ -112,8 +112,12 @@ async def check_single_exists(conn, sql, params):
 
 async def check_or_create_existence(
     db, conn, bot, guild_id=None, user=None,
-    starboard_id=None, do_member=False, create_new=True
+    starboard_id=None, do_member=False, create_new=True,
+    user_is_id=False,
 ):
+    if guild_id is None and check_bot:
+        check_bot = False # we can't query members because we don't have guild ID
+
     check_guild = \
         """SELECT * FROM guilds WHERE id=$1"""
     check_user = \
@@ -132,12 +136,24 @@ async def check_or_create_existence(
                 await add_prefix(bot, guild_id, bot_config.DEFAULT_PREFIX)
     else:
         gexists = None
+
     if user is not None:
-        uexists = await check_single_exists(conn, check_user, (user.id,))
-        if not uexists and create_new:
-            await db.q.create_user.fetch(user.id, user.bot)
+        if user_is_id:
+            user = await bot.get_guild(guild_id).query_members(user_ids=[user])
+            if len(user) == 0:
+                uexists = None
+            else:
+                user = user[0]
+                uexists = await check_single_exists(conn, check_user, (user.id,))
+                if not uexists and create_new:
+                    await db.q.create_user.fetch(user.id, user.bot)
+        else:
+            uexists = await check_single_exists(conn, check_user, (user.id,))
+            if not uexists and create_new:
+                await db.q.create_user.fetch(user.id, user.bot)
     else:
         uexists = None
+
     if starboard_id is not None and guild_id is not None:
         s_exists = await check_single_exists(
             conn, check_starboard, (starboard_id,)
@@ -147,15 +163,24 @@ async def check_or_create_existence(
     else:
         s_exists = None
     if do_member and user is not None and guild_id is not None:
-        mexists = await check_single_exists(
-            conn, check_member, (guild_id, user.id,)
-        )
-        if not mexists and create_new:
-            await db.q.create_member.fetch(user.id, guild_id)
+        if not user_is_id:
+            mexists = await check_single_exists(
+                conn, check_member, (guild_id, user.id,)
+            )
+            if not mexists and create_new:
+                await db.q.create_member.fetch(user.id, guild_id)
+        else:
+            mexists = await check_single_exists(
+                conn, check_member, (guild_id, user,)
+            )
+            if not mexists and create_new:
+                await db.q.create_member.fetch(user, guild_id)
+
     else:
         mexists = None
 
     return dict(ge=gexists, ue=uexists, se=s_exists, me=mexists)
+
 
 
 async def required_patron_level(db, user_id, level):
