@@ -7,20 +7,13 @@ async def is_starboard_emoji(db, guild_id, emoji):
     get_starboards = \
         """SELECT * FROM starboards WHERE guild_id=$1"""
     get_sbeemojis = \
-        """SELECT * FROM sbemojis WHERE starboard_id=$1"""
+        """SELECT * FROM sbemojis WHERE starboard_id=any($1::numeric[])"""
 
     async with db.lock:
         conn = await db.connect()
         async with conn.transaction():
             starboards = await conn.fetch(get_starboards, guild_id)
-            all_emojis = []
-            for starboard in starboards:
-                emojis = await conn.fetch(get_sbeemojis, starboard['id'])
-                #all_emojis += [
-                #    str(e['name']) if e['d_id'] is None
-                #    else str(e['d_id']) for e in emojis
-                #]
-                all_emojis += [e['name'] for e in emojis]
+            all_emojis = await conn.fetch(get_sbeemojis, [starboard['id'] for starboard in starboards])
     return str(emoji) in all_emojis
 
 
