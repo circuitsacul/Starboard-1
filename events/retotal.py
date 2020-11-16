@@ -96,6 +96,17 @@ async def recount_reactions(bot, message):
     async with bot.db.lock:
         conn = bot.db.conn
         async with conn.transaction():
+            await functions.check_or_create_existence(
+                bot.db, conn, bot,
+                guild_id=message.guild.id,
+                user=message.author, do_member=True
+            )
+            await bot.db.q.create_message.fetch(
+                message.id, message.guild.id,
+                message.author.id, None,
+                message.channel.id, True,
+                message.channel.is_nsfw()
+            )
             for r in to_add:
                 await functions.check_or_create_existence(
                     bot.db, conn, bot,

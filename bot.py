@@ -373,6 +373,8 @@ async def on_command_error(ctx, error):
         pass
     elif type(error) is discord.ext.commands.errors.BotMissingPermissions:
         pass
+    elif type(error) is discord.ext.commands.errors.MaxConcurrencyReached:
+        pass
     elif type(error) is ValueError:
         pass
     elif type(error) is Forbidden:

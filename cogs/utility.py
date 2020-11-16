@@ -2,6 +2,7 @@ import discord
 import functions
 import bot_config
 import checks
+from discord.ext.commands import BucketType
 from events import retotal
 from events import leveling
 from discord.ext import commands
@@ -17,7 +18,7 @@ async def scan_recount(bot, channel, messages: int, start_date=None):
         start_date = guild.me.created_at
 
     async for m in channel.history(limit=messages):
-        if await retotal.needs_recount(bot, m) or True:
+        if await retotal.needs_recount(bot, m):
             await retotal.recount_reactions(bot, m)
 
 
@@ -72,10 +73,12 @@ class Utility(commands.Cog):
         brief='Retotal reactions on X messages in channel'
     )
     @commands.has_permissions(manage_guild=True)
+    @commands.max_concurrency(1, BucketType.channel)
+    #@commands.cooldown(1, 60, type=BucketType.guild)
     @commands.guild_only()
     async def recount_channel(self, ctx, messages: int):
-        if messages > 1000:
-            await ctx.send("Can only recount up to 1000 messages")
+        if messages > 25000:
+            await ctx.send("Can only recount up to 25000 messages")
             return
 
         async with ctx.typing():
