@@ -64,7 +64,9 @@ class Levels(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
-    async def set_member_xp(self, ctx, _user: Union[discord.Member, int], xp: int):
+    async def set_member_xp(
+        self, ctx, _user: Union[discord.Member, int], xp: int
+    ):
         if isinstance(_user, discord.Member):
             _user = _user.id
         user = await functions.get_members([_user], ctx.guild)
