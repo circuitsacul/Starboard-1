@@ -136,12 +136,16 @@ async def check_or_create_existence(
 
     if user is not None:
         if user_is_id:
-            user = await bot.get_guild(guild_id).query_members(user_ids=[user])
-            if len(user) == 0:
+            #user = await bot.get_guild(guild_id).query_members(user_ids=[user])
+            guild = bot.get_guild(guild_id)
+            users = await functions.get_members([user], guild)
+            if len(users) == 0:
                 uexists = None
             else:
-                user = user[0]
-                uexists = await check_single_exists(conn, check_user, (user.id,))
+                user = users[0]
+                uexists = await check_single_exists(
+                    conn, check_user, (user.id,)
+                )
                 if not uexists and create_new:
                     await db.q.create_user.fetch(user.id, user.bot)
         else:
@@ -160,24 +164,16 @@ async def check_or_create_existence(
     else:
         s_exists = None
     if do_member and user is not None and guild_id is not None:
-        if not user_is_id:
-            mexists = await check_single_exists(
-                conn, check_member, (guild_id, user.id,)
-            )
-            if not mexists and create_new:
-                await db.q.create_member.fetch(user.id, guild_id)
-        else:
-            mexists = await check_single_exists(
-                conn, check_member, (guild_id, user,)
-            )
-            if not mexists and create_new:
-                await db.q.create_member.fetch(user, guild_id)
+        mexists = await check_single_exists(
+            conn, check_member, (guild_id, user.id,)
+        )
+        if not mexists and create_new:
+            await db.q.create_member.fetch(user.id, guild_id)
 
     else:
         mexists = None
 
     return dict(ge=gexists, ue=uexists, se=s_exists, me=mexists)
-
 
 
 async def required_patron_level(db, user_id, level):
