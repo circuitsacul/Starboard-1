@@ -2,6 +2,7 @@ import ast
 import discord
 import checks
 import time
+import bot_config
 import dotenv
 import os
 import asyncpg
@@ -117,7 +118,7 @@ class Owner(commands.Cog):
         description='Time postgres queries'
     )
     async def time_postgres(self, ctx, query: str):
-        if ctx.author.id in ast.literal_eval(os.getenv('RUN_SQL', [])):
+        if ctx.author.id in bot_config.RUN_SQL:
             start_time = time.time()
             conn = self.bot.db.conn
             async with self.bot.db.lock:
