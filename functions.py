@@ -115,9 +115,6 @@ async def check_or_create_existence(
     starboard_id=None, do_member=False, create_new=True,
     user_is_id=False,
 ):
-    if guild_id is None and check_bot:
-        check_bot = False # we can't query members because we don't have guild ID
-
     check_guild = \
         """SELECT * FROM guilds WHERE id=$1"""
     check_user = \
