@@ -175,6 +175,26 @@ class Owner(commands.Cog):
         ep = disputils.EmbedPaginator(self.bot, embeds)
         await ep.run([ctx.message.author], ctx.channel)
 
+    @commands.command(name='clearsql')
+    @checks.is_owner()
+    async def clear_sql_stats(self, ctx):
+        delete = \
+            """DELETE FROM sqlruntimes"""
+
+        async with self.bot.db.lock:
+            async with self.bot.db.conn.transaction():
+                await self.bot.db.conn.execute(delete)
+
+        await ctx.send("Done")
+
+    @commands.command(name='dumpnow')
+    @checks.is_owner()
+    async def early_dump_sqlruntimes(self, ctx):
+        async with self.bot.db.lock:
+            await self.bot.db.conn.dump()
+
+        await ctx.send("Done")
+
 
 def setup(bot):
     bot.add_cog(Owner(bot, bot.db))
