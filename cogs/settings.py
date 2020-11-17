@@ -36,14 +36,15 @@ class Settings(commands.Cog):
         self.bot = bot
         self.db = db
 
-    @commands.group(
-        name='profile', aliases=['userConfig', 'uc', 'p'],
-        brief='View/change personal settings',
-        description='Change or view settings for yourself. '
-        'Changes affect all servers, not just the current one.',
-        invoke_without_command=True
-    )
+    #@commands.group(
+    #    name='profile', aliases=['userConfig', 'uc', 'p'],
+    #    brief='View/change personal settings',
+    #    description='Change or view settings for yourself. '
+    #    'Changes affect all servers, not just the current one.',
+    #    invoke_without_command=True
+    #)
     async def user_settings(self, ctx):
+        return
         get_user = \
             """SELECT * FROM users WHERE id=$1"""
 
@@ -76,11 +77,11 @@ class Settings(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @user_settings.command(
-        name='LevelUpMessages', aliases=['LvlUpMsgs', 'lum'],
-        brief='Wether or not to send you level up messages',
-        description='Wether or not to send you level up messages'
-    )
+    #@user_settings.command(
+    #    name='LevelUpMessages', aliases=['LvlUpMsgs', 'lum'],
+    #    brief='Wether or not to send you level up messages',
+    #    description='Wether or not to send you level up messages'
+    #)
     async def set_user_lvl_up_msgs(self, ctx, value: bool):
         status = await change_user_setting(
             self.db, ctx.message.author.id, lvl_up_msgs=value
