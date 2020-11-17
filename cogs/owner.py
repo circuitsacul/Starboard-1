@@ -4,6 +4,7 @@ import checks
 import time
 import bot_config
 import disputils
+from asyncpg.exceptions._base import InterfaceError
 from discord.ext import tasks
 
 from api.post_guild_count import post_all
@@ -149,7 +150,7 @@ class Owner(commands.Cog):
                                 runtimes.append((time.time()-start)/times)
                                 times = 1
                     raise Exception("Rollback")
-            except Exception:
+            except (Exception, InterfaceError):
                 pass
 
             for x, r in enumerate(runtimes):
