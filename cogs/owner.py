@@ -13,7 +13,6 @@ from discord.ext import commands
 def ms(t):
     return round(t*1000, 5)
 
-
 class Owner(commands.Cog):
     def __init__(self, bot, db):
         self.db = db
@@ -122,28 +121,39 @@ class Owner(commands.Cog):
         await ctx.send(string)
 
     @commands.command(
-        name='runpg', aliases=['timepg', 'timeit', 'rpg', 'runtime'],
+        name='runpg', aliases=['timepg', 'timeit', 'runtime'],
         brief='Time postgres queries',
         description='Time postgres queries',
         hidden=True
     )
     async def time_postgres(self, ctx, *args):
         if ctx.author.id in bot_config.RUN_SQL:
+            times = 1
             conn = self.bot.db.conn
-            async with self.bot.db.lock:
+            runtimes = []
+
+            try:
                 async with conn.transaction():
-                    try:
-                        async with conn.transaction():
-                            for i in range(len(args)):
-                                start_time = time.time()
-                                no = await conn.fetch(args[i])
-                                await ctx.send("Query " + str(i + 1) + " took " + str(round((time.time() - start_time) * 1000, 2)) + "ms! Here's the first 500 characters returned:")
-                            raise ZeroDivisionError
-                    except ZeroDivisionError:
-                        await ctx.send(str(no)[:500])
-                    except Exception as e:
-                        await ctx.send("The query took " + str(round((time.time() - start_time) * 1000, 2)) + "ms! Here's the first 500 characters returned:")
-                        await ctx.send("wow your thing errored smh **" + str(e) + "**")
+                    for a in args:
+                        try:
+                            times = int(a)
+                        except:
+                            async with self.bot.db.lock:
+                                start = time.time()
+                                for i in range(0, times):
+                                    try:
+                                        result = await conn.fetch(a)
+                                    except Exception as e:
+                                        await ctx.send(e)
+                                runtimes.append((time.time()-start)/times)
+                                times = 1
+                    raise error
+            except:
+                pass
+
+            for x, r in enumerate(runtimes):
+                await ctx.send(f"Query {x} took {round(r*1000, 2)} ms")
+            await ctx.send(result)
 
     @commands.command(name='sql', hidden=True)
     async def get_sql_stats(self, ctx, sort: str = 'total'):
