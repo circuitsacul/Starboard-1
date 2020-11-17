@@ -4,7 +4,6 @@ import checks
 import time
 import bot_config
 import disputils
-from typing import List
 from discord.ext import tasks
 
 from api.post_guild_count import post_all
