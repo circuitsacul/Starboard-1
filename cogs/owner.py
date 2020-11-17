@@ -4,6 +4,7 @@ import checks
 import time
 import bot_config
 import disputils
+from typing import List
 from discord.ext import tasks
 
 from api.post_guild_count import post_all
@@ -127,16 +128,17 @@ class Owner(commands.Cog):
         description='Time postgres queries',
         hidden=True
     )
-    async def time_postgres(self, ctx, query: str):
+    async def time_postgres(self, ctx, *args):
         if ctx.author.id in bot_config.RUN_SQL:
-            start_time = time.time()
             conn = self.bot.db.conn
             async with self.bot.db.lock:
                 async with conn.transaction():
                     try:
                         async with conn.transaction():
-                            no = await conn.fetch(query)
-                            await ctx.send("The query took " + str(round((time.time() - start_time) * 1000, 2)) + "ms! Here's the first 500 characters returned:")
+                            for i in range(len(args)):
+                                start_time = time.time()
+                                no = await conn.fetch(args[i])
+                                await ctx.send("Query " + str(i + 1) + " took " + str(round((time.time() - start_time) * 1000, 2)) + "ms! Here's the first 500 characters returned:")
                             raise ZeroDivisionError
                     except ZeroDivisionError:
                         await ctx.send(str(no)[:500])
