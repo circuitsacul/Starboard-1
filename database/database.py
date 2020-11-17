@@ -1,5 +1,6 @@
 import asyncpg as apg
 import os
+import time
 from asyncio import Lock
 from discord import utils
 
@@ -21,37 +22,71 @@ class CustomConn:
         self.realcon = realcon
         self.sql_dict = {}
 
+    async def dump(self):  # requires external lock
+        add_row = \
+            """INSERT INTO sqlruntimes (sql, count, time)
+            values ($1, $2, $3)"""
+        update_row = \
+            """UPDATE sqlruntimes
+            SET count=$2,
+            time=$3
+            WHERE sql=$1"""
+        check_row = \
+            """SELECT * FROM sqlruntimes
+            WHERE sql=$1"""
+
+        conn = self.realcon
+
+        async with self.realcon.transaction():
+            for sql, d in self.sql_dict.items():
+                row = await conn.fetchrow(check_row, sql)
+                if row is None:
+                    await conn.execute(
+                        add_row, sql, d['c'], d['e']
+                    )
+                else:
+                    await conn.execute(
+                        update_row, sql,
+                        d['c']+row['count'],
+                        d['e']+float(row['time'])
+                    )
+
+        self.sql_dict = {}
+
     def transaction(self, *args, **kwargs):
         return self.realcon.transaction(*args, **kwargs)
 
-    def log(self, sql):
-        self.sql_dict.setdefault(sql, 0)
-        self.sql_dict[sql] += 1
-
-    def most_common(self):
-        top = list(sorted(
-            [(s, c) for s, c in self.sql_dict.items()],
-            key=lambda l: l[1], reverse=True
-        ))[0:5]
-        m = "Top 5 sql statmenets:"
-        for s, c in top:
-            m += f"\n`{s}`: {c}"
-        return m
+    def log(self, sql, time):
+        self.sql_dict.setdefault(sql, {'c': 0, 'e': 0})
+        self.sql_dict[sql]['c'] += 1
+        self.sql_dict[sql]['e'] += time
 
     async def prepare(self, *args, **kwargs):
         return await self.realcon.prepare(*args, **kwargs)
 
     async def execute(self, sql, *args, **kwargs):
-        self.log(sql)
-        return await self.realcon.execute(sql, *args, **kwargs)
+        s = time.time()
+        result = await self.realcon.execute(sql, *args, **kwargs)
+        e = time.time()
+        t = e-s
+        self.log(sql, t)
+        return result
 
     async def fetch(self, sql, *args, **kwargs):
-        self.log(sql)
-        return await self.realcon.fetch(sql, *args, **kwargs)
+        s = time.time()
+        result = await self.realcon.fetch(sql, *args, **kwargs)
+        e = time.time()
+        t = e-s
+        self.log(sql, t)
+        return result
 
     async def fetchrow(self, sql, *args, **kwargs):
-        self.log(sql)
-        return await self.realcon.fetchrow(sql, *args, **kwargs)
+        s = time.time()
+        result = await self.realcon.fetchrow(sql, *args, **kwargs)
+        e = time.time()
+        t = e-s
+        self.log(sql, t)
+        return result
 
 
 class BotCache(aobject):
@@ -415,6 +450,13 @@ class Database:
                 FOREIGN KEY (message_id) REFERENCES messages (id)
             )"""
 
+        sqlruntimes_table = \
+            """CREATE TABLE IF NOT EXISTS sqlruntimes (
+                sql TEXT PRIMARY KEY,
+                count integer NOT NULL DEFAULT 0,
+                time numeric NOT NULL DEFAULT 0
+            )"""
+
         delete_reaction_index = \
             """CREATE INDEX IF NOT EXISTS delete_reaction
             ON reactions(message_id, user_id, name)"""
@@ -433,6 +475,7 @@ class Database:
         await self._create_table(asemojis_table)
         await self._create_table(messages_table)
         await self._create_table(reactions_table)
+        await self._create_table(sqlruntimes_table)
 
         await self._create_index(delete_reaction_index)
         self.lock.release()
