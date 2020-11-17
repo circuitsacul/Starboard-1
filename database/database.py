@@ -16,6 +16,34 @@ class aobject(object):
         pass
 
 
+class CustomConn:
+    def __init__(self, realcon):
+        self.realcon = realcon
+        self.sql_dict = {}
+
+    def transaction(self, *args, **kwargs):
+        return self.realcon.transaction(*args, **kwargs)
+
+    def log(self, sql):
+        self.sql_dict.setdefault(sql, 0)
+        self.sql_dict[sql] += 1
+
+    async def prepare(self, *args, **kwargs):
+        return await self.realcon.prepare(*args, **kwargs)
+
+    async def execute(self, sql, *args, **kwargs):
+        self.log(sql)
+        return await self.realcon.execute(sql, *args, **kwargs)
+
+    async def fetch(self, sql, *args, **kwargs):
+        self.log(sql)
+        return await self.realcon.fetch(sql, *args, **kwargs)
+
+    async def fetchrow(self, sql, *args, **kwargs):
+        self.log(sql)
+        return await self.realcon.fetchrow(sql, *args, **kwargs)
+
+
 class BotCache(aobject):
     async def __init__(self, event, limit=20):
         self._messages = {}
@@ -190,7 +218,8 @@ class Database:
             print(f"Couldn't connect to database: {e}")
             if conn:
                 await conn.close()
-        return conn
+        customconn = CustomConn(conn)
+        return customconn
 
     def _dict_factory(self, cursor, row):
         d = {}
