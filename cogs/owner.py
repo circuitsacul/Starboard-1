@@ -3,18 +3,27 @@ import discord
 import checks
 import time
 import bot_config
-import dotenv
-import os
-import asyncpg
+import disputils
+from discord.ext import tasks
 
 from api.post_guild_count import post_all
 from discord.ext import commands
+
+
+def ms(t):
+    return round(t*1000, 5)
 
 
 class Owner(commands.Cog):
     def __init__(self, bot, db):
         self.db = db
         self.bot = bot
+        self.dump_sqlruntimes.start()
+
+    @tasks.loop(minutes=5)
+    async def dump_sqlruntimes(self):
+        async with self.bot.db.lock:
+            await self.bot.db.conn.dump()
 
     def insert_returns(self, body):
         # insert return stmt if the last expression is a expression statement
@@ -115,7 +124,8 @@ class Owner(commands.Cog):
     @commands.command(
         name='runpg', aliases=['timepg', 'timeit', 'rpg', 'runtime'],
         brief='Time postgres queries',
-        description='Time postgres queries'
+        description='Time postgres queries',
+        hidden=True
     )
     async def time_postgres(self, ctx, query: str):
         if ctx.author.id in bot_config.RUN_SQL:
@@ -133,6 +143,36 @@ class Owner(commands.Cog):
                     except Exception as e:
                         await ctx.send("The query took " + str(round((time.time() - start_time) * 1000, 2)) + "ms! Here's the first 500 characters returned:")
                         await ctx.send("wow your thing errored smh **" + str(e) + "**")
+
+    @commands.command(name='sql', hidden=True)
+    async def get_sql_stats(self, ctx):
+        get_results = \
+            """SELECT * FROM sqlruntimes"""
+
+        conn = self.bot.db.conn
+        async with self.bot.db.lock:
+            async with self.bot.db.conn.transaction():
+                r = await conn.fetch(get_results)
+                sorted_rows = sorted(
+                    [(d['sql'], d['count'], d['time']) for d in r],
+                    key=lambda l: l[1], reverse=True
+                )
+
+        p = commands.Paginator(prefix='', suffix='')
+        embeds = []
+        for sr in sorted_rows:
+            p.add_line(f"```{sr[0]}```**{sr[1]} | {ms(sr[2]/sr[1])}**")
+
+        for page in p.pages:
+            e = discord.Embed(
+                title='Results',
+                description=page
+            )
+            embeds.append(e)
+
+        ep = disputils.EmbedPaginator(self.bot, embeds)
+        await ep.run([ctx.message.author], ctx.channel)
+
 
 def setup(bot):
     bot.add_cog(Owner(bot, bot.db))
