@@ -145,15 +145,23 @@ class Owner(commands.Cog):
                         await ctx.send("wow your thing errored smh **" + str(e) + "**")
 
     @commands.command(name='sql', hidden=True)
-    async def get_sql_stats(self, ctx, sort_by_time: bool = False):
+    async def get_sql_stats(self, ctx, sort: str = 'normal'):
+        if sort not in ['avg', 'total']:
+            await ctx.send(
+                "Leave the sort type blank "
+                "or set it to either 'avg' or 'total'."
+            )
+            return
         if ctx.message.author.id not in bot_config.RUN_SQL:
             return
         get_results = \
             """SELECT * FROM sqlruntimes"""
 
         def sorter(l):
-            if sort_by_time is True:
+            if sort == 'avg':
                 return float(l[2])/l[1]
+            elif sort == 'total':
+                return float(l[2])
             return l[1]
 
         conn = self.bot.db.conn
@@ -168,7 +176,7 @@ class Owner(commands.Cog):
         p = commands.Paginator(prefix='', suffix='')
         embeds = []
         for sr in sorted_rows:
-            p.add_line(f"```{sr[0]}```**{sr[1]} | {ms(sr[2]/sr[1])}**")
+            p.add_line(f"```{sr[0]}```**{sr[1]} | {ms(sr[2])} | {ms(sr[2]/sr[1])}**")
 
         for page in p.pages:
             e = discord.Embed(
