@@ -67,25 +67,19 @@ class CustomConn:
     async def execute(self, sql, *args, **kwargs):
         s = time.time()
         result = await self.realcon.execute(sql, *args, **kwargs)
-        e = time.time()
-        t = e-s
-        self.log(sql, t)
+        self.log(sql, time.time() - s)
         return result
 
     async def fetch(self, sql, *args, **kwargs):
         s = time.time()
         result = await self.realcon.fetch(sql, *args, **kwargs)
-        e = time.time()
-        t = e-s
-        self.log(sql, t)
+        self.log(sql, time.time() - s)
         return result
 
     async def fetchrow(self, sql, *args, **kwargs):
         s = time.time()
         result = await self.realcon.fetchrow(sql, *args, **kwargs)
-        e = time.time()
-        t = e-s
-        self.log(sql, t)
+        self.log(sql, time.time() - s)
         return result
 
 
