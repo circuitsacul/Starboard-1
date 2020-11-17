@@ -28,6 +28,16 @@ class CustomConn:
         self.sql_dict.setdefault(sql, 0)
         self.sql_dict[sql] += 1
 
+    def most_common(self):
+        top = list(sorted(
+            [(s, c) for s, c in self.sql_dict.items()],
+            key=lambda l: l[1], reverse=True
+        ))[0:5]
+        m = "Top 5 sql statmenets:"
+        for s, c in top:
+            m += f"\n`{s}`: {c}"
+        return m
+
     async def prepare(self, *args, **kwargs):
         return await self.realcon.prepare(*args, **kwargs)
 

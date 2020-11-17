@@ -330,6 +330,7 @@ async def on_message(message):
         else:
             p = bot_config.DEFAULT_PREFIX
         try:
+            return
             await message.channel.send(
                 f"To get started, run `{p}setup`.\n"
                 f"To see all my commands, run `{p}help`\n"
@@ -339,7 +340,11 @@ async def on_message(message):
         except Exception:
             pass
     else:
-        await bot.process_commands(message)
+        if message.author.id != 321733774414970882:
+            pass
+        else:
+            print('yes')
+            await bot.process_commands(message)
 
 
 @bot.event
