@@ -173,7 +173,7 @@ class Owner(commands.Cog):
                     key=sorter, reverse=True
                 )
 
-        p = commands.Paginator(prefix='', suffix='')
+        p = commands.Paginator(prefix='', suffix='', max_size=1000)
         embeds = []
         for sr in sorted_rows:
             p.add_line(
