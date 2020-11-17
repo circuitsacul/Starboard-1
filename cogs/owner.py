@@ -146,7 +146,7 @@ class Owner(commands.Cog):
 
     @commands.command(name='sql', hidden=True)
     async def get_sql_stats(self, ctx, sort: str = 'normal'):
-        if sort not in ['avg', 'total']:
+        if sort not in ['avg', 'total', 'normal']:
             await ctx.send(
                 "Leave the sort type blank "
                 "or set it to either 'avg' or 'total'."
