@@ -145,11 +145,16 @@ class Owner(commands.Cog):
                         await ctx.send("wow your thing errored smh **" + str(e) + "**")
 
     @commands.command(name='sql', hidden=True)
-    async def get_sql_stats(self, ctx):
+    async def get_sql_stats(self, ctx, sort_by_time: bool = False):
         if ctx.message.author.id not in bot_config.RUN_SQL:
             return
         get_results = \
             """SELECT * FROM sqlruntimes"""
+
+        def sorter(l):
+            if sort_by_time is True:
+                return float(l[2])/l[1]
+            return l[1]
 
         conn = self.bot.db.conn
         async with self.bot.db.lock:
@@ -157,7 +162,7 @@ class Owner(commands.Cog):
                 r = await conn.fetch(get_results)
                 sorted_rows = sorted(
                     [(d['sql'], d['count'], d['time']) for d in r],
-                    key=lambda l: l[1], reverse=True
+                    key=sorter, reverse=True
                 )
 
         p = commands.Paginator(prefix='', suffix='')
