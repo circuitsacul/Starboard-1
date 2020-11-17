@@ -135,20 +135,19 @@ class Owner(commands.Cog):
             runtimes = []
 
             try:
-                async with conn.transaction():
+                async with conn.transaction() and self.bot.db.lock:
                     for a in args:
                         try:
                             times = int(a)
                         except Exception:
-                            async with self.bot.db.lock:
-                                start = time.time()
-                                for i in range(0, times):
-                                    try:
-                                        result = await conn.fetch(a)
-                                    except Exception as e:
-                                        await ctx.send(e)
-                                runtimes.append((time.time()-start)/times)
-                                times = 1
+                            start = time.time()
+                            for i in range(0, times):
+                                try:
+                                    result = await conn.fetch(a)
+                                except Exception as e:
+                                    await ctx.send(e)
+                            runtimes.append((time.time()-start)/times)
+                            times = 1
                     raise Exception("Rollback")
             except (Exception, InterfaceError):
                 pass
