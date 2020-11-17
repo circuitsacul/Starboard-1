@@ -329,7 +329,6 @@ async def on_message(message):
             p = await functions.get_one_prefix(bot, message.guild.id)
         else:
             p = bot_config.DEFAULT_PREFIX
-        p = 'sb!'
         try:
             await message.channel.send(
                 f"To get started, run `{p}setup`.\n"
