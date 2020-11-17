@@ -128,6 +128,7 @@ class Owner(commands.Cog):
     )
     async def time_postgres(self, ctx, *args):
         if ctx.author.id in bot_config.RUN_SQL:
+            result = "None"
             times = 1
             conn = self.bot.db.conn
             runtimes = []
@@ -137,7 +138,7 @@ class Owner(commands.Cog):
                     for a in args:
                         try:
                             times = int(a)
-                        except:
+                        except Exception:
                             async with self.bot.db.lock:
                                 start = time.time()
                                 for i in range(0, times):
@@ -147,8 +148,8 @@ class Owner(commands.Cog):
                                         await ctx.send(e)
                                 runtimes.append((time.time()-start)/times)
                                 times = 1
-                    raise error
-            except:
+                    raise Exception("Rollback")
+            except Exception:
                 pass
 
             for x, r in enumerate(runtimes):
