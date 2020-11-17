@@ -146,6 +146,8 @@ class Owner(commands.Cog):
 
     @commands.command(name='sql', hidden=True)
     async def get_sql_stats(self, ctx):
+        if ctx.message.author.id not in bot_config.RUN_SQL:
+            return
         get_results = \
             """SELECT * FROM sqlruntimes"""
 
