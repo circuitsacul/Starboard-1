@@ -176,7 +176,10 @@ class Owner(commands.Cog):
         p = commands.Paginator(prefix='', suffix='')
         embeds = []
         for sr in sorted_rows:
-            p.add_line(f"```{sr[0]}```**{sr[1]} | {sr[2]} seconds | {ms(sr[2]/sr[1])} ms**")
+            p.add_line(
+                f"```{sr[0]}```**{sr[1]} | {round(sr[2], 5)} seconds "
+                f"| {ms(sr[2]/sr[1])} ms**"
+            )
 
         for page in p.pages:
             e = discord.Embed(
