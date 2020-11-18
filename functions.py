@@ -140,7 +140,7 @@ async def check_or_create_existence(
     check_starboard = \
         """SELECT * FROM starboards WHERE id=$1"""
     check_member = \
-        """SELECT * FROM members WHERE guild_id=$1 AND user_id=$2"""
+        """SELECT * FROM members WHERE user_id=$1 AND guild_id=$2"""
 
     if guild_id is not None:
         gexists = await check_single_exists(conn, check_guild, (guild_id,))
@@ -182,7 +182,7 @@ async def check_or_create_existence(
         s_exists = None
     if do_member and user is not None and guild_id is not None:
         mexists = await check_single_exists(
-            conn, check_member, (guild_id, user.id,)
+            conn, check_member, (user.id, guild_id)
         )
         if not mexists and create_new:
             await db.q.create_member.fetch(user.id, guild_id)
