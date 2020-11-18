@@ -460,6 +460,10 @@ class Database:
             """CREATE INDEX IF NOT EXISTS msg_id
             ON messages(orig_message_id)"""
 
+        member_uid_index = \
+            """CREATE INDEX IF NOT EXISTS member_uid
+            ON members(user_id)"""
+
         await self.lock.acquire()
         await self._create_table(guilds_table)
         await self._create_table(prefixes_table)
@@ -478,4 +482,5 @@ class Database:
 
         await self._create_index(delete_reaction_index)
         await self._create_index(msg_orig_msg_id_index)
+        await self._create_index(member_uid_index)
         self.lock.release()
