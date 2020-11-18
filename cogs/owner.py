@@ -147,6 +147,7 @@ class Owner(commands.Cog):
                                         result = await conn.fetch(a)
                                     except Exception as e:
                                         await ctx.send(e)
+                                        raise Exception('rollback')
                                 runtimes.append((time.time()-start)/times)
                                 times = 1
                         raise Exception("Rollback")
@@ -155,7 +156,7 @@ class Owner(commands.Cog):
 
             for x, r in enumerate(runtimes):
                 await ctx.send(f"Query {x} took {round(r*1000, 2)} ms")
-            await ctx.send(result)
+            await ctx.send(result[0:500])
 
     @commands.command(name='sql', hidden=True)
     async def get_sql_stats(self, ctx, sort: str = 'total'):
@@ -205,8 +206,9 @@ class Owner(commands.Cog):
         await ep.run([ctx.message.author], ctx.channel)
 
     @commands.command(name='clearsql')
-    @checks.is_owner()
     async def clear_sql_stats(self, ctx):
+        if ctx.message.author.id not in bot_config.RUN_SQL:
+            return
         delete = \
             """DELETE FROM sqlruntimes"""
 
@@ -217,8 +219,9 @@ class Owner(commands.Cog):
         await ctx.send("Done")
 
     @commands.command(name='dumpnow')
-    @checks.is_owner()
     async def early_dump_sqlruntimes(self, ctx):
+        if ctx.message.author.id not in bot_config.RUN_SQL:
+            return
         async with self.bot.db.lock:
             await self.bot.db.conn.dump()
 
