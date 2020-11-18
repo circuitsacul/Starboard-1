@@ -3,18 +3,27 @@ import discord
 import checks
 import time
 import bot_config
-import dotenv
-import os
-import asyncpg
+import disputils
+from asyncpg.exceptions._base import InterfaceError
+from discord.ext import tasks
 
 from api.post_guild_count import post_all
 from discord.ext import commands
 
 
+def ms(t):
+    return round(t*1000, 5)
+
 class Owner(commands.Cog):
     def __init__(self, bot, db):
         self.db = db
         self.bot = bot
+        self.dump_sqlruntimes.start()
+
+    @tasks.loop(minutes=5)
+    async def dump_sqlruntimes(self):
+        async with self.bot.db.lock:
+            await self.bot.db.conn.dump()
 
     def insert_returns(self, body):
         # insert return stmt if the last expression is a expression statement
@@ -113,26 +122,111 @@ class Owner(commands.Cog):
         await ctx.send(string)
 
     @commands.command(
-        name='runpg', aliases=['timepg', 'timeit', 'rpg', 'runtime'],
+        name='runpg', aliases=['timepg', 'timeit', 'runtime'],
         brief='Time postgres queries',
-        description='Time postgres queries'
+        description='Time postgres queries',
+        hidden=True
     )
-    async def time_postgres(self, ctx, query: str):
+    async def time_postgres(self, ctx, *args):
         if ctx.author.id in bot_config.RUN_SQL:
-            start_time = time.time()
+            result = "None"
+            times = 1
             conn = self.bot.db.conn
-            async with self.bot.db.lock:
-                async with conn.transaction():
-                    try:
-                        async with conn.transaction():
-                            no = await conn.fetch(query)
-                            await ctx.send("The query took " + str(round((time.time() - start_time) * 1000, 2)) + "ms! Here's the first 500 characters returned:")
-                            raise ZeroDivisionError
-                    except ZeroDivisionError:
-                        await ctx.send(str(no)[:500])
-                    except Exception as e:
-                        await ctx.send("The query took " + str(round((time.time() - start_time) * 1000, 2)) + "ms! Here's the first 500 characters returned:")
-                        await ctx.send("wow your thing errored smh **" + str(e) + "**")
+            runtimes = []
+
+            try:
+                async with self.bot.db.lock:
+                    async with conn.transaction():
+                        for a in args:
+                            try:
+                                times = int(a)
+                            except Exception:
+                                start = time.time()
+                                for i in range(0, times):
+                                    try:
+                                        result = await conn.fetch(a)
+                                    except Exception as e:
+                                        await ctx.send(e)
+                                        raise Exception('rollback')
+                                runtimes.append((time.time()-start)/times)
+                                times = 1
+                        raise Exception("Rollback")
+            except (Exception, InterfaceError):
+                pass
+
+            for x, r in enumerate(runtimes):
+                await ctx.send(f"Query {x} took {round(r*1000, 2)} ms")
+            await ctx.send(result[0:500])
+
+    @commands.command(name='sql', hidden=True)
+    async def get_sql_stats(self, ctx, sort: str = 'total'):
+        if sort not in ['avg', 'total', 'count']:
+            await ctx.send(
+                "Valid option are: 'avg', 'total', 'count'."
+                "\nDefaults to total."
+            )
+            return
+        if ctx.message.author.id not in bot_config.RUN_SQL:
+            return
+        get_results = \
+            """SELECT * FROM sqlruntimes"""
+
+        def sorter(l):
+            if sort == 'avg':
+                return float(l[2])/l[1]
+            elif sort == 'total':
+                return float(l[2])
+            return l[1]
+
+        conn = self.bot.db.conn
+        async with self.bot.db.lock:
+            async with self.bot.db.conn.transaction():
+                r = await conn.fetch(get_results)
+                sorted_rows = sorted(
+                    [(d['sql'], d['count'], d['time']) for d in r],
+                    key=sorter, reverse=True
+                )
+
+        p = commands.Paginator(prefix='', suffix='', max_size=1000)
+        embeds = []
+        for sr in sorted_rows:
+            p.add_line(
+                f"```{sr[0]}```**{sr[1]} | {round(sr[2], 5)} seconds "
+                f"| {ms(sr[2]/sr[1])} ms**"
+            )
+
+        for page in p.pages:
+            e = discord.Embed(
+                title='Results',
+                description=page
+            )
+            embeds.append(e)
+
+        ep = disputils.EmbedPaginator(self.bot, embeds)
+        await ep.run([ctx.message.author], ctx.channel)
+
+    @commands.command(name='clearsql')
+    async def clear_sql_stats(self, ctx):
+        if ctx.message.author.id not in bot_config.RUN_SQL:
+            return
+        delete = \
+            """DELETE FROM sqlruntimes"""
+
+        async with self.bot.db.lock:
+            async with self.bot.db.conn.transaction():
+                await self.bot.db.conn.execute(delete)
+
+        await ctx.send("Done")
+
+    @commands.command(name='dumpnow')
+    async def early_dump_sqlruntimes(self, ctx):
+        if ctx.message.author.id not in bot_config.RUN_SQL:
+            return
+        async with self.bot.db.lock:
+            await self.bot.db.conn.dump()
+
+        await ctx.send("Done")
+
 
 def setup(bot):
     bot.add_cog(Owner(bot, bot.db))
