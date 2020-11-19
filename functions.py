@@ -29,7 +29,8 @@ async def is_starboard_emoji(db, guild_id, emoji):
 async def get_members(user_ids: Iterable[int], guild: discord.Guild):
     unfound_ids = []
     users = []
-    for uid in user_ids:
+    for _uid in user_ids:
+        uid = int(_uid)
         u = guild.get_member(uid)
         if u is not None:
             users.append(u)
