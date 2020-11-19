@@ -3,7 +3,7 @@ import discord
 import checks
 import time
 import bot_config
-import disputils
+from paginators import disputils
 from asyncpg.exceptions._base import InterfaceError
 from discord.ext import tasks
 
