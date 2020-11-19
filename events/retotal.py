@@ -1,5 +1,4 @@
 import functions
-import asyncio
 from itertools import compress
 
 
@@ -12,8 +11,13 @@ async def needs_recount(bot, message):
         return False
 
     total = 0
-    reactions = [str(r.emoji.id) if r.custom_emoji else str(r.emoji) for r in message.reactions]
-    reaction_mask = await functions.is_starboard_emoji(bot.db, message.guild.id, reactions, multiple=True)
+    reactions = [
+        str(r.emoji.id) if r.custom_emoji else str(r.emoji)
+        for r in message.reactions
+    ]
+    reaction_mask = await functions.is_starboard_emoji(
+        bot.db, message.guild.id, reactions, multiple=True
+    )
     for r in compress(message.reactions, reaction_mask):
         total += r.count
 
@@ -56,7 +60,9 @@ async def recount_reactions(bot, message):
         else:
             name = str(reaction.emoji)
 
-        if not await functions.is_starboard_emoji(bot.db, message.guild.id, name):
+        if not await functions.is_starboard_emoji(
+            bot.db, message.guild.id, name
+        ):
             continue
 
         async for user in reaction.users():
