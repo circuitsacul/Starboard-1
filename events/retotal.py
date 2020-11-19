@@ -59,12 +59,7 @@ async def recount_reactions(bot, message):
         if not await functions.is_starboard_emoji(bot.db, message.guild.id, name):
             continue
 
-        x = 0
         async for user in reaction.users():
-            x += 1
-            if x >= 100:
-                await asyncio.sleep(5)
-                x = 0
             if user is None:
                 continue
             elif user.bot:
