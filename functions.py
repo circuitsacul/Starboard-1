@@ -1,10 +1,10 @@
 from discord import utils
 from discord.ext import commands
 from typing import Tuple, Union, Iterable
+from paginators import disputils
 import emoji
 import bot_config
 import discord
-import disputils
 import functions
 
 async def is_starboard_emoji(db, guild_id, emoji, multiple=False):
@@ -34,7 +34,8 @@ async def is_starboard_emoji(db, guild_id, emoji, multiple=False):
 async def get_members(user_ids: Iterable[int], guild: discord.Guild):
     unfound_ids = []
     users = []
-    for uid in user_ids:
+    for _uid in user_ids:
+        uid = int(_uid)
         u = guild.get_member(uid)
         if u is not None:
             users.append(u)

@@ -1,10 +1,10 @@
-import disputils
 import discord
 import functions
 import asyncio
 import bot_config
 import emoji as emojilib
 import settings
+from paginators import disputils
 from asyncio import sleep
 from discord import utils
 from settings import change_starboard_settings

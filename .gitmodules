@@ -1,0 +1,3 @@
+[submodule "paginators"]
+	path = paginators
+	url = https://github.com/CircuitsBots/paginators

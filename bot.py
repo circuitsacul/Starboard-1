@@ -370,7 +370,7 @@ async def on_command_error(ctx, error):
         errors.NoPrivateMessage, errors.MissingPermissions,
         errors.NotOwner, errors.CommandOnCooldown,
         errors.ChannelNotFound, errors.BadUnionArgument,
-        errors.BotMissingPermissions
+        errors.BotMissingPermissions, errors.UserNotFound
     ]:
         pass
     elif type(error) is discord.ext.commands.errors.MaxConcurrencyReached:

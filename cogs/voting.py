@@ -133,6 +133,37 @@ class TopVotes(commands.Cog):
                 self.bot, uid, False
             )
 
+    @commands.command(
+        name='votes', aliases=['v'],
+        description='View the total number of times you have voted',
+        brief='View total votes'
+    )
+    @commands.cooldown(1, 2)
+    async def view_user_votes(
+        self, ctx,
+        user: discord.User = None
+    ) -> None:
+        get_votes = \
+            """SELECT * FROM votes WHERE user_id=$1"""
+
+        user = user or ctx.message.author
+        conn = self.bot.db.conn
+
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                votes = await conn.fetch(get_votes, user.id)
+
+        t = len(votes)
+        is_same = user.id == ctx.message.author.id
+
+        embed = discord.Embed(
+            title=f"{'You have' if is_same else str(user) + ' has'} "
+            f"voted **{t}** time"
+            f"{'' if t == 1 else 's'}{'!' if t != 0 else ' :('}",
+            color=bot_config.COLOR
+        )
+        await ctx.send(embed=embed)
+
 
 def setup(bot):
     bot.add_cog(TopVotes(bot))
