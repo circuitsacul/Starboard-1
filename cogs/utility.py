@@ -49,6 +49,72 @@ async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
     return status
 
 
+async def handle_forcing(
+    bot, ctx,
+    _channel: discord.TextChannel,
+    _message_id: int,
+    force: bool
+) -> None:
+    check_message = \
+        """SELECT * FROM messages WHERE id=$1"""
+    force_message = \
+        """UPDATE messages
+        SET is_forced=$1
+        WHERE id=$2"""
+
+    _channel = ctx.channel if _channel is None else _channel
+
+    try:
+        await functions.fetch(
+            bot, int(_message_id), _channel
+        )
+    except discord.errors.NotFound:
+        await ctx.send("I couldn't find that message.")
+        return
+    except AttributeError:
+        await ctx.send("I can't find that channel")
+        return
+
+    async with bot.db.lock:
+        conn = await bot.db.connect()
+        async with conn.transaction():
+            message_id, channel_id = await functions.orig_message_id(
+                bot.db, conn, _message_id
+            )
+
+    channel = bot.get_channel(int(channel_id)) \
+        if channel_id is not None else ctx.channel
+
+    message = await functions.fetch(bot, int(message_id), channel)
+
+    async with bot.db.lock:
+        conn = await bot.db.connect()
+        async with conn.transaction():
+            await functions.check_or_create_existence(
+                bot.db, conn, bot,
+                guild_id=ctx.guild.id, user=message.author,
+                do_member=True
+            )
+
+            sql_message = await conn.fetchrow(check_message, message_id)
+            if sql_message is None:
+                await bot.db.q.create_message.fetch(
+                    message.id, ctx.guild.id, message.author.id,
+                    None, message.channel.id, True,
+                    message.channel.is_nsfw()
+                )
+            await conn.execute(force_message, force, message.id)
+
+    await ctx.send(
+        "Message forced." if force else
+        "Message unforced."
+    )
+
+    await starboard_events.handle_starboards(
+        bot.db, bot, message.id, message.channel, message
+    )
+
+
 class Utility(commands.Cog):
     def __init__(self, bot, db):
         self.bot = bot
@@ -178,60 +244,26 @@ class Utility(commands.Cog):
     async def force_message(
         self, ctx, _message_id, _channel: discord.TextChannel = None
     ):
-        check_message = \
-            """SELECT * FROM messages WHERE id=$1"""
-        force_message = \
-            """UPDATE messages
-            SET is_forced=True
-            WHERE id=$1"""
+        await handle_forcing(
+            self.bot, ctx, _channel,
+            _message_id, True
+        )
 
-        _channel = ctx.channel if _channel is None else _channel
-
-        try:
-            await functions.fetch(
-                self.bot, int(_message_id), _channel
-            )
-        except discord.errors.NotFound:
-            await ctx.send("I couldn't find that message.")
-            return
-        except AttributeError:
-            await ctx.send("I can't find that channel")
-            return
-
-        async with self.db.lock:
-            conn = await self.db.connect()
-            async with conn.transaction():
-                message_id, channel_id = await functions.orig_message_id(
-                    self.db, conn, _message_id
-                )
-
-        channel = self.bot.get_channel(int(channel_id)) \
-            if channel_id is not None else ctx.channel
-
-        message = await functions.fetch(self.bot, int(message_id), channel)
-
-        async with self.db.lock:
-            conn = await self.db.connect()
-            async with conn.transaction():
-                await functions.check_or_create_existence(
-                    self.bot.db, conn, self.bot,
-                    guild_id=ctx.guild.id, user=message.author,
-                    do_member=True
-                )
-
-                sql_message = await conn.fetchrow(check_message, message_id)
-                if sql_message is None:
-                    await self.db.q.create_message.fetch(
-                        message.id, ctx.guild.id, message.author.id,
-                        None, message.channel.id, True,
-                        message.channel.is_nsfw()
-                    )
-                await conn.execute(force_message, message.id)
-
-        await ctx.send("Message forced.")
-
-        await starboard_events.handle_starboards(
-            self.db, self.bot, message.id, message.channel, message
+    @commands.command(
+        name='unforce',
+        description='Unforces a message from all starboards',
+        brief='Unforces a message'
+    )
+    @commands.has_permissions(manage_messages=True)
+    @commands.guild_only()
+    async def unforce_message(
+        self, ctx,
+        _message_id: int,
+        _channel: discord.TextChannel = None
+    ) -> None:
+        await handle_forcing(
+            self.bot, ctx, _channel,
+            _message_id, False
         )
 
     @commands.command(
