@@ -1,7 +1,7 @@
 import discord
 import bot_config
-import disputils
 import functions
+from paginators import disputils
 from discord import utils
 from discord.ext import commands
 from events import leveling

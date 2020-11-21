@@ -1,10 +1,10 @@
 from discord import utils
 from discord.ext import commands
 from typing import Tuple, Union, Iterable
+from paginators import disputils
 import emoji
 import bot_config
 import discord
-import disputils
 import functions
 
 
