@@ -57,7 +57,6 @@ class CustomConn:
         return self.realcon.transaction(*args, **kwargs)
 
     def log(self, sql, time):
-        sql = sql.lower()
         self.sql_dict.setdefault(sql, {'c': 0, 'e': 0})
         self.sql_dict[sql]['c'] += 1
         self.sql_dict[sql]['e'] += time
