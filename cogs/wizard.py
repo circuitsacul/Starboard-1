@@ -773,16 +773,18 @@ class SetupWizard:
                 return False
             return True
 
-        def react_check(reaction, user):
-            if user.id != self.ctx.message.author.id:
+        def react_check(payload):
+            if payload.user_id != self.ctx.message.author.id:
                 return False
-            if reaction.message.id != self.message.id:
+            if payload.message_id != self.message.id:
                 return False
             return True
 
         tasks = [
-            self.bot.wait_for('message', check=msg_check),
-            self.bot.wait_for('reaction_add', check=react_check)
+            self.bot.wait_for('message', check=msg_check, timeout=30),
+            self.bot.wait_for(
+                'raw_reaction_add', check=react_check, timeout=30
+            )
         ]
 
         done, pending = await asyncio.wait(
@@ -794,7 +796,10 @@ class SetupWizard:
 
         await self.message.clear_reactions()
 
-        args = await done[0]
+        try:
+            args = await done[0]
+        except asyncio.TimeoutError:
+            return
         if type(args) is discord.Message:
             inp = args
             await inp.delete()
@@ -815,17 +820,19 @@ class SetupWizard:
         await self.message.edit(embed=embed)
         await self.message.add_reaction("🆗")
 
-        def check(reaction, user):
-            if reaction.message.id != self.message.id:
+        def check(payload):
+            if payload.message_id != self.message.id:
                 return False
-            if user.id != self.ctx.message.author.id:
+            if payload.user_id != self.ctx.message.author.id:
                 return False
-            if reaction.emoji != "🆗":
+            if payload.emoji.name != "🆗":
                 return False
             return True
 
         try:
-            await self.bot.wait_for('reaction_add', check=check, timeout=30)
+            await self.bot.wait_for(
+                'raw_reaction_add', check=check, timeout=30
+            )
         except asyncio.TimeoutError:
             pass
 
