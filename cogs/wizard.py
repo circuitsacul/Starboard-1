@@ -825,7 +825,7 @@ class SetupWizard:
             return True
 
         try:
-            await self.bot.wait_for('reaction_add', check=check, timeout=1)
+            await self.bot.wait_for('reaction_add', check=check, timeout=30)
         except asyncio.TimeoutError:
             pass
 
