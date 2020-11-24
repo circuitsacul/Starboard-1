@@ -187,15 +187,15 @@ class Settings(commands.Cog):
             else:
                 self.bot.running_wizzards.append(ctx.guild.id)
 
-        try:
-            if can_run:
-                await wizard.run()
-            else:
-                await ctx.send(
-                    "A setup wizard is already running for this server!"
-                )
-        except Exception:
-            await ctx.send("Wizard exited due to a problem.")
+        #try:
+        if can_run:
+            await wizard.run()
+        else:
+            await ctx.send(
+                "A setup wizard is already running for this server!"
+            )
+        #except Exception:
+        #    await ctx.send("Wizard exited due to a problem.")
 
         if can_run:
             async with self.bot.wizzard_lock():
