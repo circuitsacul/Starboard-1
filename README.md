@@ -1,12 +1,12 @@
 ## About Starboard
-Starboard is an advanced, reliable, and highly customizable starboard bot, which I've been working on for a while now, mostly for use on personal servers. When it turned out better than I imagined, I open-sourced it and posted it to both lists. I hope you find this code and bot useful. 
+Starboard is an advanced, reliable, and highly customizable starboard bot, allowing for multiple starboards, multiple emojis, auto-star channels, and much more coming!
 
 This documentation gives you a quick start to using the bot. If you see a problem, please let me know, either by using the bots suggest command or joining the support server. My discord username is `@Circuit#5585`.
 
 ## Useful Links
 [Click here for a demonstration](https://drive.google.com/file/d/1fMx3cTMYGtpgWtW-ZrovJL3nOFBBQrzu/view?usp=sharing)
 
-[Invite Starboard to your server](https://discord.com/api/oauth2/authorize?client_id=700796664276844612&permissions=388160&scope=bot)
+[Invite Starboard to your server](https://dsc.gg/starboard)
 
 [Join the support server](https://discord.gg/3gK8mSA)
 
