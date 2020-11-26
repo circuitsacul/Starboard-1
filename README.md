@@ -6,7 +6,7 @@ This documentation gives you a quick start to using the bot. If you see a proble
 ## Useful Links
 [Click here for a demonstration](https://drive.google.com/file/d/1fMx3cTMYGtpgWtW-ZrovJL3nOFBBQrzu/view?usp=sharing)
 
-[Invite Starboard to your server](https://discord.com/api/oauth2/authorize?client_id=700796664276844612&permissions=388160&scope=bot)
+[Invite Starboard to your server](https://dsc.gg/starboard)
 
 [Join the support server](https://discord.gg/3gK8mSA)
 
