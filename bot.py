@@ -477,3 +477,4 @@ if __name__ == '__main__':
         print("Logging out")
         loop.run_until_complete(bot.logout())
         loop.run_until_complete(web_server.close())
+        exit(1)
