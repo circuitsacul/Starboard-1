@@ -28,12 +28,10 @@ from api import post_guild_count
 
 from cogs.webhook import HttpWebHook
 
-_TOKEN = os.getenv('TOKEN')
-_BETA_TOKEN = os.getenv('BETA_TOKEN')
+TOKEN = os.getenv('TOKEN')
 IPC_KEY = os.getenv('IPC_KEY')
 
 BETA = True if len(sys.argv) > 1 and sys.argv[1] == 'beta' else False
-TOKEN = _BETA_TOKEN if BETA and _BETA_TOKEN is not None else _TOKEN
 BOT_DESCRIPTION = """
 An advanced starboard that allows for multiple starboards and multiple emojis per starboard.
 To get started, run the "setup" command.
