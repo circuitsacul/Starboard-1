@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from quart import Quart
+from quart import render_template
 from discord.ext.ipc import Client
 
 load_dotenv()
@@ -15,7 +16,9 @@ ipc = Client(
 @app.route('/')
 async def show_guilds():
     gc = await app.ipc_node.request("gcount")
-    return str(gc)
+    return await render_template(
+        'stats.jinja', gcount=gc
+    )
 
 
 @app.before_first_request

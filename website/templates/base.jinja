@@ -1,0 +1,20 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Starboard" />
+    <meta property="og:description" content="The best discord starboard" />
+    <meta property="og:url" content="https://starboard.ld1.repl.co/" />
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>{% block title %}Starboard{% endblock %}</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% block content %}
+    {% endblock %}
+</body>
+</html>
