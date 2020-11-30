@@ -17,7 +17,7 @@ ipc = Client(
 async def show_guilds():
     gc = await app.ipc_node.request("gcount")
     return await render_template(
-        'stats.jinja', gcount=gc
+        'home.jinja', gcount=gc
     )
 
 
