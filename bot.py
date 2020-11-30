@@ -15,6 +15,7 @@ import errors as cerrors
 from discord.ext import commands
 from pretty_help import PrettyHelp
 from asyncio import Lock
+from discord.ext.ipc import Server
 
 dotenv.load_dotenv()
 
@@ -29,6 +30,7 @@ from cogs.webhook import HttpWebHook
 
 _TOKEN = os.getenv('TOKEN')
 _BETA_TOKEN = os.getenv('BETA_TOKEN')
+IPC_KEY = os.getenv('IPC_KEY')
 
 BETA = True if len(sys.argv) > 1 and sys.argv[1] == 'beta' else False
 TOKEN = _BETA_TOKEN if BETA and _BETA_TOKEN is not None else _TOKEN
@@ -70,6 +72,15 @@ bot = Bot(
     description=BOT_DESCRIPTION
 )
 web_server = HttpWebHook(bot, db)
+ipc = Server(
+    bot, 'localhost', 8765, IPC_KEY
+)
+
+
+# IPC Server Routes
+@ipc.route('gcount')
+async def get_guild_count(data):
+    return len(bot.guilds)
 
 
 # Info Commands
@@ -441,10 +452,14 @@ async def on_ready():
     print(f"Logged in as {bot.user.name} in {len(bot.guilds)} guilds!")
 
 
+@bot.event
+async def on_ipc_ready():
+    print("IPC is ready, you can run the dashboard now.")
+
+
 async def main():
     await db.open(bot)
-    if bot_config.DONATE_BOT_ON is True:
-        await web_server.start()
+    await web_server.start()
     if not BETA:
         bot.loop.create_task(post_guild_count.loop_post(bot))
 
@@ -469,6 +484,7 @@ async def main():
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     try:
+        ipc.start()
         loop.run_until_complete(main())
     except Exception as e:
         print(type(e), e)
