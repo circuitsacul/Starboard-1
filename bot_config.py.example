@@ -14,6 +14,7 @@ VOTE_LOG_ID = 0 #the channel to send votes to
 VOTE_ROLE_ID = 0 #the role to give users for 1 day when they vote
 
 PAGINATOR_EMOJIS = ('◀', '▶', '⏹')
+DEFAULT_PREFIX = 'sb!'
 
 DONATE_BOT_ON = False # For those who want to accept donations through donatebot
 
