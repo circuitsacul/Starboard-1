@@ -76,9 +76,13 @@ ipc = Server(
 
 
 # IPC Server Routes
-@ipc.route('gcount')
-async def get_guild_count(data):
-    return len(bot.guilds)
+@ipc.route('bot_stats')
+async def get_bot_stats(data):
+    mcount = 0
+    gcount = len(bot.guilds)
+    for g in bot.guilds:
+        mcount += g.member_count
+    return f"{gcount}-{mcount}"
 
 
 # Info Commands

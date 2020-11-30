@@ -31,9 +31,10 @@ discord = DiscordOAuth2Session(app)
 @app.route('/')
 @app.route('/home')
 async def home():
-    gc = await app.ipc_node.request("gcount")
+    stats = await app.ipc_node.request("bot_stats")
+    gc, mc = stats.replace('"', '').split('-')
     return await render_template(
-        'home.jinja', gcount=gc
+        'home.jinja', gcount=gc, mcount=mc
     )
 
 
