@@ -24,7 +24,7 @@ app.secret_key = os.getenv("QUART_KEY")
 
 app.config["DISCORD_CLIENT_ID"] = bot_config.BOT_ID
 app.config["DISCORD_CLIENT_SECRET"] = os.getenv("SECRET")
-app.config["DISCORD_REDIRECT_URI"] = bot_config.REDIRECT_URI
+app.config["DISCORD_REDIRECT_URI"] = bot_config.REDIRECT_URI + '/api/callback'
 app.config["DISCORD_BOT_TOKEN"] = os.getenv("TOKEN")
 discord = DiscordOAuth2Session(app)
 
@@ -41,20 +41,51 @@ async def home():
 
 @app.route('/login/')
 async def login():
-    return await discord.create_session()
+    return await discord.create_session(
+        data={'type': 'user'}
+    )
 
 
-@app.route('/callback/')
+@app.route('/api/callback/')
 async def callback():
-    await discord.callback()
-    return redirect(url_for("dashboard"))
+    data = await discord.callback()
+    if data['type'] == 'user':
+        return redirect(url_for("me"))
+    else:
+        return redirect(url_for("servers"))
 
 
-@app.route('/dashboard/')
+@app.route('/me/')
 @requires_authorization
-async def dashboard():
+async def me():
     user = await discord.fetch_user()
-    return await render_template('dashboard.jinja', user=user)
+    return await render_template('me.jinja', user=user)
+
+
+@app.route('/servers/')
+@requires_authorization
+async def servers():
+    _guilds = await discord.fetch_guilds()
+    guilds = [
+        g for g in _guilds if g.permissions.manage_guild
+    ]
+    return await render_template('dashboard.jinja', guilds=guilds)
+
+
+@app.route('/servers/<int:gid>/')
+@requires_authorization
+async def manage_guild(gid: int):
+    _guilds = await discord.fetch_guilds()
+    valid_ids = [
+        g.id for g in _guilds if g.permissions.manage_guild
+    ]
+    if gid in valid_ids:
+        return await discord.create_session(
+            scope=['bot'], permissions=268823632,
+            data={'type': 'server'}
+        )
+    else:
+        return redirect(url_for('servers'))
 
 
 @app.errorhandler(Unauthorized)

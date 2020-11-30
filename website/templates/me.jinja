@@ -1,7 +1,6 @@
 {% extends 'base.jinja' %}
 
 {% block content %}
-{% for g in guilds %}
-    {{ g.name }}
-{% endfor %}
+<img src="{{ user.avatar_url }}">
+{{ user.name }}
 {% endblock %}
