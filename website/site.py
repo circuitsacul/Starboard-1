@@ -5,7 +5,8 @@ from quart import Quart, redirect, url_for, render_template
 from quart_discord import (
     DiscordOAuth2Session,
     requires_authorization,
-    Unauthorized
+    Unauthorized,
+    AccessDenied
 )
 from discord.ext.ipc import Client
 
@@ -46,12 +47,12 @@ async def login():
 @app.route('/callback/')
 async def callback():
     await discord.callback()
-    return redirect(url_for("me"))
+    return redirect(url_for("dashboard"))
 
 
-@app.route('/me/')
+@app.route('/dashboard/')
 @requires_authorization
-async def me():
+async def dashboard():
     user = await discord.fetch_user()
     return f"""
     <html>
@@ -67,6 +68,11 @@ async def me():
 @app.errorhandler(Unauthorized)
 async def handle_unauthorized(e):
     return redirect(url_for('login'))
+
+
+@app.errorhandler(AccessDenied)
+async def handle_denied_access(e):
+    return redirect(url_for('home'))
 
 
 @app.before_first_request
