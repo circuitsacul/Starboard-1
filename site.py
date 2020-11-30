@@ -1,0 +1,27 @@
+import os
+from dotenv import load_dotenv
+from quart import Quart
+from discord.ext.ipc import Client
+
+load_dotenv()
+
+app = Quart(__name__)
+ipc = Client(
+    'localhost', 8765,
+    secret_key=os.getenv('IPC_KEY')
+)
+
+
+@app.route('/')
+async def show_guilds():
+    gc = await app.ipc_node.request("gcount")
+    return str(gc)
+
+
+@app.before_first_request
+async def before():
+    app.ipc_node = ipc
+
+
+if __name__ == '__main__':
+    app.run()
