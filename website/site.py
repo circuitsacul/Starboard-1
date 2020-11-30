@@ -54,15 +54,7 @@ async def callback():
 @requires_authorization
 async def dashboard():
     user = await discord.fetch_user()
-    return f"""
-    <html>
-        <head>
-            <title>{user.name}</title>
-        </head>
-        <body>
-            <img src='{user.avatar_url}' />
-        </body>
-    </html>"""
+    return await render_template('dashboard.jinja', user=user)
 
 
 @app.errorhandler(Unauthorized)
