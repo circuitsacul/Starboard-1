@@ -345,14 +345,22 @@ async def get_embed_from_message(message):
             'url': attachment.url, 'type': 'upload'
         })
 
+    e = discord.embeds._EmptyEmbed
+
     for msg_embed in message.embeds:
         if msg_embed.type == 'rich':
             fields = [
-                (f"\n**{x.name}**\n", f"{x.value}\n")
+                (
+                    f"\n**{x.name if type(x.name) != e else ''}**\n",
+                    f"{x.value if type(x.value) != e else ''}\n"
+                )
                 for x in msg_embed.fields
             ]
-            embed_text += f"__**{msg_embed.title}**__\n"
-            embed_text += f"{msg_embed.description}\n"
+            embed_text += f"__**{msg_embed.title}**__\n"\
+                if type(msg_embed.title) != e else ''
+            embed_text += f"{msg_embed.description}\n"\
+                if type(msg_embed.description) != e else ''
+
             for name, value in fields:
                 embed_text += name + value
             if msg_embed.footer.text is not embed.Empty:
