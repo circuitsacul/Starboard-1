@@ -14,7 +14,8 @@ ipc = Client(
 
 
 @app.route('/')
-async def show_guilds():
+@app.route('/home')
+async def home():
     gc = await app.ipc_node.request("gcount")
     return await render_template(
         'home.jinja', gcount=gc
