@@ -85,6 +85,17 @@ async def get_bot_stats(data):
     return f"{gcount}-{mcount}"
 
 
+@ipc.route('guilds_in')
+async def get_guilds_in(data):
+    all_guilds = data.guilds
+    ids_in = [g.id for g in bot.guilds]
+    guilds = [
+        str(g) for g in all_guilds if g in ids_in
+    ]
+    joined = '-'.join(guilds)
+    return joined
+
+
 # Info Commands
 @bot.command(
     name='links', aliases=['invite', 'support'],

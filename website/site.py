@@ -62,6 +62,15 @@ async def me():
     return await render_template('me.jinja', user=user)
 
 
+@app.route('/invite/')
+@requires_authorization
+async def invite_bot():
+    return await discord.create_session(
+        scope=['bot'], permissions=268823632,
+        data={'type': 'server'}
+    )
+
+
 @app.route('/servers/')
 @requires_authorization
 async def servers():
@@ -69,7 +78,12 @@ async def servers():
     guilds = [
         g for g in _guilds if g.permissions.manage_guild
     ]
-    return await render_template('dashboard.jinja', guilds=guilds)
+    shared_guilds_ids = await app.ipc_node.request(
+        'guilds_in', guilds=[g.id for g in guilds]
+    )
+    shared_guilds_ids = shared_guilds_ids.replace('"', '').split('-')
+    shared_guilds = [g for g in guilds if str(g.id) in shared_guilds_ids]
+    return await render_template('dashboard.jinja', guilds=shared_guilds)
 
 
 @app.route('/servers/<int:gid>/')
@@ -80,10 +94,7 @@ async def manage_guild(gid: int):
         g.id for g in _guilds if g.permissions.manage_guild
     ]
     if gid in valid_ids:
-        return await discord.create_session(
-            scope=['bot'], permissions=268823632,
-            data={'type': 'server'}
-        )
+        return 'yup'
     else:
         return redirect(url_for('servers'))
 
