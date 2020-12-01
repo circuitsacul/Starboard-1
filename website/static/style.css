@@ -7,6 +7,11 @@ body {
     color: #ffe16c;
 }
 
+.server-box-container {
+    padding: 5px;
+    border-radius: 5px;
+}
+
 .server-box {
     transition: 0.25s;
     text-align: center;
