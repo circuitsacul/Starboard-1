@@ -1,7 +1,7 @@
 import os
 import sys
 from dotenv import load_dotenv
-from quart import Quart, redirect, url_for, render_template
+from quart import Quart, redirect, url_for, render_template, request
 from quart_discord import (
     DiscordOAuth2Session,
     requires_authorization,
@@ -30,7 +30,7 @@ discord = DiscordOAuth2Session(app)
 
 
 @app.route('/')
-@app.route('/home')
+@app.route('/home/')
 async def home():
     stats = await app.ipc_node.request("bot_stats")
     gc, mc = stats.replace('"', '').split('-')
@@ -42,7 +42,8 @@ async def home():
 @app.route('/login/')
 async def login():
     return await discord.create_session(
-        data={'type': 'user'}
+        data={'type': 'user'},
+        scope=['identify', 'guilds']
     )
 
 
@@ -52,7 +53,15 @@ async def callback():
     if data['type'] == 'user':
         return redirect(url_for("me"))
     else:
-        return redirect(url_for("servers"))
+        _gid = request.args.get('guild_id')
+        try:
+            gid = int(_gid)
+        except ValueError:
+            gid = None
+        if gid is None:
+            return redirect(url_for("servers"))
+        else:
+            return redirect(url_for("manage_guild", gid=gid))
 
 
 @app.route('/me/')
@@ -62,15 +71,6 @@ async def me():
     return await render_template('me.jinja', user=user)
 
 
-@app.route('/invite/')
-@requires_authorization
-async def invite_bot():
-    return await discord.create_session(
-        scope=['bot'], permissions=268823632,
-        data={'type': 'server'}
-    )
-
-
 @app.route('/servers/')
 @requires_authorization
 async def servers():
@@ -78,12 +78,9 @@ async def servers():
     guilds = [
         g for g in _guilds if g.permissions.manage_guild
     ]
-    shared_guilds_ids = await app.ipc_node.request(
-        'guilds_in', guilds=[g.id for g in guilds]
+    return await render_template(
+        'dashboard/server-picker.jinja', guilds=guilds
     )
-    shared_guilds_ids = shared_guilds_ids.replace('"', '').split('-')
-    shared_guilds = [g for g in guilds if str(g.id) in shared_guilds_ids]
-    return await render_template('dashboard.jinja', guilds=shared_guilds)
 
 
 @app.route('/servers/<int:gid>/')
@@ -94,7 +91,18 @@ async def manage_guild(gid: int):
         g.id for g in _guilds if g.permissions.manage_guild
     ]
     if gid in valid_ids:
-        return 'yup'
+        resp = await app.ipc_node.request(
+            'does_share', gid=gid
+        )
+        print(resp)
+        if resp == '"1"':
+            return 'yup'
+        else:
+            return await discord.create_session(
+                scope=['bot'], permissions=268823632,
+                data={'type': 'server'},
+                guild_id=gid
+            )
     else:
         return redirect(url_for('servers'))
 

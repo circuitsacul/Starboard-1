@@ -1,8 +1,0 @@
-{% extends 'base.jinja' %}
-
-{% block content %}
-{% for g in guilds %}
-    {{ g.name }}<br>
-{% endfor %}
-<a href="{{ url_for('invite_bot') }}">Add to server</a>
-{% endblock %}

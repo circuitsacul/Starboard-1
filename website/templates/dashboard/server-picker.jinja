@@ -1,0 +1,18 @@
+{% extends 'base.jinja' %}
+
+{% block content %}
+<br><br>
+<div class='container'>
+    <div class="row d-flex justify-content-center align-items-middle">
+        {% for g in guilds %}
+            <div class='col-md-2 server-box'>
+                <a href="/servers/{{ g.id }}">
+                    <img src="{{ g.icon_url }}" class='rounded-circle' style="width: 75px;">
+                    <br>
+                    {{ g.name }}
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

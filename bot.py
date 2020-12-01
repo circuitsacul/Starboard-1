@@ -85,15 +85,12 @@ async def get_bot_stats(data):
     return f"{gcount}-{mcount}"
 
 
-@ipc.route('guilds_in')
-async def get_guilds_in(data):
-    all_guilds = data.guilds
-    ids_in = [g.id for g in bot.guilds]
-    guilds = [
-        str(g) for g in all_guilds if g in ids_in
-    ]
-    joined = '-'.join(guilds)
-    return joined
+@ipc.route('does_share')
+async def check_shared_guild(data):
+    if int(data.gid) in [g.id for g in bot.guilds]:
+        return '1'
+    else:
+        return '0'
 
 
 # Info Commands

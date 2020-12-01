@@ -1,8 +1,23 @@
 body {
-    background-color: #23272a;
+    background-color: #23272A;
     color: white;
 }
 
 .sb-text-yellow {
     color: #ffe16c;
+}
+
+.server-box {
+    text-align: center;
+    border-radius: 5px;
+    padding: 5px;
+}
+
+.server-box a {
+    text-decoration: none;
+    color: white;
+}
+
+.server-box a:hover {
+    color: white;
 }
