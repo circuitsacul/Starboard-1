@@ -7,9 +7,11 @@
         {% for g in guilds %}
             <div class='col-md-2 server-box'>
                 <a href="/servers/{{ g.id }}">
-                    <img src="{{ g.icon_url }}" class='rounded-circle' style="width: 75px;">
-                    <br>
-                    {{ g.name }}
+                    <div class='inner-server-box'>
+                        <img src="{{ g.icon_url }}" class='rounded-circle' style="width: 75px;">
+                        <br>
+                        {{ g.name }}
+                    </div>
                 </a>
             </div>
         {% endfor %}
