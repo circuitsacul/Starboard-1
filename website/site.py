@@ -51,7 +51,7 @@ async def login():
 async def callback():
     data = await discord.callback()
     if data['type'] == 'user':
-        return redirect(url_for("me"))
+        return redirect(url_for("home"))
     else:
         _gid = request.args.get('guild_id')
         try:
