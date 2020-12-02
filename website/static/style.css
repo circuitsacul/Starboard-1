@@ -36,3 +36,16 @@ body {
     text-decoration: none;
     color: white;
 }
+
+#logout-dropdown-btn {
+    color: white;
+}
+
+#logout-dropdown-btn:hover {
+    background-color: #dc3545;
+}
+
+#logout-dropdown-btn:active {
+    color: white;
+    background-color: #dc3545;
+}

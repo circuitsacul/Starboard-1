@@ -41,10 +41,17 @@ async def handle_login(next: str = ''):
 @app.route('/')
 @app.route('/home/')
 async def home():
+    authorized = True
+    user = None
+    try:
+        user = await discord.fetch_user()
+    except Unauthorized:
+        authorized = False
     stats = await app.ipc_node.request("bot_stats")
     gc, mc = stats.replace('"', '').split('-')
     return await render_template(
-        'home.jinja', gcount=gc, mcount=mc
+        'home.jinja', gcount=gc, mcount=mc,
+        authorized=authorized, user=user
     )
 
 
@@ -79,22 +86,17 @@ async def callback():
             return redirect(url_for("manage_guild", gid=gid))
 
 
-@app.route('/me/')
-@requires_authorization
-async def me():
-    user = await discord.fetch_user()
-    return await render_template('me.jinja', user=user)
-
-
 @app.route('/servers/')
 @requires_authorization
 async def servers():
     _guilds = await discord.fetch_guilds()
+    user = await discord.fetch_user()
     guilds = [
         g for g in _guilds if g.permissions.manage_guild
     ]
     return await render_template(
-        'dashboard/server-picker.jinja', guilds=guilds
+        'dashboard/server-picker.jinja', guilds=guilds,
+        authorized=True, user=user
     )
 
 
