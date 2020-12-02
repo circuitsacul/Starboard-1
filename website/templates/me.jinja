@@ -2,5 +2,8 @@
 
 {% block content %}
 <img src="{{ user.avatar_url }}" class='rounded-circle'>
-{{ user.name }}
+{{ user.name }}<br>
+<form action="{{ url_for('logout') }}">
+    <input type='submit' class='btn btn-outline-danger btn-block' value="Logout">
+</form>
 {% endblock %}

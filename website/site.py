@@ -47,6 +47,12 @@ async def login():
     )
 
 
+@app.route('/logout/')
+async def logout():
+    discord.revoke()
+    return redirect(url_for('home'))
+
+
 @app.route('/api/callback/')
 async def callback():
     data = await discord.callback()
