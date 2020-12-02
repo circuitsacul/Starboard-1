@@ -124,10 +124,22 @@ async def manage_guild(gid: int):
         return redirect(url_for('servers'))
 
 
+@app.errorhandler(404)
+async def handle_page_not_found(e):
+    u = None
+    a = False
+    try:
+        u = await discord.fetch_user()
+        a = True
+    except Unauthorized:
+        pass
+    return await render_template(
+        '404.jinja', user=u, authorized=a
+    ), 404
+
+
 @app.errorhandler(Unauthorized)
 async def handle_unauthorized(e):
-    print(request.path)
-    print(dir(e.args))
     return await handle_login(next=request.path)
 
 
