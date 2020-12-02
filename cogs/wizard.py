@@ -429,7 +429,7 @@ class SetupWizard:
             emoji = utils.get(channel.guild.emojis, id=emoji_id)
         else:
             emoji = emoji_name
-        
+
         try:
             await settings.add_asemoji(
                 self.bot, channel, emoji
