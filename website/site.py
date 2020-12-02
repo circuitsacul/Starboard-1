@@ -28,6 +28,15 @@ app.config["DISCORD_REDIRECT_URI"] = bot_config.REDIRECT_URI + '/api/callback'
 app.config["DISCORD_BOT_TOKEN"] = os.getenv("TOKEN")
 discord = DiscordOAuth2Session(app)
 
+BASE_URL = 'http://127.0.0.1:5000'
+
+
+async def handle_login(next: str = ''):
+    return await discord.create_session(
+        data={'type': 'user', 'next': next},
+        scope=['identify', 'guilds']
+    )
+
 
 @app.route('/')
 @app.route('/home/')
@@ -41,10 +50,7 @@ async def home():
 
 @app.route('/login/')
 async def login():
-    return await discord.create_session(
-        data={'type': 'user'},
-        scope=['identify', 'guilds']
-    )
+    return await handle_login()
 
 
 @app.route('/logout/')
@@ -57,7 +63,10 @@ async def logout():
 async def callback():
     data = await discord.callback()
     if data['type'] == 'user':
-        return redirect(url_for("home"))
+        if data['next'] == '':
+            return redirect(url_for("home"))
+        else:
+            return redirect(BASE_URL + data['next'])
     else:
         _gid = request.args.get('guild_id')
         try:
@@ -115,7 +124,9 @@ async def manage_guild(gid: int):
 
 @app.errorhandler(Unauthorized)
 async def handle_unauthorized(e):
-    return redirect(url_for('login'))
+    print(request.path)
+    print(dir(e.args))
+    return await handle_login(next=request.path)
 
 
 @app.errorhandler(AccessDenied)
