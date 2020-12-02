@@ -55,7 +55,6 @@ class Bot(commands.Bot):
     def __init__(self, db, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.db = db
-        self.running_wizzards = []
         self.wizzard_lock = Lock
 
 
@@ -382,7 +381,6 @@ async def on_command_error(ctx, error):
     elif type(error) in [
         cerrors.BotNeedsPerms, cerrors.DoesNotExist, cerrors.NoPremiumError,
         cerrors.AlreadyExists, cerrors.InvalidArgument,
-        checks.WizzardRunningError
     ]:
         pass
     elif type(error) in [

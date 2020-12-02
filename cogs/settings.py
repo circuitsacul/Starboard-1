@@ -180,26 +180,10 @@ class Settings(commands.Cog):
                 )
 
         wizard = SetupWizard(ctx, self.bot)
-        can_run = True
-        async with self.bot.wizzard_lock():
-            if ctx.guild.id in self.bot.running_wizzards:
-                can_run = False
-            else:
-                self.bot.running_wizzards.append(ctx.guild.id)
-
         try:
-            if can_run:
-                await wizard.run()
-            else:
-                await ctx.send(
-                    "A setup wizard is already running for this server!"
-                )
+            await wizard.run()
         except Exception:
             await ctx.send("Wizard exited due to a problem.")
-
-        if can_run:
-            async with self.bot.wizzard_lock():
-                self.bot.running_wizzards.remove(ctx.guild.id)
 
 
 def setup(bot):
