@@ -94,9 +94,13 @@ async def servers():
     guilds = [
         g for g in _guilds if g.permissions.manage_guild
     ]
+    avatars = {}
+    default_icon = "https://i.ibb.co/rt0Rpbb/default-icon.png"
+    for g in guilds:
+        avatars[g.id] = g.icon_url or default_icon
     return await render_template(
         'dashboard/server-picker.jinja', guilds=guilds,
-        authorized=True, user=user
+        authorized=True, user=user, icons=avatars
     )
 
 

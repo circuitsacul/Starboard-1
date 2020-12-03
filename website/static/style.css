@@ -28,13 +28,20 @@ body {
 
 .server-box:hover {
     transition: 0.25s;
-    background-color: #bba54e;
+    background-color: #ffe16c;
     transform: translate(0, -5px);
+    box-shadow: 5px 5px 6px rgb(26, 26, 26);
 }
 
 .server-box a {
+    transition: 0.25s;
     text-decoration: none;
     color: white;
+}
+
+.server-box:hover a {
+    transition: 0.25s;
+    color: black;
 }
 
 #logout-dropdown-btn {
