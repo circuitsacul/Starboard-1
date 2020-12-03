@@ -52,7 +52,11 @@ body {
     background-color: #dc3545;
 }
 
-#logout-dropdown-btn:active {
+.my-dropdown-btn {
     color: white;
-    background-color: #dc3545;
+}
+
+.my-dropdown-btn:hover {
+    background-color: darkslategray;
+    color: white;
 }

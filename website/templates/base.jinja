@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+    <nav class="navbar navbar-expand-md bg-dark navbar-dark">
         <a class="navbar-brand" href="{{ url_for('home') }}">
             <img src='https://i.ibb.co/Kzb62xT/starboard-logo.png' style='width: 40px;'>
         </a>
@@ -41,14 +41,28 @@
                 </li>
             </ul>
             <ul class='navbar-nav'>
+                {% if guild %}
+                    <li class='nav-item dropdown'>
+                        <a class='nav-link dropdown-toggle' href="#" id="navbardrop" data-toggle="dropdown">
+                            <img src="{{ icon }}" alt="Server Icon" style="width: 30px;" class="rounded-circle">
+                            {{ guild.name }}
+                        </a>
+                        <div class="dropdown-menu" style="background-color: #2d3236">
+                            <a class="dropdown-item my-dropdown-btn" href="{{ url_for('servers') }}">Back to All Servers</a>
+                        </div>
+                    </li>
+                {% endif %}
                 {% if authorized %}
                     <li class='nav-item dropdown'>
                         <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
                             <img src="{{ user.avatar_url }}" alt="Your Avatar" style='width: 30px;' class='rounded-circle'>
                             {{ user.name }}#{{ user.discriminator }}
                         </a>
-                        <div class="dropdown-menu" style="background-color: #2d3236; box-shadow: 1px 1px 5px rgb(26, 26, 26);">
-                            <a class="dropdown-item" id="logout-dropdown-btn" href="{{ url_for('logout') }}">Logout</a>
+                        <div class="dropdown-menu" style="background-color: #2d3236">
+                            <a class="dropdown-item my-dropdown-btn" href="{{ url_for('servers') }}">Servers</a>
+                            <a class="dropdown-item my-dropdown-btn">Premium</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item my-dropdown-btn" href="{{ url_for('logout') }}">Logout</a>
                         </div>
                     </li>
                 {% else %}
