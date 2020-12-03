@@ -8,6 +8,12 @@ DONATE = "(optional) link to donatebot.io donation page" # str or None
 ISSUES_PAGE = "link to github issues page"
 VOTE = "bot list vote link"
 
+RANDOM_MESSAGES = [
+    'messages to send randomly',
+    'message2'
+]
+MESSAGE_CHANCE = 50
+
 SUPPORT_SERVER_ID = 0 #your-server-id
 SERVER_LOG_ID = 0 #the channel to send server joins and leaves to. Must be in support server
 VOTE_LOG_ID = 0 #the channel to send votes to

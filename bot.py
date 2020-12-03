@@ -458,7 +458,8 @@ async def main():
         'cogs.starboard',
         'cogs.stats',
         'cogs.utility',
-        'cogs.voting'
+        'cogs.voting',
+        'cogs.rand_messages'
     ]
 
     for ext in extensions:
