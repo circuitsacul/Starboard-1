@@ -458,6 +458,7 @@ async def main():
         'cogs.stats',
         'cogs.utility',
         'cogs.voting',
+        'cogs.rand_messages',
         'cogs.help'
     ]
 
