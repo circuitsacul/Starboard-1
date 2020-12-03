@@ -4,7 +4,7 @@ from discord.ext import commands
 
 
 def do_now() -> bool:
-    if random.randint(0, 400) == 0:
+    if random.randint(0, bot_config.MESSAGE_CHANCE) == 0:
         return True
     return False
 
