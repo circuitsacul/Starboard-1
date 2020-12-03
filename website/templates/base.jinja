@@ -47,7 +47,7 @@
                             <img src="{{ user.avatar_url }}" alt="Your Avatar" style='width: 30px;' class='rounded-circle'>
                             {{ user.name }}#{{ user.discriminator }}
                         </a>
-                        <div class="dropdown-menu" style="background-color: #2d3236">
+                        <div class="dropdown-menu" style="background-color: #2d3236; box-shadow: 3px 3px 3px rgb(26, 26, 26);">
                             <a class="dropdown-item" id="logout-dropdown-btn" href="{{ url_for('logout') }}">Logout</a>
                         </div>
                     </li>
