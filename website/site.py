@@ -28,7 +28,7 @@ app.config["DISCORD_REDIRECT_URI"] = bot_config.REDIRECT_URI + '/api/callback'
 app.config["DISCORD_BOT_TOKEN"] = os.getenv("TOKEN")
 discord = DiscordOAuth2Session(app)
 
-BASE_URL = 'http://127.0.0.1:5000'
+BASE_URL = bot_config.REDIRECT_URI
 
 
 async def handle_login(next: str = ''):
