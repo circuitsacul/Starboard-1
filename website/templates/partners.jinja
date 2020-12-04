@@ -1,0 +1,30 @@
+{% extends 'base.jinja' %}
+
+{% block topstatic %}
+<link rel='stylesheet' href="{{ url_for('static', filename='partners.css') }}">
+{% endblock %}
+
+{% block content %}
+<br>
+<h1 class='text-center'>Our Partners</h1>
+<br>
+<div class='container'>
+    <div class="row d-flex justify-content-center align-items-middle partner-box-container bg-dark">
+
+        <div class='col-md-3 partner-box'>
+            <a href="#">
+                <div class='inner-partner-box'>
+                    <div class='partner-splash-area'>
+                        <img src="https://cdn.discordlabs.org/logo.gif">
+                    </div>
+                    <div class='partner-desc text-center'>
+                        <h3>Discord Labs</h3>
+                        Description<br><br>More
+                    </div>
+                </div>
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

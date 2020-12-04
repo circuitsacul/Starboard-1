@@ -20,6 +20,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
     <link rel="shortcut icon" href="https://i.ibb.co/Kzb62xT/starboard-logo.png">
+
+    {% block topstatic %}
+    {% endblock %}
 </head>
 <body>
     <nav class="navbar navbar-expand-md bg-dark navbar-dark">
@@ -38,6 +41,9 @@
                 </li>
                 <li class='nav-item'>
                     <a class='nav-link' href="{{ url_for('servers') }}">Dashboard</a>
+                </li>
+                <li class='nav-item'>
+                    <a class='nav-link' href="{{ url_for('show_partners') }}">Partners</a>
                 </li>
                 <li class='nav-item'>
                     <a class='nav-link' href="https://dsc.gg/starhelp" target='_blank'>Discord</a>

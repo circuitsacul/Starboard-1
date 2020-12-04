@@ -138,6 +138,20 @@ async def manage_guild(gid: int):
         return redirect(url_for('servers'))
 
 
+@app.route('/partners/')
+async def show_partners():
+    try:
+        user = await discord.fetch_user()
+        authorized = True
+    except Unauthorized:
+        user = None
+        authorized = False
+    return await render_template(
+        'partners.jinja', authorized=authorized,
+        user=user
+    )
+
+
 @app.errorhandler(404)
 async def handle_page_not_found(e):
     u = None
