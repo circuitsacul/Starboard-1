@@ -148,7 +148,7 @@ async def show_partners():
         authorized = False
     return await render_template(
         'partners.jinja', authorized=authorized,
-        user=user
+        user=user, partners=bot_config.PARTNERS
     )
 
 

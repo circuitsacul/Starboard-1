@@ -74,6 +74,22 @@ PATRON_LEVELS = {
     }
 }
 
+PARTNERS = {
+
+    {
+        'title': 'Partner With Us!',
+        'description': (
+            "Do you want to partner with Starboard? "
+            "Join our discord server and DM "
+            "Circuit#5585!"
+        ),
+        'color': '#ffe16c',
+        'url': '#',
+        'image': 'https://i.ibb.co/Kzb62xT/starboard-logo.png'
+    }
+
+}
+
 # Markdown, str
 PRIVACY_POLICY = \
 """

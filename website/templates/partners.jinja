@@ -11,33 +11,21 @@
 <div class='container'>
     <div class="row d-flex justify-content-center align-items-middle partner-box-container bg-dark">
 
-        <div class='col-md-4 partner-box' id='devhub'>
-            <a href="https://discorddevhub.cf/?utm_source=starboard&utm_medium=partnership&utm_content=box">
-                <div class='inner-partner-box'>
-                    <div class='partner-splash-area'>
-                        <img src="https://cam.is-ne.at/PLGXtE.png">
-                        Discord DevHub
+        {% for p in partners %}
+            <div class='col-md-4 partner-box' style="border: 4px solid {{ p['color'] }}">
+                <a href="{{ p['url'] }}" target='_blank'>
+                    <div class='inner-partner-box'>
+                        <div class='partner-splash-area'>
+                            <img src="{{ p['image'] }}">
+                            {{ p['title'] }}
+                        </div>
+                        <div class='partner-desc text-center'>
+                            {{ p['description'] }}
+                        </div>
                     </div>
-                    <div class='partner-desc text-center'>
-                        Discord DevHub is an exclusive development community on Discord. Want to join? Not so fast- you're gonna need to solve the puzzle first to prove that you deserve to be here!
-                    </div>
-                </div>
-            </a>
-        </div>
-
-        <div class='col-md-4 partner-box' id='starboard'>
-            <a href="#">
-                <div class='inner-partner-box'>
-                    <div class='partner-splash-area'>
-                        <img src="https://i.ibb.co/Kzb62xT/starboard-logo.png">
-                        Partner With Us!
-                    </div>
-                    <div class='partner-desc text-center'>
-                        Want to parter with Starboard? Join our discord and DM Circuit#5585
-                    </div>
-                </div>
-            </a>
-        </div>
+                </a>
+            </div>
+        {% endfor %}
 
     </div>
 </div>
