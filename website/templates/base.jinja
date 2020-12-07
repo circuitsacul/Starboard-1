@@ -56,7 +56,7 @@
                             <img src="{{ icon }}" alt="Server Icon" style="width: 30px;" class="rounded-circle">
                             {{ guild.name }}
                         </a>
-                        <div class="dropdown-menu" style="background-color: #2d3236">
+                        <div class="dropdown-menu dropdown-menu-right" style="background-color: #2d3236">
                             <a class="dropdown-item my-dropdown-btn" href="{{ url_for('servers') }}">Back to All Servers</a>
                         </div>
                     </li>
@@ -67,7 +67,7 @@
                             <img src="{{ user.avatar_url }}" alt="Your Avatar" style='width: 30px;' class='rounded-circle'>
                             {{ user.name }}#{{ user.discriminator }}
                         </a>
-                        <div class="dropdown-menu" style="background-color: #2d3236">
+                        <div class="dropdown-menu dropdown-menu-right" style="background-color: #2d3236">
                             <a class="dropdown-item my-dropdown-btn" href="{{ url_for('servers') }}">Servers</a>
                             <a class="dropdown-item my-dropdown-btn">Premium</a>
                             <div class="dropdown-divider"></div>
