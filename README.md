@@ -94,7 +94,7 @@ These directions are for self-hosting the bot. If you just want a working bot, y
 
 - Make a copy of `bot_config.py.example`, and rename it to `bot_config.py`.
 
-- Update the settings to your liking. If you need help with this, you can join the support server.
+- Update the settings to your liking. If you need help with this, you can join the support server. You only *need* to edit the first two lines, and you can just leave the others the same for now.
 
 - Create a file called `.env`, and inside it paste the contents of the `.env.example` file. The only required fields are `TOKEN`, and `DB_PASSWORD`. If you wish to have statistics for your bot you can fill out `STATCORD_TOKEN` with a token from [Statcord](https://statcord.com)
 
