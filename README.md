@@ -86,7 +86,7 @@ These directions are for self-hosting the bot. If you just want a working bot, y
 ### What you will need:
 - Something to run the bot on
 -   A Discord bot application from the [Discord Developer Portal](https://discord.com/developers/applications)
-- A Python installation
+- A Python 3.6 or higher installation
 - A PostgreSQL database
 ### Instructions
 
