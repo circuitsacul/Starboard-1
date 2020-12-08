@@ -29,8 +29,7 @@ app.config["DISCORD_BOT_TOKEN"] = os.getenv("TOKEN")
 discord = DiscordOAuth2Session(app)
 
 BASE_URL = bot_config.REDIRECT_URI
-DEFAULT_ICON = "https://i.ibb.co/rt0Rpbb/default-icon.png"
-
+DEFAULT_ICON = "img/default-icon.png"
 
 
 async def handle_login(next: str = ''):
@@ -98,7 +97,7 @@ async def servers():
     ]
     avatars = {}
     for g in guilds:
-        avatars[g.id] = g.icon_url or DEFAULT_ICON
+        avatars[g.id] = g.icon_url or url_for('static', filename=DEFAULT_ICON)
     return await render_template(
         'dashboard/server-picker.jinja', guilds=guilds,
         authorized=True, user=user, icons=avatars
@@ -122,7 +121,7 @@ async def manage_guild(gid: int):
             for g in _guilds:
                 if g.id == gid:
                     guild = g
-            icon = guild.icon_url or DEFAULT_ICON
+            icon = guild.icon_url or url_for('static', filename=DEFAULT_ICON)
             return await render_template(
                 'dashboard/server-base.jinja',
                 authorized=True, user=user, guild=guild,
