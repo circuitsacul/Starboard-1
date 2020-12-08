@@ -46,10 +46,18 @@
             <div class='col-md-3 text-center feature-card'>
                 <h3>AutoStar Channels</h3>
                 Have the bot automatically star messages, so users can star them easily!
+                <br>
+                <button type='button' class='btn btn-myprimary feature-button' data-toggle='modal' data-target='#autostarModal'>
+                    Read More
+                </button>
             </div>
             <div class='col-md-3 text-center feature-card'>
-                <h3>XP and Leveling</h3>
+                <h3>Leveling and XP</h3>
                 Gain XP every minute you receive a star, and work your way up the leaderboard!
+                <br>
+                <button type='button' class='btn btn-myprimary feature-button' data-toggle='modal' data-target='#xpModal'>
+                    Read More
+                </button>
             </div>
         </div>
     </div>
@@ -106,6 +114,46 @@
 
             <div class='modal-body'>
                 <p>Starboard comes with very useful message moderation features, such as trashing, which effectively deletes a message from all starboards, forcing, which sends a message to the starboard regardless of its stars, and freezing, which prevents a message from gaining or loosing stars.</p>
+            </div>
+
+            <div class='modal-footer'>
+                <button type='button' class='btn btn-mysecondary' data-dismiss='modal'>Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class='modal fade' id='autostarModal'>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class='modal-content bg-dark'>
+
+            <div class='modal-header'>
+                <h1>AutoStar Channels</h1>
+                <button type='button' class='close' data-dismiss='modal'>×</button>
+            </div>
+
+            <div class='modal-body'>
+                <p>A unique feature of this starboard is AutoStar channels. These are channels where messages sent will be automatically starred, if they meet the requirments you set. You can set a character limit, wether or not it requires an image, and wether invalid messages are auto-deleted.</p>
+            </div>
+
+            <div class='modal-footer'>
+                <button type='button' class='btn btn-mysecondary' data-dismiss='modal'>Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class='modal fade' id='xpModal'>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class='modal-content bg-dark'>
+
+            <div class='modal-header'>
+                <h1>Leveling and XP</h1>
+                <button type='button' class='close' data-dismiss='modal'>×</button>
+            </div>
+
+            <div class='modal-body'>
+                <p>Most starboard bots simply count the number of stars a user receives. While this works, this encourages things like star-for-star and reaction spamming. This bot takes a different approach. Every minute a user stars another user, that user receives 1 XP. Then, the more XP they gain, the higher their level is, giving servers a spam-free but still fun leaderboard system.</p>
             </div>
 
             <div class='modal-footer'>
