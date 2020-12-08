@@ -1,9 +1,41 @@
 {% extends 'base.jinja' %}
 
+{% block topstatic %}
+<link rel='stylesheet' href="{{ url_for('static', filename='home.css') }}">
+{% endblock %}
+
 {% block content %}
-<div class='jumbotron bg-dark'>
+<div class='jumbotron jumbotron-fluid bg-transparent bottom-yellow-wave-1 jumbo-nomargin'>
     <h1 class='text-center'>Starboard</h1>
     <h4 class='text-center'>The most advanced starboard</h4>
     <p class='text-center'>{{ gcount }} servers | {{ mcount }} users</p>
+    <br><br><br>
+</div>
+<div class='jumbotron jumbotron-fluid bg-myyellow bottom-dgrey-wave-1'>
+    <h2 class='text-center' style="color: black;">Features</h2>
+    <div class='container bot-features'>
+        <div class="row d-flex justify-content-center align-items-middle bg-transparent">
+            <div class='col-md-3 text-center feature-card'>
+                <h3>Multiple Starboards</h3>
+                Add multiple starboards to your server!
+            </div>
+            <div class='col-md-3 text-center feature-card'>
+                <h3>Multiple Emojis</h3>
+                You can have multiple starboard emojis on each starboard!
+            </div>
+            <div class='col-md-3 text-center feature-card'>
+                <h3>Message Moderation</h3>
+                Easily manage starred messages to keep the starboard clean and high quality!
+            </div>
+            <div class='col-md-3 text-center feature-card'>
+                <h3>AutoStar Channels</h3>
+                Have the bot automatically star messages, so users can star them easily!
+            </div>
+            <div class='col-md-3 text-center feature-card'>
+                <h3>XP and Leveling</h3>
+                Gain XP every minute you receive a star, and work your way up the leaderboard!
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

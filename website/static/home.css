@@ -1,0 +1,23 @@
+.bot-features {
+    margin-top: 40px !important;
+}
+
+.feature-card {
+    transition: 0.2s;
+    border: 3px solid #ffe16c;
+    border-radius: 20px;
+    background-color: #23272A;
+    margin: 10px;
+    margin-left: 20px;
+    margin-right: 20px;
+    padding: 20px;
+    color: lightgrey;
+}
+
+.feature-card:hover {
+    transform: perspective(500px) scale(1.05);
+}
+
+.feature-card h3 {
+    color: #ffe16c !important;
+}

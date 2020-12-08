@@ -3,8 +3,41 @@ body {
     color: white;
 }
 
+.jumbo-nomargin {
+    margin: 0px !important;
+}
+
+.bottom-yellow-wave-1{
+    background-image: url("https://i.ibb.co/DWdm0Kz/starboard-flipped.png");
+    background-position: bottom;
+    background-repeat: no-repeat;
+    background-size: 100% 200px;
+}
+
+.bottom-grey-wave-1 {
+    background-image: url("https://i.ibb.co/LkPD6VM/grey-wave.png");
+    background-position: bottom;
+    background-repeat: no-repeat;
+    background-size: 101% 200px;
+}
+
+.bottom-dgrey-wave-1 {
+    background-image: url("https://i.ibb.co/X5Hw1Vq/darkgreywave.png");
+    background-position: bottom;
+    background-repeat: no-repeat;
+    background-size: 101% 100px;
+}
+
+.bg-transparent {
+    background-color: transparent !important;
+}
+
 .sb-text-yellow {
     color: #ffe16c;
+}
+
+.bg-myyellow {
+    background-color: #ffe16c;
 }
 
 .server-box-container {
