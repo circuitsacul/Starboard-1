@@ -89,11 +89,11 @@
         <div class='jumbotron jumbotron-fluid bg-transparent bottom-grey-wave-1 jumbo-nomargin footer'>
             <div class='container text-center'>
                 {% block footerbody %}
-                <a href='https://github.com/CircuitsBots/Starboard' target='_blank'>GitHub</a><br>
+                <a href="{{ url_for('github') }}" target='_blank'>GitHub</a><br>
                 <a href='https://patreon.com/CircuitSacul' target='_blank'>Patreon</a><br>
                 <a href='https://donatebot.io/checkout/725336160112738385' target='_blank'>Donate</a><br>
-                <a href='https://dsc.gg/starhelp' target='_blank'>Support</a><br>
-                <a href='https://dsc.gg/starboard' target='_blank'>Invite</a>
+                <a href="{{ url_for('support') }}" target='_blank'>Support</a><br>
+                <a href="{{ url_for('invite') }}" target='_blank'>Invite</a>
                 {% endblock %}
             </div>
         </div>

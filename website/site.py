@@ -152,6 +152,21 @@ async def show_partners():
     )
 
 
+@app.route('/invite/')
+async def invite():
+    return redirect(bot_config.INVITE)
+
+
+@app.route('/support/')
+async def support():
+    return redirect(bot_config.SUPPORT_SERVER)
+
+
+@app.route('/github/')
+async def github():
+    return redirect(bot_config.SOURCE_CODE)
+
+
 @app.errorhandler(404)
 async def handle_page_not_found(e):
     u = None
