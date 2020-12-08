@@ -5,23 +5,26 @@
 {% endblock %}
 
 {% block content %}
-<div class='jumbotron jumbotron-fluid bg-transparent bottom-yellow-wave-1 jumbo-nomargin'>
+<div class='jumbotron jumbotron-fluid bg-transparent bottom-yellow-wave-1 jumbo-nomargin outer-home-div'>
     <div class='main-home-div'>
         <h1 class='text-center'>Starboard</h1>
         <h4 class='text-center'>The most advanced starboard</h4>
         <p class='text-center'>{{ gcount }} servers | {{ mcount }} users</p>
         <div class="justify-content-center align-items-middle bg-transparent text-center">
-            <a class='btn mybtn btn-myprimary' href="{{ url_for('servers') }}">Dashboard</a> <a class='btn mybtn btn-mysecondary' href="#">Support Starboard</a>
+            <a class='btn mybtn btn-myprimary' href="{{ url_for('servers') }}">Get Started</a>
+            <a class='btn mybtn btn-mysecondary' href="#features">See Features</a>
         </div>
     </div>
 </div>
+<div id='features'></div>
 <div class='jumbotron jumbotron-fluid bg-myyellow bottom-dgrey-wave-1'>
-    <h2 class='text-center' style="color: black;">Features</h2>
+    <h2 class='text-center' style="color: black;">Why This Starboard?</h2>
+    <p class='text-center' style="color: darkslategrey;">There are so many bots that come with a starboard - but here's why this one is better:</p>
     <div class='container bot-features'>
         <div class="row d-flex justify-content-center align-items-middle bg-transparent">
             <div class='col-md-3 text-center feature-card'>
                 <h3>Multiple Starboards</h3>
-                Add multiple starboards to your server!
+                Each server can have up to 3 starboards
                 <br>
                 <button type='button' class='btn btn-myprimary feature-button' data-toggle='modal' data-target="#starboardsModal">
                     Read More
@@ -29,7 +32,7 @@
             </div>
             <div class='col-md-3 text-center feature-card'>
                 <h3>Multiple Emojis</h3>
-                You can have multiple starboard emojis on each starboard!
+                Multiple star emojis per for each starboard
                 <br>
                 <button type='button' class='btn btn-myprimary feature-button' data-toggle='modal' data-target="#emojisModal">
                     Read More
@@ -37,7 +40,7 @@
             </div>
             <div class='col-md-3 text-center feature-card'>
                 <h3>Message Moderation</h3>
-                Easily manage starred messages to keep the starboard clean and high quality!
+                Easy message management for keeping the starboard clean and quality
                 <br>
                 <button type='button' class='btn btn-myprimary feature-button' data-toggle='modal' data-target='#modModal'>
                     Read More
@@ -45,7 +48,7 @@
             </div>
             <div class='col-md-3 text-center feature-card'>
                 <h3>AutoStar Channels</h3>
-                Have the bot automatically star messages, so users can star them easily!
+                Channels where the bot automatically star messages, so other users can star them easily
                 <br>
                 <button type='button' class='btn btn-myprimary feature-button' data-toggle='modal' data-target='#autostarModal'>
                     Read More
@@ -53,13 +56,19 @@
             </div>
             <div class='col-md-3 text-center feature-card'>
                 <h3>Leveling and XP</h3>
-                Gain XP every minute you receive a star, and work your way up the leaderboard!
+                Users gain XP every minute they receive stars, gaining levels and working their way up the leaderboard
                 <br>
                 <button type='button' class='btn btn-myprimary feature-button' data-toggle='modal' data-target='#xpModal'>
                     Read More
                 </button>
             </div>
         </div>
+    </div>
+</div>
+<div class='jumbotron jumbotron-fluid bg-transparent'>
+    <h2 class='text-center'>Ready to try Starboard?</h2>
+    <div class="justify-content-center align-items-middle bg-transparent text-center">
+        <a class='btn mybtn btn-myprimary' href="{{ url_for('servers') }}">Get Started</a>
     </div>
 </div>
 

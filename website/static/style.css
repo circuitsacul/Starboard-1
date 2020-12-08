@@ -1,6 +1,56 @@
+html {
+    scroll-behavior: smooth;
+}
+
+a {
+    transition: 0.1s;
+    color: rgba(255,255,255,.5);
+    text-decoration: none;
+}
+
+a:hover {
+    color: rgba(255,255,255, 0.8);
+    text-decoration: none;
+}
+
 body {
     background-color: #23272A;
     color: white;
+}
+
+.footer {
+    height: 300px!important;
+    padding-top: 150px!important;
+    background-size: 100% 100% !important;
+}
+
+.mybtn {
+    margin: 5px;
+    width: 200px!important;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.btn-myprimary {
+    background-color: #ffe16c;
+    border: 2px solid #ffe16c;
+}
+
+.btn-myprimary:hover {
+    background-color: #e2c862;
+    border: 2px solid #e2c862;
+    color: black;
+}
+
+.btn-mysecondary {
+    background-color: transparent;
+    border: 2px solid #ffe16c;
+    color: #ffe16c;
+}
+
+.btn-mysecondary:hover {
+    background-color: #ffe16c;
+    color: black;
 }
 
 .jumbo-nomargin {
@@ -16,6 +66,13 @@ body {
 
 .bottom-dgrey-wave-1 {
     background-image: url("https://i.ibb.co/ZmmHh7n/grey-wave-1.png");
+    background-position: bottom;
+    background-repeat: no-repeat;
+    background-size: 100% 250px;
+}
+
+.bottom-grey-wave-1 {
+    background-image: url("https://i.ibb.co/pXVRdZb/lightgrey-wave-1.png");
     background-position: bottom;
     background-repeat: no-repeat;
     background-size: 100% 250px;

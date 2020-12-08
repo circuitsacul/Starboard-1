@@ -1,39 +1,14 @@
-.main-home-div {
-    margin-top: 200px!important;
-    margin-bottom: 300px!important;
+.outer-home-div {
+    height: 100vh!important;
+    min-height: 500px;
 }
 
-.mybtn {
-    margin: 5px;
-    width: 200px!important;
-    padding: 10px;
-    border-radius: 10px;
+.main-home-div {
+    margin-top: 15vh;
 }
 
 .feature-button {
     margin-top: 10px;
-}
-
-.btn-myprimary {
-    background-color: #ffe16c;
-    border: 2px solid #ffe16c;
-}
-
-.btn-myprimary:hover {
-    background-color: #e2c862;
-    border: 2px solid #e2c862;
-    color: black;
-}
-
-.btn-mysecondary {
-    background-color: transparent;
-    border: 2px solid #ffe16c;
-    color: #ffe16c;
-}
-
-.btn-mysecondary:hover {
-    background-color: #ffe16c;
-    color: black;
 }
 
 .bot-features {
