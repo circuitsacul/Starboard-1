@@ -1,3 +1,41 @@
+.main-home-div {
+    margin-top: 100px!important;
+    margin-bottom: 150px!important;
+}
+
+.mybtn {
+    margin: 5px;
+    width: 200px!important;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.feature-button {
+    margin-top: 10px;
+}
+
+.btn-myprimary {
+    background-color: #ffe16c;
+    border: 2px solid #ffe16c;
+}
+
+.btn-myprimary:hover {
+    background-color: #e2c862;
+    border: 2px solid #e2c862;
+    color: black;
+}
+
+.btn-mysecondary {
+    background-color: transparent;
+    border: 2px solid #ffe16c;
+    color: #ffe16c;
+}
+
+.btn-mysecondary:hover {
+    background-color: #ffe16c;
+    color: black;
+}
+
 .bot-features {
     margin-top: 40px !important;
 }

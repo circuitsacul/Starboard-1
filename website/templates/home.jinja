@@ -6,10 +6,14 @@
 
 {% block content %}
 <div class='jumbotron jumbotron-fluid bg-transparent bottom-yellow-wave-1 jumbo-nomargin'>
-    <h1 class='text-center'>Starboard</h1>
-    <h4 class='text-center'>The most advanced starboard</h4>
-    <p class='text-center'>{{ gcount }} servers | {{ mcount }} users</p>
-    <br><br><br>
+    <div class='main-home-div'>
+        <h1 class='text-center'>Starboard</h1>
+        <h4 class='text-center'>The most advanced starboard</h4>
+        <p class='text-center'>{{ gcount }} servers | {{ mcount }} users</p>
+        <div class="justify-content-center align-items-middle bg-transparent text-center">
+            <a class='btn mybtn btn-myprimary' href="{{ url_for('servers') }}">Dashboard</a> <a class='btn mybtn btn-mysecondary' href="#">Support Starboard</a>
+        </div>
+    </div>
 </div>
 <div class='jumbotron jumbotron-fluid bg-myyellow bottom-dgrey-wave-1'>
     <h2 class='text-center' style="color: black;">Features</h2>
@@ -18,14 +22,26 @@
             <div class='col-md-3 text-center feature-card'>
                 <h3>Multiple Starboards</h3>
                 Add multiple starboards to your server!
+                <br>
+                <button type='button' class='btn btn-myprimary feature-button' data-toggle='modal' data-target="#starboardsModal">
+                    Read More
+                </button>
             </div>
             <div class='col-md-3 text-center feature-card'>
                 <h3>Multiple Emojis</h3>
                 You can have multiple starboard emojis on each starboard!
+                <br>
+                <button type='button' class='btn btn-myprimary feature-button' data-toggle='modal' data-target="#emojisModal">
+                    Read More
+                </button>
             </div>
             <div class='col-md-3 text-center feature-card'>
                 <h3>Message Moderation</h3>
                 Easily manage starred messages to keep the starboard clean and high quality!
+                <br>
+                <button type='button' class='btn btn-myprimary feature-button' data-toggle='modal' data-target='#modModal'>
+                    Read More
+                </button>
             </div>
             <div class='col-md-3 text-center feature-card'>
                 <h3>AutoStar Channels</h3>
@@ -34,6 +50,66 @@
             <div class='col-md-3 text-center feature-card'>
                 <h3>XP and Leveling</h3>
                 Gain XP every minute you receive a star, and work your way up the leaderboard!
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class='modal fade' id='starboardsModal'>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class='modal-content bg-dark'>
+
+            <div class='modal-header'>
+                <h1>Multiple Starboards</h1>
+                <button type='button' class='close' data-dismiss='modal'>×</button>
+            </div>
+
+            <div class='modal-body'>
+                <p>Unlike most starboards, this bot allows you to have multiple starboards, each with its own configuration. For example, you could have a regular starboard, which requires 3 stars, and a super-starboard, which requires 5 stars.
+            </div>
+
+            <div class='modal-footer'>
+                <button type='button' class='btn btn-mysecondary' data-dismiss='modal'>Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class='modal fade' id='emojisModal'>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class='modal-content bg-dark'>
+
+            <div class='modal-header'>
+                <h1>Multiple Emojis</h1>
+                <button type='button' class='close' data-dismiss='modal'>×</button>
+            </div>
+
+            <div class='modal-body'>
+                <p>Each of your starboards can have multiple "star" emojis on them, normal or custom, giving your users multiple ways to star messages.
+            </div>
+
+            <div class='modal-footer'>
+                <button type='button' class='btn btn-mysecondary' data-dismiss='modal'>Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class='modal fade' id='modModal'>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class='modal-content bg-dark'>
+
+            <div class='modal-header'>
+                <h1>Message Moderation</h1>
+                <button type='button' class='close' data-dismiss='modal'>×</button>
+            </div>
+
+            <div class='modal-body'>
+                <p>Starboard comes with very useful message moderation features, such as trashing, which effectively deletes a message from all starboards, forcing, which sends a message to the starboard regardless of its stars, and freezing, which prevents a message from gaining or loosing stars.</p>
+            </div>
+
+            <div class='modal-footer'>
+                <button type='button' class='btn btn-mysecondary' data-dismiss='modal'>Close</button>
             </div>
         </div>
     </div>
