@@ -57,27 +57,6 @@ body {
     margin: 0px !important;
 }
 
-.bottom-yellow-wave-1{
-    background-image: url("https://i.ibb.co/PTJZvTK/yellow-wave-1.png");
-    background-position: bottom;
-    background-repeat: no-repeat;
-    background-size: 100% 250px;
-}
-
-.bottom-dgrey-wave-1 {
-    background-image: url("https://i.ibb.co/ZmmHh7n/grey-wave-1.png");
-    background-position: bottom;
-    background-repeat: no-repeat;
-    background-size: 100% 250px;
-}
-
-.bottom-grey-wave-1 {
-    background-image: url("https://i.ibb.co/pXVRdZb/lightgrey-wave-1.png");
-    background-position: bottom;
-    background-repeat: no-repeat;
-    background-size: 100% 250px;
-}
-
 .bg-transparent {
     background-color: transparent !important;
 }

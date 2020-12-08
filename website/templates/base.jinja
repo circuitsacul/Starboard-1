@@ -6,11 +6,34 @@
     <meta property="og:title" content="Starboard" />
     <meta property="og:description" content="The best discord starboard" />
     <meta property="og:url" content="" />
-    <meta property="og:image" content="https://i.ibb.co/Kzb62xT/starboard-logo.png"/>
+    <meta property="og:image" content="{{ url_for('static', filename='img/starboard-logo.png') }}"/>
 
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
     <title>{% block title %}Starboard{% endblock %}</title>
+
+    <style>
+    .bottom-yellow-wave-1{
+        background-image: url("{{ url_for('static', filename='img/yellow-wave-1.png') }}");
+        background-position: bottom;
+        background-repeat: no-repeat;
+        background-size: 100% 250px;
+    }
+
+    .bottom-dgrey-wave-1 {
+        background-image: url("{{ url_for('static', filename='img/grey-wave-1.png') }}");
+        background-position: bottom;
+        background-repeat: no-repeat;
+        background-size: 100% 250px;
+    }
+
+    .bottom-grey-wave-1 {
+        background-image: url("{{ url_for('static', filename='img/lightgrey-wave-1.png') }}");
+        background-position: bottom;
+        background-repeat: no-repeat;
+        background-size: 100% 250px;
+    }
+    </style>
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -19,7 +42,7 @@
 
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-    <link rel="shortcut icon" href="https://i.ibb.co/Kzb62xT/starboard-logo.png">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/starboard-logo.png') }}">
 
     {% block topstatic %}
     {% endblock %}
@@ -27,7 +50,7 @@
 <body>
     <nav class="navbar navbar-expand-md bg-dark navbar-dark">
         <a class="navbar-brand" href="{{ url_for('home') }}">
-            <img src='https://i.ibb.co/Kzb62xT/starboard-logo.png' style='width: 40px;'>
+            <img src="{{ url_for('static', filename='img/starboard-logo.png') }}" style='width: 40px;'>
         </a>
 
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
@@ -46,7 +69,7 @@
                     <a class='nav-link' href="{{ url_for('show_partners') }}">Partners</a>
                 </li>
                 <li class='nav-item'>
-                    <a class='nav-link' href="https://dsc.gg/starhelp" target='_blank'>Discord</a>
+                    <a class='nav-link' href="{{ url_for('support') }}" target='_blank'>Discord</a>
                 </li>
             </ul>
             <ul class='navbar-nav'>
