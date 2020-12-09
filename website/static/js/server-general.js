@@ -31,7 +31,8 @@ function loadData() {
 
 function populateData(guildData) {
     console.log(guildData);
-    $("#prefixes").html(String(guildData.prefixes));
+    div = document.getElementById("prefixes");
+    div.textContent = String(guildData.prefixes);
 }
 
 
