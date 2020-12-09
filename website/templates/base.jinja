@@ -8,6 +8,8 @@
     <meta property="og:url" content="" />
     <meta property="og:image" content="{{ url_for('static', filename='img/starboard-logo.png') }}"/>
 
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
     <title>{% block title %}Starboard{% endblock %}</title>
@@ -105,6 +107,7 @@
             </ul>
         </div>
     </nav>
+
     {% block content %}
     {% endblock %}
 
@@ -121,5 +124,17 @@
             </div>
         </div>
     {% endblock %}
+
+    <script type="text/javascript">
+        var csrf_token = "{{ csrf_token() }}";
+
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrf_token);
+                }
+            }
+        });
+    </script>
 </body>
 </html>

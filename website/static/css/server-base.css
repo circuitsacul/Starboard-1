@@ -1,30 +1,42 @@
-.tab {
+* {box-sizing: border-box}
+
+body {
+    height: 100vh;
     overflow: hidden;
-    background-color: grey;
 }
-  
-.tab button {
-    background-color: inherit;
+
+.tab {
     float: left;
+    background-color: #343a40;
+    width: 10%;
+    height: 100%;
+    padding: 10px 0px;
+}
+
+.tab button {
+    display: block;
+    background-color: inherit;
+    color: rgba(255,255,255,.5);
+    padding: 10px 10px;
+    width: 100%;
     border: none;
     outline: none;
+    text-align: left;
     cursor: pointer;
-    padding: 14px 16px;
-    transition: 0.3s;
-    color: white;
+    transition: 0.1s;
 }
-  
+
 .tab button:hover {
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.2);
 }
-  
+
 .tab button.active {
-    background-color: #23272A;
+    background-color: #ffe16c;
+    color: black;
 }
-  
-.tabcontent {
-    display: none;
-    padding: 6px 12px;
-    border: 1px solid #ccc;
-    border-top: none;
+
+.settings-container {
+    width: 90%;
+    border-radius: 10px;
+    margin-top: 20px;
 }

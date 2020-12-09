@@ -1,14 +1,16 @@
+import quart.flask_patch
 import os
 import sys
 import json
 from dotenv import load_dotenv
-from quart import Quart, redirect, url_for, render_template, request
+from quart import Quart, redirect, url_for, render_template, request, flash
 from quart_discord import (
     DiscordOAuth2Session,
     requires_authorization,
     Unauthorized,
     AccessDenied
 )
+from flask_wtf.csrf import CSRFProtect
 from discord.ext.ipc import Client
 
 sys.path.append('../')
@@ -17,12 +19,13 @@ import bot_config
 load_dotenv()
 
 app = Quart(__name__)
+csrf = CSRFProtect(app)
 ipc = Client(
     'localhost', 8765,
     secret_key=os.getenv('IPC_KEY')
 )
 app.secret_key = os.getenv("QUART_KEY")
-
+app.config['SECRET_KEY'] = os.getenv("QUART_KEY")
 app.config["DISCORD_CLIENT_ID"] = bot_config.BOT_ID
 app.config["DISCORD_CLIENT_SECRET"] = os.getenv("SECRET")
 app.config["DISCORD_REDIRECT_URI"] = bot_config.REDIRECT_URI + '/api/callback'
@@ -40,13 +43,44 @@ async def handle_login(next: str = ''):
     )
 
 
-async def get_guild_data(gid: int) -> dict:
+@app.route('/api/callback/')
+async def callback():
+    data = await discord.callback()
+    if data['type'] == 'user':
+        if data['next'] == '':
+            return redirect(url_for("home"))
+        else:
+            return redirect(BASE_URL + data['next'])
+    else:
+        _gid = request.args.get('guild_id')
+        try:
+            gid = int(_gid)
+        except ValueError:
+            gid = None
+        if gid is None:
+            return redirect(url_for("servers"))
+        else:
+            return redirect(url_for("manage_guild", gid=gid))
+
+
+@app.route('/api/guild-data')
+async def get_guild_data():
+    gid = int(request.args.get('guildId'))
     try:
-        guild_data_string = await app.ipc_node.request("guild_data", gid=gid)
+        guild_data_string = await app.ipc_node.request(
+            "guild_data", gid=gid
+        )
     except Exception as e:
         print(e)
         return {"error": str(e)}
-    return json.loads(guild_data_string)
+    return guild_data_string
+
+
+@app.route('/test', methods=['get', 'post'])
+async def test():
+    text = request.args.get('jsdata')
+    flash(f"You said {text}")
+    return "Sent"
 
 
 @app.route('/')
@@ -75,26 +109,6 @@ async def login():
 async def logout():
     discord.revoke()
     return redirect(url_for('home'))
-
-
-@app.route('/api/callback/')
-async def callback():
-    data = await discord.callback()
-    if data['type'] == 'user':
-        if data['next'] == '':
-            return redirect(url_for("home"))
-        else:
-            return redirect(BASE_URL + data['next'])
-    else:
-        _gid = request.args.get('guild_id')
-        try:
-            gid = int(_gid)
-        except ValueError:
-            gid = None
-        if gid is None:
-            return redirect(url_for("servers"))
-        else:
-            return redirect(url_for("manage_guild", gid=gid))
 
 
 @app.route('/manage/')
@@ -131,12 +145,11 @@ async def manage_guild(gid: int):
             for g in _guilds:
                 if g.id == gid:
                     guild = g
-            data = await get_guild_data(gid)
             icon = guild.icon_url or url_for('static', filename=DEFAULT_ICON)
             return await render_template(
                 'dashboard/server-base.jinja',
                 authorized=True, user=user, guild=guild,
-                icon=icon, data=data
+                icon=icon, gid=str(gid)
             )
         else:
             return await discord.create_session(

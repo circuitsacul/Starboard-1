@@ -111,8 +111,8 @@ async def get_guild_data(data):
                 bot, int(gid)
             )
     data = json.dumps({
-        'id': str(guild_data['id']),
-        'prefixes': list(prefixes)
+        "id": str(guild_data['id']),
+        "prefixes": list(prefixes)
     })
     return data
 
