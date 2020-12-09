@@ -51,7 +51,7 @@ intents = discord.Intents(
 )
 
 
-class Bot(commands.Bot):
+class Bot(commands.AutoShardedBot):
     def __init__(self, db, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.db = db
