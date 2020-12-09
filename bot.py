@@ -51,7 +51,7 @@ intents = discord.Intents(
 )
 
 
-class Bot(commands.Bot):
+class Bot(commands.AutoShardedBot):
     def __init__(self, db, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.db = db
@@ -182,30 +182,23 @@ async def bot_ping(ctx):
     def ms(seconds):
         return int((seconds*1000))
 
-    start = time.time()
-    _pinger = await ctx.send("Pinging...")
-    send = time.time()
-    pinger = await ctx.channel.fetch_message(_pinger.id)
-    fetch = time.time()
-    await pinger.edit(content='Pinging...')
-    edit = time.time()
-    await pinger.delete()
-    delete = time.time()
-
-    send_time = ms(send-start)
-    fetch_time = ms(fetch-send)
-    edit_time = ms(edit-fetch)
-    delete_time = ms(delete-edit)
     latency = ms(bot.latency)
 
     embed = discord.Embed(
         title='Pong!',
-        description=f"Latency: {latency} ms\n"
-        f"Message Send: {send_time} ms\n"
-        f"Message Fetch: {fetch_time} ms\n"
-        f"Message Edit: {edit_time} ms\n"
-        f"Message Delete: {delete_time} ms",
+        description=f"Average Latency: {latency} ms\n",
         color=bot_config.COLOR
+    )
+
+    other_shards = ''
+    for sid, l in bot.latencies:
+        if ctx.guild and sid == ctx.guild.shard_id:
+            other_shards += f"**Shard {sid}**: {ms(l)} ms\n"
+        else:
+            other_shards += f"Shard {sid}: {ms(l)} ms\n"
+
+    embed.add_field(
+        name='Shards', value=other_shards
     )
 
     await ctx.send(embed=embed)
