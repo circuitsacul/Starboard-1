@@ -87,7 +87,7 @@ async def callback():
             return redirect(url_for("manage_guild", gid=gid))
 
 
-@app.route('/servers/')
+@app.route('/manage/')
 @requires_authorization
 async def servers():
     _guilds = await discord.fetch_guilds()
@@ -104,7 +104,7 @@ async def servers():
     )
 
 
-@app.route('/servers/<int:gid>/')
+@app.route('/manage/<int:gid>/')
 @requires_authorization
 async def manage_guild(gid: int):
     _guilds = await discord.fetch_guilds()
