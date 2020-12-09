@@ -9,6 +9,7 @@ from bot_config import SUPPORT_SERVER
 import functions
 import traceback
 import pretty_help
+import json
 import time
 import checks
 import errors as cerrors
@@ -90,6 +91,30 @@ async def check_shared_guild(data):
         return '1'
     else:
         return '0'
+
+
+@ipc.route('guild_data')
+async def get_guild_data(data):
+    gid = data.gid
+    get_guild = \
+        """SELECT * FROM guilds WHERE id=$1"""
+    conn = bot.db.conn
+    async with bot.db.lock:
+        async with conn.transaction():
+            await functions.check_or_create_existence(
+                bot.db, conn, bot, guild_id=int(gid)
+            )
+            guild_data = await conn.fetchrow(
+                get_guild, int(gid)
+            )
+            prefixes = await functions.list_prefixes(
+                bot, int(gid)
+            )
+    data = json.dumps({
+        'id': str(guild_data['id']),
+        'prefixes': list(prefixes)
+    })
+    return data
 
 
 # Info Commands

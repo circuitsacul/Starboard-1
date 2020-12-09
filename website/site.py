@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 from dotenv import load_dotenv
 from quart import Quart, redirect, url_for, render_template, request
 from quart_discord import (
@@ -37,6 +38,15 @@ async def handle_login(next: str = ''):
         data={'type': 'user', 'next': next},
         scope=['identify', 'guilds']
     )
+
+
+async def get_guild_data(gid: int) -> dict:
+    try:
+        guild_data_string = await app.ipc_node.request("guild_data", gid=gid)
+    except Exception as e:
+        print(e)
+        return {"error": str(e)}
+    return json.loads(guild_data_string)
 
 
 @app.route('/')
@@ -121,11 +131,12 @@ async def manage_guild(gid: int):
             for g in _guilds:
                 if g.id == gid:
                     guild = g
+            data = await get_guild_data(gid)
             icon = guild.icon_url or url_for('static', filename=DEFAULT_ICON)
             return await render_template(
                 'dashboard/server-base.jinja',
                 authorized=True, user=user, guild=guild,
-                icon=icon
+                icon=icon, data=data
             )
         else:
             return await discord.create_session(
