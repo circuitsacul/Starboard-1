@@ -172,7 +172,7 @@ async def bot_ping(ctx):
 
     other_shards = ''
     for sid, l in bot.latencies:
-        if sid == ctx.guild.shard_id:
+        if ctx.guild and sid == ctx.guild.shard_id:
             other_shards += f"**Shard {sid}**: {ms(l)} ms\n"
         else:
             other_shards += f"Shard {sid}: {ms(l)} ms\n"
