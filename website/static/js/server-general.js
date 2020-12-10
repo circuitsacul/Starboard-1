@@ -1,10 +1,11 @@
-function addPrefix(prefix, guildId) {
+function addPrefix(prefix) {
     $.ajax({
-        url: '/api/modify/addprefix',
+        url: '/api/modify',
         type: 'post',
         data: {
-            prefix: prefix,
-            guild: guildId
+            guildId: currentGuildId,
+            action: 'prefix.add',
+            modifydata: `{"prefix": "${prefix}"}`
         },
         success: function(response) {
             alert(response)

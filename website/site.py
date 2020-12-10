@@ -4,6 +4,7 @@ import sys
 import json
 from dotenv import load_dotenv
 from quart import Quart, redirect, url_for, render_template, request, flash
+from typing import Union
 from quart_discord import (
     DiscordOAuth2Session,
     requires_authorization,
@@ -43,6 +44,24 @@ async def handle_login(next: str = ''):
     )
 
 
+async def handle_modify_action(
+    gid: int,
+    action: str,
+    data: dict
+) -> Union[None, Exception]:
+    print(f"Action {action} in {gid} with data {data}")
+
+
+async def can_manage(
+    guild_id, guilds: list
+) -> bool:
+    for g in guilds:
+        if g.id == guild_id:
+            if g.permissions.manage_guild:
+                return True
+    return False
+
+
 @app.route('/api/callback/')
 async def callback():
     data = await discord.callback()
@@ -66,6 +85,11 @@ async def callback():
 @app.route('/api/guild-data')
 async def get_guild_data():
     gid = int(request.args.get('guildId'))
+    guilds = await discord.fetch_guilds()
+    if can_manage(gid, guilds):
+        pass
+    else:
+        return "No", 403
     try:
         guild_data_string = await app.ipc_node.request(
             "guild_data", gid=gid
@@ -76,11 +100,24 @@ async def get_guild_data():
     return guild_data_string
 
 
-@app.route('/test', methods=['get', 'post'])
-async def test():
-    text = request.args.get('jsdata')
-    flash(f"You said {text}")
-    return "Sent"
+@app.route('/api/modify', methods=['post'])
+async def modify():
+    f = await request.form
+    gid = int(f.get('guildId'))
+    guilds = await discord.fetch_guilds()
+
+    if not await can_manage(gid, guilds):
+        return "No", 403
+
+    action = f.get('action')
+    data = json.loads(f.get('modifydata'))
+    status = await handle_modify_action(
+        gid, action, data
+    )
+    if status:
+        return str(status), 400
+    else:
+        return "Success!"
 
 
 @app.route('/')
@@ -133,32 +170,30 @@ async def servers():
 async def manage_guild(gid: int):
     _guilds = await discord.fetch_guilds()
     user = await discord.fetch_user()
-    valid_ids = [
-        g.id for g in _guilds if g.permissions.manage_guild
-    ]
-    if gid in valid_ids:
-        resp = await app.ipc_node.request(
-            'does_share', gid=gid
-        )
-        if resp == '"1"':
-            guild = None
-            for g in _guilds:
-                if g.id == gid:
-                    guild = g
-            icon = guild.icon_url or url_for('static', filename=DEFAULT_ICON)
-            return await render_template(
-                'dashboard/server-base.jinja',
-                authorized=True, user=user, guild=guild,
-                icon=icon, gid=str(gid)
-            )
-        else:
-            return await discord.create_session(
-                scope=['bot'], permissions=268823632,
-                data={'type': 'server'},
-                guild_id=gid
-            )
-    else:
+
+    if not await can_manage(gid, _guilds):
         return redirect(url_for('servers'))
+
+    resp = await app.ipc_node.request(
+        'does_share', gid=gid
+    )
+    if resp == '"1"':
+        guild = None
+        for g in _guilds:
+            if g.id == gid:
+                guild = g
+        icon = guild.icon_url or url_for('static', filename=DEFAULT_ICON)
+        return await render_template(
+            'dashboard/server-base.jinja',
+            authorized=True, user=user, guild=guild,
+            icon=icon, gid=str(gid)
+        )
+    else:
+        return await discord.create_session(
+            scope=['bot'], permissions=268823632,
+            data={'type': 'server'},
+            guild_id=gid
+        )
 
 
 @app.route('/partners/')
