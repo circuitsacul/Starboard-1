@@ -122,7 +122,7 @@ async def add_aschannel(bot: commands.Bot, channel: discord.TextChannel):
         """SELECT * FROM aschannels WHERE guild_id=$1"""
 
     # just in case we messed something up earlier and it's already in there
-    if not channel.id in bot.db.as_cache:
+    if channel.id not in bot.db.as_cache:
         bot.db.as_cache.add(channel.id)
 
     guild = channel.guild
