@@ -49,6 +49,10 @@ async def handle_modify_action(
     action: str,
     data: dict
 ) -> Union[None, Exception]:
+    await app.ipc_node.request(
+        'modify_guild', gid=gid, action=action,
+        modifydata=json.dumps(data)
+    )
     print(f"Action {action} in {gid} with data {data}")
 
 
@@ -86,7 +90,7 @@ async def callback():
 async def get_guild_data():
     gid = int(request.args.get('guildId'))
     guilds = await discord.fetch_guilds()
-    if can_manage(gid, guilds):
+    if await can_manage(gid, guilds):
         pass
     else:
         return "No", 403

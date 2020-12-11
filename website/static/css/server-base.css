@@ -34,4 +34,47 @@
     width: 100%;
     border-radius: 10px;
     margin-top: 20px;
+    padding: 20px;
+}
+
+.setting-card {
+    border-radius: 5px;
+    padding: 10px;
+    margin: 10px;
+    background-color: #23272A;
+}
+
+.my-form-control {
+    background-color: #343a40;
+    color: white;
+    border: none;
+}
+
+.my-form-control:active {
+    background-color: #343a40;
+    color: white;
+}
+
+.my-form-control:focus {
+    background-color: #343a40;
+    color: white;
+}
+
+.my-list-group-item {
+    color: white;
+    background-color: #343a40;
+    padding: 3px 10px!important;
+}
+
+.del-prefix {
+    border: 1px solid red;
+    background-color: transparent;
+    color: red;
+    font-size: 1em;
+}
+
+.del-prefix:hover {
+    cursor: pointer;
+    color: black;
+    background-color: red;
 }

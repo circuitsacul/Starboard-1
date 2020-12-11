@@ -117,6 +117,29 @@ async def get_guild_data(data):
     return data
 
 
+@ipc.route('modify_guild')
+async def modify_guild(data):
+    gid = data.gid
+    action = data.action
+    modifydata = json.loads(data.modifydata)
+
+    try:
+        async with bot.db.lock:
+            async with bot.db.conn.transaction():
+                if action == 'prefix.add':
+                    await functions.add_prefix(
+                        bot, int(gid), modifydata['prefix']
+                    )
+                elif action == 'prefix.remove':
+                    await functions.remove_prefix(
+                        bot, int(gid), modifydata['prefix']
+                    )
+    except Exception as e:
+        print(e)
+
+    print(f"Action {action} in {gid} with data {modifydata}")
+
+
 # Info Commands
 @bot.command(
     name='links', aliases=['invite', 'support'],

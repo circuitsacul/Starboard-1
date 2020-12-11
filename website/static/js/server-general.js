@@ -1,11 +1,21 @@
+function removeAllChildNodes(parent) {
+    while (parent.firstChild) {
+        parent.removeChild(parent.firstChild);
+    }
+}
+
+
 function modifyReq(action, modifydata) {
-    return $.ajax({
+    $.ajax({
         url: '/api/modify',
         type: 'post',
         data: {
             guildId: currentGuildId,
             action: action,
             modifydata: modifydata
+        },
+        success: function(resp) {
+            loadData();
         }
     })
 }
@@ -51,15 +61,30 @@ function loadData() {
 
 
 function populateData(guildData) {
-    console.log(guildData);
-    div = document.getElementById("prefixes");
-    div.textContent = String(guildData.prefixes);
+    let e = document.getElementById('prefix-list');
+    removeAllChildNodes(e);
+    guildData.prefixes.forEach(function(prefix) {
+        let l = document.createElement("li");
+        l.className = "list-group-item my-list-group-item d-flex justify-content-between align-items-center";
+        l.textContent = prefix
+        tag = document.createElement('button');
+        tag.className = "badge badge-circle del-prefix";
+        tag.textContent = '×';
+        tag.onclick = function(e) {
+            removePrefix(prefix);
+        }
+        l.appendChild(tag);
+        e.appendChild(l);
+    })
 }
 
 
 $(document).ready(function(){
-    $(".show-toast").click(function(){
-        $("#myToast").toast('show');
-    });
     loadData();
+    $("#add-prefix-input").keypress(function(e) {
+        if (e.keyCode == 13) {
+            addPrefix($("#add-prefix-input").val());
+            $("#add-prefix-input").val('');
+        }
+    })
 });
