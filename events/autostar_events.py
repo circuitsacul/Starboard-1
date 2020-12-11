@@ -12,7 +12,7 @@ async def load_aschannels(bot):
             )
 
     if asc != []:
-        bot.db.as_cache = set([a['id'] for a in asc])
+        bot.db.as_cache = set([int(a['id']) for a in asc])
     else:
         bot.db.as_cache = set()
 
