@@ -144,7 +144,7 @@ class Utility(commands.Cog):
             for i, msg in enumerate(frozen_messages):
                 from_msg = f"**[{msg['id']}]"\
                     "(https://discordapp.com/channels/"\
-                    "{msg['guild_id']}/{msg['channel_id']}/{msg['id']}/)**\n"
+                    f"{msg['guild_id']}/{msg['channel_id']}/{msg['id']}/)**\n"
                 all_strings.append(from_msg)
 
             size = 10
