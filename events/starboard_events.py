@@ -266,6 +266,9 @@ async def update_message(
 ):
     update = orig_message is not None
 
+    check_message = \
+        """SELECT * FROM messages WHERE orig_message_id=$1 AND channel_id=$2"""
+
     if trashed:
         if sb_message is not None:
             embed = discord.Embed(title='Trashed Message')
@@ -288,6 +291,15 @@ async def update_message(
         ) if orig_message is not None else None
 
         if add and embed is not None:
+            async with db.lock:
+                conn = db.conn
+                async with conn.transaction():
+                    _message = await conn.fetchrow(
+                        check_message, orig_message.id,
+                        starboard.id
+                    )
+            if _message is not None:
+                return
             try:
                 sb_message = await starboard.send(plain_text, embed=embed)
             except Forbidden:
@@ -401,7 +413,7 @@ async def get_embed_from_message(message):
                     'url': msg_embed.url, 'type': 'video'
                 })
 
-    value_string = f"{message.content}\n{embed_text}"
+    value_string = f"{message.system_content}\n{embed_text}"
     context_string = f"\n[**Jump to Message**]({message.jump_url})"
     if len(value_string) > 2048:
         clip_msg = "... *message clipped*"

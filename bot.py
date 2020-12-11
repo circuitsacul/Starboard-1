@@ -485,7 +485,10 @@ async def on_ipc_ready():
 
 async def main():
     await db.open(bot)
+    await autostar_events.load_aschannels(bot)
+
     await web_server.start()
+
     if not BETA:
         bot.loop.create_task(post_guild_count.loop_post(bot))
 
