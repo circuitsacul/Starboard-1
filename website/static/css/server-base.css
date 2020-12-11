@@ -1,0 +1,37 @@
+* {box-sizing: border-box}
+
+.tab {
+    background-color: #343a40;
+    width: 100%;
+    overflow: hidden;
+    border-top: 1px solid black;
+    border-bottom: 2px solid #ffe16c;
+}
+
+.tab button {
+    background-color: inherit;
+    color: rgba(255,255,255,.5);
+    padding: 10px 10px;
+    float: left;
+    margin: 0px;
+    border: none;
+    outline: none;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.1s;
+}
+
+.tab button:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.tab button.active {
+    background-color: #ffe16c;
+    color: black;
+}
+
+.settings-container {
+    width: 100%;
+    border-radius: 10px;
+    margin-top: 20px;
+}

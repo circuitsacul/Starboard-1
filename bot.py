@@ -9,12 +9,14 @@ from bot_config import SUPPORT_SERVER
 import functions
 import traceback
 import pretty_help
+import json
 import time
 import checks
 import errors as cerrors
 from discord.ext import commands
 from pretty_help import PrettyHelp
 from asyncio import Lock
+from discord.ext.ipc import Server
 
 dotenv.load_dotenv()
 
@@ -27,11 +29,10 @@ from api import post_guild_count
 
 from cogs.webhook import HttpWebHook
 
-_TOKEN = os.getenv('TOKEN')
-_BETA_TOKEN = os.getenv('BETA_TOKEN')
+TOKEN = os.getenv('TOKEN')
+IPC_KEY = os.getenv('IPC_KEY')
 
 BETA = True if len(sys.argv) > 1 and sys.argv[1] == 'beta' else False
-TOKEN = _BETA_TOKEN if BETA and _BETA_TOKEN is not None else _TOKEN
 BOT_DESCRIPTION = """
 An advanced starboard that allows for multiple starboards and multiple emojis per starboard.
 To get started, run the "setup" command.
@@ -69,6 +70,51 @@ bot = Bot(
     description=BOT_DESCRIPTION
 )
 web_server = HttpWebHook(bot, db)
+ipc = Server(
+    bot, 'localhost', 8765, IPC_KEY
+)
+
+
+# IPC Server Routes
+@ipc.route('bot_stats')
+async def get_bot_stats(data):
+    mcount = 0
+    gcount = len(bot.guilds)
+    for g in bot.guilds:
+        mcount += g.member_count
+    return f"{gcount}-{mcount}"
+
+
+@ipc.route('does_share')
+async def check_shared_guild(data):
+    if int(data.gid) in [g.id for g in bot.guilds]:
+        return '1'
+    else:
+        return '0'
+
+
+@ipc.route('guild_data')
+async def get_guild_data(data):
+    gid = data.gid
+    get_guild = \
+        """SELECT * FROM guilds WHERE id=$1"""
+    conn = bot.db.conn
+    async with bot.db.lock:
+        async with conn.transaction():
+            await functions.check_or_create_existence(
+                bot.db, conn, bot, guild_id=int(gid)
+            )
+            guild_data = await conn.fetchrow(
+                get_guild, int(gid)
+            )
+            prefixes = await functions.list_prefixes(
+                bot, int(gid)
+            )
+    data = json.dumps({
+        "id": str(guild_data['id']),
+        "prefixes": list(prefixes)
+    })
+    return data
 
 
 # Info Commands
@@ -107,7 +153,7 @@ async def show_vote_info(ctx):
         f"\n\n**[Click Here to Vote For Starboard!]({bot_config.VOTE})**"
     embed.description = description
     await ctx.send(embed=embed)
-    
+
     # literally ignore everything below this
     def check(m):
         if m.author.id != 772492831138775050:
@@ -120,7 +166,6 @@ async def show_vote_info(ctx):
         await ctx.send(embed=embed)
     except asyncio.TimeoutError:
         pass
-
 
 
 @bot.command(
@@ -433,13 +478,17 @@ async def on_ready():
     print(f"Logged in as {bot.user.name} in {len(bot.guilds)} guilds!")
 
 
+@bot.event
+async def on_ipc_ready():
+    print("IPC is ready, you can run the dashboard now.")
+
+
 async def main():
     await db.open(bot)
-
     await autostar_events.load_aschannels(bot)
 
-    if bot_config.DONATE_BOT_ON is True:
-        await web_server.start()
+    await web_server.start()
+
     if not BETA:
         bot.loop.create_task(post_guild_count.loop_post(bot))
 
@@ -465,6 +514,7 @@ async def main():
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     try:
+        ipc.start()
         loop.run_until_complete(main())
     except Exception as e:
         print(type(e), e)
