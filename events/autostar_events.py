@@ -45,7 +45,7 @@ async def handle_message(bot, message):
     guild = message.guild
     conn = bot.db.conn
 
-    if not channel.id in bot.db.as_cache:
+    if channel.id not in bot.db.as_cache:
         return False
 
     valid = True
