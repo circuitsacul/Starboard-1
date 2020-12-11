@@ -11,7 +11,7 @@ async def load_aschannels(bot):
                 check_aschannel
             )
 
-    if not asc is None:
+    if asc is not None:
         bot.db.as_cache = set(asc)
     else:
         bot.db.as_cache = set()
