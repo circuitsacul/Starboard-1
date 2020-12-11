@@ -7,12 +7,12 @@ async def load_aschannels(bot):
 
     async with bot.db.lock:
         async with bot.db.conn.transaction():
-            asc = await bot.db.conn.fetchrow(
+            asc = await bot.db.conn.fetch(
                 check_aschannel
             )
 
-    if asc is not None:
-        bot.db.as_cache = set(asc)
+    if asc != []:
+        bot.db.as_cache = set([a['id'] for a in asc])
     else:
         bot.db.as_cache = set()
 
