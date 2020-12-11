@@ -1,16 +1,36 @@
-function addPrefix(prefix) {
-    $.ajax({
+function modifyReq(action, modifydata) {
+    return $.ajax({
         url: '/api/modify',
         type: 'post',
         data: {
             guildId: currentGuildId,
-            action: 'prefix.add',
-            modifydata: `{"prefix": "${prefix}"}`
-        },
-        success: function(response) {
-            alert(response)
+            action: action,
+            modifydata: modifydata
         }
     })
+}
+
+
+function addPrefix(prefix) {
+    data = JSON.stringify({prefix: prefix})
+    return modifyReq('prefix.add', data)
+}
+
+
+function removePrefix(prefix) {
+    data = JSON.stringify({prefix: prefix})
+    return modifyReq('prefix.remove', data)
+}
+
+
+function addStarboard(channelId) {
+    data = JSON.stringify({channel: channelId})
+    return modifyReq('starboard.add', data)
+}
+
+
+function removeStarboard(channelId) {
+    data = JSON.stringify({channel: channelId})
 }
 
 
