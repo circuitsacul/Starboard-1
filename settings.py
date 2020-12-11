@@ -121,6 +121,10 @@ async def add_aschannel(bot: commands.Bot, channel: discord.TextChannel):
     get_aschannels = \
         """SELECT * FROM aschannels WHERE guild_id=$1"""
 
+    # just in case we messed something up earlier and it's already in there
+    if channel.id not in bot.db.as_cache:
+        bot.db.as_cache.add(channel.id)
+
     guild = channel.guild
     perms = channel.permissions_for(guild.me)
     limit = await functions.get_limit(
@@ -190,6 +194,9 @@ async def remove_aschannel(bot: commands.Bot, channel_id: int, guild_id: int):
         """DELETE FROM aschannels WHERE id=$1"""
 
     conn = bot.db.conn
+    # just in case we messed something up earlier and it's not in there
+    if channel_id in bot.db.as_cache:
+        bot.db.as_cache.remove(channel_id)
 
     async with bot.db.lock:
         async with conn.transaction():

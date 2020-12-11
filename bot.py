@@ -435,6 +435,9 @@ async def on_ready():
 
 async def main():
     await db.open(bot)
+
+    await autostar_events.load_aschannels(bot)
+
     if bot_config.DONATE_BOT_ON is True:
         await web_server.start()
     if not BETA:
