@@ -67,14 +67,15 @@
 }
 
 .del-prefix {
-    border: 1px solid red;
+    border: none;
     background-color: transparent;
-    color: red;
-    font-size: 1em;
+    color: #dc3545;
+    font-size: 1.2em;
 }
 
 .del-prefix:hover {
+    transition: 0.1s;
     cursor: pointer;
     color: black;
-    background-color: red;
+    background-color: #dc3545;
 }
