@@ -231,6 +231,9 @@ class Database:
             'giving_stars': {}  # {user_id: cooldown_end_datetime}
         }
         self.conn = None
+        self.cache = None
+        self.as_cache = None
+        self.prefix_cache = None
 
     async def open(self, bot):
         # self.q = await CommonSql()
