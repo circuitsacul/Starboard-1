@@ -99,8 +99,7 @@ class Owner(commands.Cog):
     @checks.is_owner()
     async def clear_global_cache(self, ctx):
         cache = self.bot.db.cache
-        async with cache.lock:
-            cache._messages = {}
+        cache._messages = {}
         await ctx.send("Cleared message cache for all servers.")
 
     @commands.command(
