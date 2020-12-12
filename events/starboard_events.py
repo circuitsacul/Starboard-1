@@ -308,12 +308,20 @@ async def update_message(
                 async with db.lock:
                     conn = await db.connect()
                     async with conn.transaction():
-                        await db.q.create_message.fetch(
-                            sb_message.id, sb_message.guild.id,
-                            orig_message.author.id, orig_message.id,
-                            starboard.id, False,
-                            orig_message.channel.is_nsfw()
+                        _message = await conn.fetchrow(
+                            check_message, orig_message.id,
+                            starboard.id
                         )
+                        if _message is None:
+                            await db.q.create_message.fetch(
+                                sb_message.id, sb_message.guild.id,
+                                orig_message.author.id, orig_message.id,
+                                starboard.id, False,
+                                orig_message.channel.is_nsfw()
+                            )
+                if _message is not None:
+                    print("### DUPLICATE DELETED ###")
+                    await sb_message.delete()
 
         elif update and sb_message and link_edits:
             await sb_message.edit(
