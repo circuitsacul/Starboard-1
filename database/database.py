@@ -233,7 +233,7 @@ class Database:
         self.conn = None
         self.cache = None
         self.as_cache = None
-        self.prefix_cache = None
+        self.prefix_cache = {}
 
     async def open(self, bot):
         # self.q = await CommonSql()

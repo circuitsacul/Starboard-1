@@ -57,6 +57,20 @@ class Bot(commands.AutoShardedBot):
         self.db = db
         self.wizzard_lock = Lock
 
+    async def load_prefixes(self):
+        get_prefixes = \
+            """SELECT * FROM prefixes"""
+
+        conn = self.db.conn
+        async with self.db.lock:
+            async with conn.transaction():
+                prefixes = await conn.fetch(get_prefixes)
+
+        for p in prefixes:
+            gid = int(p['guild_id'])
+            self.db.prefix_cache.setdefault(gid, [])
+            self.db.prefix_cache[gid].append(p['prefix'])
+
 
 bot = Bot(
     db, command_prefix=functions._prefix_callable,
@@ -437,6 +451,7 @@ async def main():
     await db.open(bot)
 
     await autostar_events.load_aschannels(bot)
+    await bot.load_prefixes()
 
     if bot_config.DONATE_BOT_ON is True:
         await web_server.start()
