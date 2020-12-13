@@ -193,6 +193,16 @@ class CommonSql(aobject):
                 """INSERT INTO asemojis (aschannel_id, name)
                 VALUES($1, $2)"""
             )
+        self.create_channelbl = \
+            await conn.prepare(
+                """INSERT INTO channelbl (starboard_id, channel_id, guild_id, is_whitelist)
+                VALUES($1, $2, $3, $4)"""
+            )
+        self.create_channelbl = \
+            await conn.prepare(
+                """INSERT INTO rolebl (starboard_id, role_id, guild_id, is_whitelist)
+                VALUES($1, $2, $3, $4)"""
+            )
         self.create_message = \
             await conn.prepare(
                 """INSERT INTO messages (id, guild_id,
@@ -407,6 +417,32 @@ class Database:
                     ON DELETE CASCADE
             )"""
 
+        channelbl_table = \
+            """CREATE TABLE IF NOT EXISTS channelbl (
+                starboard_id numeric NOT NULL,
+                channel_id numeric NOT NULL,
+                guild_id numeric NOT NULL,
+                is_whitelist bool NOT NULL DEFAULT False
+
+                FOREIGN KEY (starboard_id) REFERENCES starboards (id)
+                    ON DELETE CASCADE,
+                FOREIGN KEY (guild_id) REFERENCES guilds (id)
+                    ON DELETE CASCADE
+            )"""
+
+        rolebl_table = \
+            """CREATE TABLE IF NOT EXISTS rolebl (
+                starboard_id numeric NOT NULL,
+                channel_id numeric NOT NULL,
+                guild_id numeric NOT NULL,
+                is_whitelist bool NOT NULL DEFAULT False
+
+                FOREIGN KEY (starboard_id) REFERENCES starboards (id)
+                    ON DELETE CASCADE,
+                FOREIGN KEY (guild_id) REFERENCES guilds (id)
+                    ON DELETE CASCADE
+            )"""
+
         messages_table = \
             """CREATE TABLE IF NOT EXISTS messages (
                 id numeric PRIMARY KEY,
@@ -468,6 +504,7 @@ class Database:
             ON sbemojis(starboard_id)"""
 
         await self.lock.acquire()
+
         await self._create_table(guilds_table)
         await self._create_table(prefixes_table)
         await self._create_table(users_table)
@@ -479,6 +516,8 @@ class Database:
         await self._create_table(sbemoijs_table)
         await self._create_table(aschannels_table)
         await self._create_table(asemojis_table)
+        await self._create_table(channelbl_table)
+        await self._create_table(rolebl_table)
         await self._create_table(messages_table)
         await self._create_table(reactions_table)
         await self._create_table(sqlruntimes_table)
@@ -487,4 +526,5 @@ class Database:
         await self._create_index(msg_orig_msg_id_index)
         await self._create_index(member_uid_index)
         await self._create_index(sbemojis_starboard_index)
+
         self.lock.release()
