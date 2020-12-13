@@ -1,9 +1,10 @@
 import discord
 import functions
 import bot_config
+import settings
 from discord.ext import commands
 from .wizard import SetupWizard
-from typing import List
+from typing import List, Union
 from paginators import disputils
 
 
@@ -282,8 +283,11 @@ class Settings(commands.Cog):
 
     @commands.group(
         name='whitelist', aliases=['wl'],
-        invoke_without_command=True
+        invoke_without_command=True,
+        description="Manage channel/role whitelist",
+        brief="Manage channel/role whitelist"
     )
+    @commands.guild_only()
     async def whitelist(self, ctx) -> None:
         embeds = await get_blacklist_config_embeds(
             self.bot, ctx.guild.id
@@ -293,9 +297,53 @@ class Settings(commands.Cog):
         )
         await p.run()
 
+    @whitelist.command(
+        name='addchannel', aliases=['ac'],
+        description="Add a channel to the whitelist",
+        brief="Add a channel to the whitelist"
+    )
+    @commands.has_permissions(manage_channels=True)
+    @commands.guild_only()
+    async def whitelist_add_channel(
+        self, ctx,
+        channel: discord.TextChannel,
+        starboard: discord.TextChannel
+    ) -> None:
+        await settings.add_channel_blacklist(
+            self.bot, channel.id, starboard.id, ctx.guild.id,
+            True
+        )
+        await ctx.send(
+            f"Added {channel.mention} to the whitelist "
+            f"for {starboard.mention}"
+        )
+
+    @whitelist.command(
+        name='removechannel', aliases=['rc'],
+        description="Remove a channel from the whitelist",
+        brief="Remove a channel from the whitelist"
+    )
+    @commands.has_permissions(manage_channels=True)
+    @commands.guild_only()
+    async def whitelist_remove_channel(
+        self, ctx,
+        channel: Union[discord.TextChannel, int],
+        starboard: discord.TextChannel
+    ) -> None:
+        cid = channel if type(channel) is int else channel.id
+        await settings.remove_channel_blacklist(
+            self.bot, cid, starboard.id
+        )
+        await ctx.send(
+            f"Removed **{channel}** from the whitelist for "
+            f"{starboard.mention}"
+        )
+
     @commands.group(
         name='blacklist', aliases=['bl'],
-        invoke_without_command=True
+        invoke_without_command=True,
+        description="Manage channel/role blacklist",
+        brief="Manage channel/role blacklist"
     )
     async def blacklist(self, ctx) -> None:
         embeds = await get_blacklist_config_embeds(
