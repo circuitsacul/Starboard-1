@@ -253,8 +253,6 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
 
     if blacklisted:
         add = False
-        if on_starboard:
-            remove = True
 
     if forced is True:
         remove = False
