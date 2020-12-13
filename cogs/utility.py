@@ -306,8 +306,7 @@ class Utility(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     async def clear_guild_cache(self, ctx):
         cache = self.bot.db.cache
-        async with cache.lock:
-            cache._messages[ctx.guild.id] = []
+        cache._messages[ctx.guild.id] = []
         await ctx.send("Message cache cleared")
 
     @commands.command(

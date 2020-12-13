@@ -88,30 +88,26 @@ class BotCache(aobject):
     async def __init__(self, event, limit=20):
         self._messages = {}
         self.limit = limit
-        self.lock = Lock()
         await self.set_listeners(event)
 
     async def push(self, item, guild: int):
-        async with self.lock:
-            self._messages.setdefault(guild, [])
-            self._messages[guild].append(item)
-            if len(self._messages[guild]) > self.limit:
-                self._messages[guild].pop(0)
+        self._messages.setdefault(guild, [])
+        self._messages[guild].append(item)
+        if len(self._messages[guild]) > self.limit:
+            self._messages[guild].pop(0)
 
     async def get(self, guild: int, **kwargs):
-        async with self.lock:
-            return utils.get(self._messages.get(guild, []), **kwargs)
+        return utils.get(self._messages.get(guild, []), **kwargs)
 
     async def remove(self, msg_id: int, guild: int):
         status = False
-        async with self.lock:
-            remove_index = None
-            for x, msg in enumerate(self._messages.get(guild, [])):
-                if msg.id == msg_id:
-                    remove_index = x
-            if remove_index is not None:
-                self._messages[guild].pop(remove_index)
-                status = True
+        remove_index = None
+        for x, msg in enumerate(self._messages.get(guild, [])):
+            if msg.id == msg_id:
+                remove_index = x
+        if remove_index is not None:
+            self._messages[guild].pop(remove_index)
+            status = True
         return status
 
     async def set_listeners(self, event):
@@ -231,6 +227,9 @@ class Database:
             'giving_stars': {}  # {user_id: cooldown_end_datetime}
         }
         self.conn = None
+        self.cache = None
+        self.as_cache = None
+        self.prefix_cache = {}
 
     async def open(self, bot):
         # self.q = await CommonSql()

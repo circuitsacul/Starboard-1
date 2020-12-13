@@ -63,25 +63,19 @@ async def _prefix_callable(bot, message):
         return commands.when_mentioned_or(
             bot_config.DEFAULT_PREFIX
         )(bot, message)
-    async with bot.db.lock:
-        prefixes = await list_prefixes(bot, message.guild.id)
+    prefixes = await list_prefixes(bot, message.guild.id)
     return commands.when_mentioned_or(*prefixes)(bot, message)
 
 
 async def get_one_prefix(bot, guild_id: int):
-    async with bot.db.lock:
-        prefixes = await list_prefixes(bot, guild_id)
+    prefixes = await list_prefixes(bot, guild_id)
     return prefixes[0] if len(prefixes) > 0 else '@' + bot.user.name + ' '
 
 
 async def list_prefixes(bot, guild_id: int):
-    get_prefixes = \
-        """SELECT * FROM prefixes WHERE guild_id=$1"""
-
-    conn = await bot.db.connect()
-    prefixes = await conn.fetch(get_prefixes, guild_id)
+    prefixes = bot.db.prefix_cache.get(guild_id, [])
     prefix_list = [bot_config.DEFAULT_PREFIX] if prefixes == [] else\
-        [p['prefix'] for p in prefixes]
+        [p for p in prefixes]
 
     return prefix_list
 
@@ -100,6 +94,7 @@ async def add_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
             bot.db, conn, bot, guild_id=guild_id
         )
         await bot.db.q.create_prefix.fetch(guild_id, prefix)
+    bot.db.prefix_cache[guild_id].append(prefix)
     return True, ''
 
 
@@ -114,6 +109,8 @@ async def remove_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
     conn = await bot.db.connect()
     async with conn.transaction():
         await conn.execute(del_prefix, prefix, guild_id)
+
+    bot.db.prefix_cache[guild_id].remove(prefix)
 
     return True, ''
 

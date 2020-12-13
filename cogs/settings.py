@@ -101,10 +101,9 @@ class Settings(commands.Cog):
         if ctx.guild is None:
             prefixes = ['sb!']
         else:
-            async with self.bot.db.lock:
-                prefixes = await functions.list_prefixes(
-                    self.bot, ctx.guild.id
-                )
+            prefixes = await functions.list_prefixes(
+                self.bot, ctx.guild.id
+            )
 
         msg = f"**-** {self.bot.user.mention}"
         for prefix in prefixes:
