@@ -50,7 +50,7 @@ async def get_blacklist_config_embeds(
         sid = int(c['starboard_id'])
         cid = int(c['channel_id'])
 
-        ltype = 'cwl' if c['is_whitelist'] else 'rbl'
+        ltype = 'cwl' if c['is_whitelist'] else 'cbl'
 
         mapping[sid][ltype].append(f"<#{cid}>")
 
@@ -435,6 +435,47 @@ class Settings(commands.Cog):
         )
         await ctx.send(
             f"Removed **{channel}** from the blacklist for "
+            f"{starboard.mention}"
+        )
+
+    @blacklist.command(
+        name='addrole', aliases=['ar'],
+        description="Add a role to the blacklist",
+        brief="Add a role to the blacklist"
+    )
+    @commands.has_permissions(manage_roles=True)
+    @commands.guild_only()
+    async def blacklist_add_role(
+        self, ctx,
+        role: discord.Role,
+        starboard: discord.TextChannel
+    ) -> None:
+        await settings.add_role_blacklist(
+            self.bot, role.id, starboard.id, ctx.guild.id
+        )
+        await ctx.send(
+            f"Added **{role.name}** to the blacklist for "
+            f"{starboard.mention}"
+        )
+
+    @blacklist.command(
+        name='removerole', aliases=['rr'],
+        description="Removes a role from the blacklist",
+        brief="Removes a role from the blacklist"
+    )
+    @commands.has_permissions(manage_roles=True)
+    @commands.guild_only()
+    async def blacklist_remove_role(
+        self, ctx,
+        role: Union[discord.Role, int],
+        starboard: discord.TextChannel
+    ) -> None:
+        rid = role if type(role) is int else role.id
+        await settings.remove_role_blacklist(
+            self.bot, rid, starboard.id
+        )
+        await ctx.send(
+            f"Removed **{role}** from the blacklist for "
             f"{starboard.mention}"
         )
 
