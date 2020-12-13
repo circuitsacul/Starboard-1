@@ -485,6 +485,8 @@ async def add_channel_blacklist(
 ) -> None:
     check_exists = \
         """SELECT * FROM channelbl WHERE channel_id=$1 AND starboard_id=$2"""
+    check_starboard = \
+        """SELECT * FROM starboards WHERE id=$1 AND guild_id=$2"""
 
     conn = bot.db.conn
 
@@ -496,6 +498,14 @@ async def add_channel_blacklist(
             if sql_channelbl is not None:
                 raise errors.AlreadyExists(
                     "That channel is already whitelisted/blacklisted"
+                )
+
+            sql_starboard = await conn.fetchrow(
+                check_starboard, starboard_id, guild_id
+            )
+            if sql_starboard is None:
+                raise errors.DoesNotExist(
+                    "That is not a starboard!"
                 )
 
             await bot.db.q.create_channelbl.fetch(
@@ -538,6 +548,8 @@ async def add_role_blacklist(
 ) -> None:
     check_exists = \
         """SELECT * FROM rolebl WHERE role_id=$1 AND starboard_id=$2"""
+    check_starboard = \
+        """SELECT * FROM starboards WHERE id=$1 AND guild_id=$2"""
 
     conn = bot.db.conn
 
@@ -549,6 +561,13 @@ async def add_role_blacklist(
             if sql_rolebl is not None:
                 raise errors.AlreadyExists(
                     "That role is already whitelisted/blacklisted"
+                )
+            sql_starboard = await conn.fetchrow(
+                check_starboard, starboard_id, guild_id
+            )
+            if sql_starboard is None:
+                raise errors.DoesNotExist(
+                    "That is not a starboard!"
                 )
 
             await bot.db.q.create_rolebl.fetch(
