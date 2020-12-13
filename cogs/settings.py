@@ -57,7 +57,7 @@ async def get_blacklist_config_embeds(
 
     for sid in mapping:
         e = discord.Embed(
-            title=f"Blacklist/Whitelist",
+            title="Blacklist/Whitelist",
             description=f"<#{sid}>",
             color=bot_config.COLOR
         )
