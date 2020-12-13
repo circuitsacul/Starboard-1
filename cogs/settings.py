@@ -387,6 +387,7 @@ class Settings(commands.Cog):
         description="Manage channel/role blacklist",
         brief="Manage channel/role blacklist"
     )
+    @commands.guild_only()
     async def blacklist(self, ctx) -> None:
         embeds = await get_blacklist_config_embeds(
             self.bot, ctx.guild.id
@@ -395,6 +396,47 @@ class Settings(commands.Cog):
             ctx, pages=embeds
         )
         await p.run()
+
+    @blacklist.command(
+        name='addchannel', aliases=['ac'],
+        description="Adds a channel to the blacklist",
+        brief="Adds a channel to the blacklist"
+    )
+    @commands.has_permissions(manage_channels=True)
+    @commands.guild_only()
+    async def blacklist_add_channel(
+        self, ctx,
+        channel: discord.TextChannel,
+        starboard: discord.TextChannel
+    ) -> None:
+        await settings.add_channel_blacklist(
+            self.bot, channel.id, starboard.id, ctx.guild.id
+        )
+        await ctx.send(
+            f"Added {channel.mention} to the blacklist for "
+            f"{starboard.mention}"
+        )
+
+    @blacklist.command(
+        name='removechannel', aliases=['rc'],
+        description="Removes a channel from the blacklist",
+        brief="Removes a channel from the blacklist"
+    )
+    @commands.has_permissions(manage_channels=True)
+    @commands.guild_only()
+    async def blacklist_remove_channel(
+        self, ctx,
+        channel: Union[discord.TextChannel, int],
+        starboard: discord.TextChannel
+    ) -> None:
+        cid = channel if type(channel) is int else channel.id
+        await settings.remove_channel_blacklist(
+            self.bot, cid, starboard.id
+        )
+        await ctx.send(
+            f"Removed **{channel}** from the blacklist for "
+            f"{starboard.mention}"
+        )
 
 
 def setup(bot):
