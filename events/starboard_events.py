@@ -219,6 +219,9 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
             )
 
     deleted = message is None
+    blacklisted = False if deleted else await functions.is_blacklisted(
+        bot, message, int(sql_starboard['id'])
+    )
     on_starboard = starboard_message is not None
 
     link_deletes = sql_starboard['link_deletes']
@@ -244,6 +247,11 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
         remove = False
 
     if is_bot and not bots_on_sb:
+        add = False
+        if on_starboard:
+            remove = True
+
+    if blacklisted:
         add = False
         if on_starboard:
             remove = True

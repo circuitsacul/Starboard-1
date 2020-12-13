@@ -321,3 +321,73 @@ async def orig_message_id(db, conn, message_id):
     rows = await conn.fetch(get_message, orig_messsage_id)
     sql_orig_message = rows[0]
     return int(orig_messsage_id), int(sql_orig_message['channel_id'])
+
+
+async def is_blacklisted(
+    bot: commands.Bot,
+    message: discord.Message,  # assumes that it is the original,
+    starboard_id: int
+) -> bool:
+    get_blacklisted_channels = \
+        """SELECT * FROM channelbl WHERE starboard_id=$1
+        AND is_whitelist=False"""
+    get_whitelisted_channels = \
+        """SELECT * FROM channelbl WHERE starboard_id=$1
+        AND is_whitelist=True"""
+    get_blacklisted_roles = \
+        """SELECT * FROM rolebl WHERE starboard_id=$1
+        AND is_whitelist=False"""
+    get_whitelisted_roles = \
+        """SELECT * FROM rolebl WHERE starboard_id=$1
+        AND is_whitelist=True"""
+
+    role_status = True
+    channel_status = True
+
+    conn = bot.db.conn
+    async with bot.db.lock:
+        async with conn.transaction():
+            sql_channelbl = await conn.fetch(
+                get_blacklisted_channels, starboard_id
+            )
+            sql_channelwl = await conn.fetch(
+                get_whitelisted_channels, starboard_id
+            )
+            sql_rolebl = await conn.fetch(
+                get_blacklisted_roles, starboard_id
+            )
+            sql_rolewl = await conn.fetch(
+                get_whitelisted_roles, starboard_id
+            )
+
+    channelbl = [int(c['channel_id']) for c in sql_channelbl]
+    channelwl = [int(c['channel_id']) for c in sql_channelwl]
+    rolebl = [int(r['role_id']) for r in sql_rolebl]
+    rolewl = [int(r['role_id']) for r in sql_rolewl]
+
+    try:
+        member = (await get_members([message.author.id], message.guild))[0]
+    except IndexError:
+        member = None
+
+    # Check role status
+    if member:
+        if rolebl == [] and rolewl != []:
+            role_status = False
+        else:
+            for rid in rolebl:
+                if rid in [r.id for r in member.roles]:
+                    role_status = False
+        for rid in rolewl:
+            if rid in [r.id for r in member.roles]:
+                role_status = True
+
+    # Check channel status
+    if channelwl != []:
+        if message.channel.id not in channelwl:
+            channel_status = False
+    else:
+        if message.channel.id in channelbl:
+            channel_status = False
+
+    return not (role_status and channel_status)  # both must be true
