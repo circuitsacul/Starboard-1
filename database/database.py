@@ -422,7 +422,7 @@ class Database:
                 starboard_id numeric NOT NULL,
                 channel_id numeric NOT NULL,
                 guild_id numeric NOT NULL,
-                is_whitelist bool NOT NULL DEFAULT False
+                is_whitelist bool NOT NULL DEFAULT False,
 
                 FOREIGN KEY (starboard_id) REFERENCES starboards (id)
                     ON DELETE CASCADE,
@@ -435,7 +435,7 @@ class Database:
                 starboard_id numeric NOT NULL,
                 channel_id numeric NOT NULL,
                 guild_id numeric NOT NULL,
-                is_whitelist bool NOT NULL DEFAULT False
+                is_whitelist bool NOT NULL DEFAULT False,
 
                 FOREIGN KEY (starboard_id) REFERENCES starboards (id)
                     ON DELETE CASCADE,
