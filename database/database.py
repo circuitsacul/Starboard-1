@@ -198,7 +198,7 @@ class CommonSql(aobject):
                 """INSERT INTO channelbl (starboard_id, channel_id, guild_id, is_whitelist)
                 VALUES($1, $2, $3, $4)"""
             )
-        self.create_channelbl = \
+        self.create_rolebl = \
             await conn.prepare(
                 """INSERT INTO rolebl (starboard_id, role_id, guild_id, is_whitelist)
                 VALUES($1, $2, $3, $4)"""
