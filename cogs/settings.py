@@ -339,6 +339,48 @@ class Settings(commands.Cog):
             f"{starboard.mention}"
         )
 
+    @whitelist.command(
+        name='addrole', aliases=['ar'],
+        description="Add a role to the whitelist",
+        brief="Add a role to the whitelist"
+    )
+    @commands.has_permissions(manage_roles=True)
+    @commands.guild_only()
+    async def whitelist_add_role(
+        self, ctx,
+        role: discord.Role,
+        starboard: discord.TextChannel
+    ) -> None:
+        await settings.add_role_blacklist(
+            self.bot, role.id, starboard.id, ctx.guild.id,
+            True
+        )
+        await ctx.send(
+            f"Added **{role.name}** to the whitelist for "
+            f"{starboard.mention}"
+        )
+
+    @whitelist.command(
+        name='removerole', aliases=['rr'],
+        description="Removes a role from the whitelist",
+        brief="Removes a role from the whitelist"
+    )
+    @commands.has_permissions(manage_roles=True)
+    @commands.guild_only()
+    async def whitelist_remove_role(
+        self, ctx,
+        role: Union[discord.Role, int],
+        starboard: discord.TextChannel
+    ) -> None:
+        rid = role if type(role) is int else role.id
+        await settings.remove_role_blacklist(
+            self.bot, rid, starboard.id
+        )
+        await ctx.send(
+            f"Removed **{role}** from the whitelist for "
+            f"{starboard.mention}"
+        )
+
     @commands.group(
         name='blacklist', aliases=['bl'],
         invoke_without_command=True,
