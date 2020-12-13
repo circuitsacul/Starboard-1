@@ -474,3 +474,129 @@ async def remove_starboard_emoji(
             await conn.execute(
                 del_sbemoji, emoji_name, starboard_id
             )
+
+
+async def add_channel_blacklist(
+    bot: commands.Bot,
+    channel_id: int,
+    starboard_id: int,
+    guild_id: int,
+    is_whitelist: bool = False
+) -> None:
+    check_exists = \
+        """SELECT * FROM channelbl WHERE channel_id=$1 AND starboard_id=$2"""
+    check_starboard = \
+        """SELECT * FROM starboards WHERE id=$1 AND guild_id=$2"""
+
+    conn = bot.db.conn
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            sql_channelbl = await conn.fetchrow(
+                check_exists, channel_id, starboard_id
+            )
+            if sql_channelbl is not None:
+                raise errors.AlreadyExists(
+                    "That channel is already whitelisted/blacklisted"
+                )
+
+            sql_starboard = await conn.fetchrow(
+                check_starboard, starboard_id, guild_id
+            )
+            if sql_starboard is None:
+                raise errors.DoesNotExist(
+                    "That is not a starboard!"
+                )
+
+            await bot.db.q.create_channelbl.fetch(
+                starboard_id, channel_id, guild_id, is_whitelist
+            )
+
+
+async def remove_channel_blacklist(
+    bot: commands.Bot,
+    channel_id: int,
+    starboard_id: int
+) -> None:
+    check_exists = \
+        """SELECT * FROM channelbl WHERE channel_id=$1 AND starboard_id=$2"""
+    delete_channelbl = \
+        """DELETE FROM channelbl WHERE channel_id=$1 AND starboard_id=$2"""
+
+    conn = bot.db.conn
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            sql_channelbl = await conn.fetchrow(
+                check_exists, channel_id, starboard_id
+            )
+            if sql_channelbl is None:
+                raise errors.DoesNotExist(
+                    "That channel is not blacklisted/whitelisted"
+                )
+            await conn.execute(
+                delete_channelbl, channel_id, starboard_id
+            )
+
+
+async def add_role_blacklist(
+    bot: commands.Bot,
+    role_id: int,
+    starboard_id: int,
+    guild_id: int,
+    is_whitelist: bool = False
+) -> None:
+    check_exists = \
+        """SELECT * FROM rolebl WHERE role_id=$1 AND starboard_id=$2"""
+    check_starboard = \
+        """SELECT * FROM starboards WHERE id=$1 AND guild_id=$2"""
+
+    conn = bot.db.conn
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            sql_rolebl = await conn.fetchrow(
+                check_exists, role_id, starboard_id
+            )
+            if sql_rolebl is not None:
+                raise errors.AlreadyExists(
+                    "That role is already whitelisted/blacklisted"
+                )
+            sql_starboard = await conn.fetchrow(
+                check_starboard, starboard_id, guild_id
+            )
+            if sql_starboard is None:
+                raise errors.DoesNotExist(
+                    "That is not a starboard!"
+                )
+
+            await bot.db.q.create_rolebl.fetch(
+                starboard_id, role_id, guild_id, is_whitelist
+            )
+
+
+async def remove_role_blacklist(
+    bot: commands.Bot,
+    role_id: int,
+    starboard_id: int,
+) -> None:
+    check_exists = \
+        """SELECT * FROM rolebl WHERE role_id=$1 AND starboard_id=$2"""
+    delete_rolebl = \
+        """DELETE FROM rolebl WHERE role_id=$1 AND starboard_id=$2"""
+
+    conn = bot.db.conn
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            sql_rolebl = await conn.fetchrow(
+                check_exists, role_id, starboard_id
+            )
+            if sql_rolebl is None:
+                raise errors.DoesNotExist(
+                    "That role is not blacklisted/whitelisted"
+                )
+
+            await conn.execute(
+                delete_rolebl, role_id, starboard_id
+            )
