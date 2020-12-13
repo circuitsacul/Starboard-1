@@ -3,6 +3,102 @@ import functions
 import bot_config
 from discord.ext import commands
 from .wizard import SetupWizard
+from typing import List
+from paginators import disputils
+
+
+async def get_blacklist_config_embeds(
+    bot: commands.Bot,
+    guild_id: int
+) -> List[discord.Embed]:
+    get_rolelist = \
+        """SELECT * FROM rolebl WHERE guild_id=$1"""
+    get_channellist = \
+        """SELECT * FROM channelbl WHERE guild_id=$1"""
+    get_starboards = \
+        """SELECT * FROM starboards WHERE guild_id=$1"""
+
+    conn = bot.db.conn
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            starboards = await conn.fetch(get_starboards, guild_id)
+            rolelist = await conn.fetch(get_rolelist, guild_id)
+            channellist = await conn.fetch(get_channellist, guild_id)
+
+    mapping = {}
+
+    for s in starboards:
+        sid = int(s['id'])
+        mapping.setdefault(sid, {
+            'rwl': [],
+            'rbl': [],
+            'cwl': [],
+            'cbl': []
+        })
+
+    for r in rolelist:
+        sid = int(r['starboard_id'])
+        rid = int(r['role_id'])
+
+        ltype = 'rwl' if r['is_whitelist'] else 'rbl'
+
+        mapping[sid][ltype].append(f"<@&{rid}>")
+
+    for c in channellist:
+        sid = int(c['starboard_id'])
+        cid = int(c['channel_id'])
+
+        ltype = 'cwl' if c['is_whitelist'] else 'rbl'
+
+        mapping[sid][ltype].append(f"<#{cid}>")
+
+    embeds = []
+
+    for sid in mapping:
+        e = discord.Embed(
+            title=f"Blacklist/Whitelist",
+            description=f"<#{sid}>",
+            color=bot_config.COLOR
+        )
+
+        rwl = ""
+        for r in mapping[sid]['rwl']:
+            rwl += r + ' '
+        rbl = ""
+        for r in mapping[sid]['rbl']:
+            rbl += r + ' '
+        cwl = ""
+        for c in mapping[sid]['cwl']:
+            cwl += c + ' '
+        cbl = ""
+        for c in mapping[sid]['cbl']:
+            cbl += c + ' '
+
+        if cwl != '':
+            cbl += "(all channels are blacklisted if any channel "\
+                "is whitelisted)."
+        if rwl != '' and rbl == '':
+            rbl = 'All roles are blacklisted, since none were '\
+                'explicitly set and there is a whitelisted role.'
+
+        if cwl == '':
+            cwl = 'None'
+        if cbl == '':
+            cbl = 'None'
+        if rwl == '':
+            rwl = 'None'
+        if rbl == '':
+            rbl = 'None'
+
+        e.add_field(name='Blacklisted Roles', value=rbl)
+        e.add_field(name='Whitelisted Roles', value=rwl)
+        e.add_field(name='Blacklisted Channels', value=cbl)
+        e.add_field(name='Whitelisted Channels', value=cwl)
+
+        embeds.append(e)
+
+    return embeds
 
 
 async def change_user_setting(
@@ -183,6 +279,32 @@ class Settings(commands.Cog):
             await wizard.run()
         except Exception:
             await ctx.send("Wizard exited due to a problem.")
+
+    @commands.group(
+        name='whitelist', aliases=['wl'],
+        invoke_without_command=True
+    )
+    async def whitelist(self, ctx) -> None:
+        embeds = await get_blacklist_config_embeds(
+            self.bot, ctx.guild.id
+        )
+        p = disputils.BotEmbedPaginator(
+            ctx, pages=embeds
+        )
+        await p.run()
+
+    @commands.group(
+        name='blacklist', aliases=['bl'],
+        invoke_without_command=True
+    )
+    async def blacklist(self, ctx) -> None:
+        embeds = await get_blacklist_config_embeds(
+            self.bot, ctx.guild.id
+        )
+        p = disputils.BotEmbedPaginator(
+            ctx, pages=embeds
+        )
+        await p.run()
 
 
 def setup(bot):
