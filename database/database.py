@@ -433,7 +433,7 @@ class Database:
         rolebl_table = \
             """CREATE TABLE IF NOT EXISTS rolebl (
                 starboard_id numeric NOT NULL,
-                channel_id numeric NOT NULL,
+                role_id numeric NOT NULL,
                 guild_id numeric NOT NULL,
                 is_whitelist bool NOT NULL DEFAULT False,
 
