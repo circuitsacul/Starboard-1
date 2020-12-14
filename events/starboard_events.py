@@ -503,7 +503,7 @@ async def calculate_points(conn, sql_message, sql_starboard, bot, guild):
             if sql_user['is_bot'] is True:
                 continue
 
-            member_list = await functions.get_members([sql_user['id']], guild)
+            member_list = await functions.get_members(int([sql_user['id']]), guild)
             member = member_list[0]
             if member and await functions.is_user_blacklisted(
                 bot, member, int(sql_starboard['id'])
