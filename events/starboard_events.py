@@ -127,10 +127,10 @@ async def handle_reaction(
                 db, user_id, message.author, guild, _emoji, is_add
             )
 
-    await handle_starboards(db, bot, message_id, channel, message)
+    await handle_starboards(db, bot, message_id, channel, message, guild)
 
 
-async def handle_starboards(db, bot, message_id, channel, message):
+async def handle_starboards(db, bot, message_id, channel, message, guild):
     get_message = \
         """SELECT * FROM messages WHERE id=$1"""
     get_starboards = \
@@ -154,11 +154,12 @@ async def handle_starboards(db, bot, message_id, channel, message):
     if sql_message is not None:
         for sql_starboard in sql_starboards:
             await handle_starboard(
-                db, bot, sql_message, message, sql_starboard
+                db, bot, sql_message, message, sql_starboard,
+                guild
             )
 
 
-async def handle_starboard(db, bot, sql_message, message, sql_starboard):
+async def handle_starboard(db, bot, sql_message, message, sql_starboard, guild):
     get_starboard_message = \
         """SELECT * FROM messages WHERE orig_message_id=$1 AND channel_id=$2"""
     delete_starboard_message = \
@@ -216,7 +217,8 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
                 )
 
     points, emojis = await calculate_points(
-        conn, sql_message, sql_starboard, bot
+        conn, sql_message, sql_starboard, bot,
+        guild
     )
 
     deleted = message is None
@@ -460,7 +462,7 @@ async def get_embed_from_message(message):
     return embed
 
 
-async def calculate_points(conn, sql_message, sql_starboard, bot):
+async def calculate_points(conn, sql_message, sql_starboard, bot, guild):
     get_reactions = \
         """SELECT * FROM reactions WHERE message_id=$1"""
     get_user = \
@@ -499,6 +501,13 @@ async def calculate_points(conn, sql_message, sql_starboard, bot):
                     sql_user = await conn.fetchrow(get_user, user_id)
 
             if sql_user['is_bot'] is True:
+                continue
+
+            member_list = await functions.get_members([sql_user['id']], guild)
+            member = member_list[0]
+            if member and await functions.is_user_blacklisted(
+                bot, member, int(sql_starboard['id'])
+            ):
                 continue
 
             total_points += 1

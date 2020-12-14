@@ -44,7 +44,8 @@ async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
 
     if status is True:
         await starboard_events.handle_starboards(
-            db, bot, message_id, channel, message
+            db, bot, message_id, channel, message,
+            ctx.guild
         )
     return status
 
@@ -111,7 +112,8 @@ async def handle_forcing(
     )
 
     await starboard_events.handle_starboards(
-        bot.db, bot, message.id, message.channel, message
+        bot.db, bot, message.id, message.channel, message,
+        ctx.guild
     )
 
 
@@ -468,7 +470,7 @@ class Utility(commands.Cog):
             await retotal.recount_reactions(self.bot, message)
             await handle_starboards(
                 self.bot.db, self.bot, message.id,
-                message.channel, message
+                message.channel, message, ctx.guild
             )
 
         await ctx.send("Finished!")

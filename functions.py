@@ -360,7 +360,7 @@ async def is_user_blacklisted(
         if rid in [r.id for r in member.roles]:
             status = True
 
-    return status
+    return not status
 
 
 async def is_message_blacklisted(
