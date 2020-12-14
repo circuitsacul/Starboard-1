@@ -214,9 +214,10 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
                     delete_starboard_message, sql_message['id'],
                     sql_starboard['id']
                 )
-            points, emojis = await calculate_points(
-                conn, sql_message, sql_starboard, bot
-            )
+
+    points, emojis = await calculate_points(
+        conn, sql_message, sql_starboard, bot
+    )
 
     deleted = message is None
     blacklisted = False if deleted else \
@@ -470,8 +471,10 @@ async def calculate_points(conn, sql_message, sql_starboard, bot):
     message_id = sql_message['id']
     self_star = sql_starboard['self_star']
 
-    emojis = await conn.fetch(get_sbemojis, sql_starboard['id'])
-    all_reactions = await conn.fetch(get_reactions, message_id)
+    async with bot.db.lock:
+        async with conn.transaction():
+            emojis = await conn.fetch(get_sbemojis, sql_starboard['id'])
+            all_reactions = await conn.fetch(get_reactions, message_id)
 
     used_users = set()
 
@@ -490,8 +493,11 @@ async def calculate_points(conn, sql_message, sql_starboard, bot):
             used_users.add(user_id)
             if user_id == sql_message['user_id'] and self_star is False:
                 continue
-            rows = await conn.fetch(get_user, user_id)
-            sql_user = rows[0]
+
+            async with bot.db.lock:
+                async with conn.transaction():
+                    sql_user = await conn.fetchrow(get_user, user_id)
+
             if sql_user['is_bot'] is True:
                 continue
 
