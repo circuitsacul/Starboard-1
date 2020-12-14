@@ -461,15 +461,17 @@ async def get_embed_from_message(message):
 
 async def calculate_points(conn, sql_message, sql_starboard, bot):
     get_reactions = \
-        """SELECT * FROM reactions WHERE message_id=$1 AND name=$2"""
+        """SELECT * FROM reactions WHERE message_id=$1"""
     get_user = \
         """SELECT * FROM users WHERE id=$1"""
     get_sbemojis = \
         """SELECT * FROM sbemojis WHERE starboard_id=$1"""
 
-    emojis = await conn.fetch(get_sbemojis, sql_starboard['id'])
     message_id = sql_message['id']
     self_star = sql_starboard['self_star']
+
+    emojis = await conn.fetch(get_sbemojis, sql_starboard['id'])
+    all_reactions = await conn.fetch(get_reactions, message_id)
 
     used_users = set()
 
@@ -477,10 +479,10 @@ async def calculate_points(conn, sql_message, sql_starboard, bot):
     for emoji in emojis:
         emoji_id = int(emoji['d_id']) if emoji['d_id'] is not None else None
         emoji_name = None if emoji_id is not None else emoji['name']
-        reactions = await conn.fetch(
-            get_reactions, message_id,
-            emoji_name if emoji_id is None else str(emoji_id)
-        )
+        reactions = [
+            r for r in all_reactions if r['name']
+            in [str(emoji_id), emoji_name]
+        ]
         for sql_reaction in reactions:
             user_id = sql_reaction['user_id']
             if user_id in used_users:
