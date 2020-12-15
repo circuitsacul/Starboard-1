@@ -123,6 +123,34 @@ pages = {
         "meet the requirements will be automatically "
         "deleted.\n`sb!asc deleteInvalid <channel> "
         "<true|false>`\n\n"
+    ),
+    'Blacklist/Whitelist': (
+        "Starboard comes with an advanced blacklist/whitelist "
+        "system, for both roles and channels.\n\n"
+        "**sb!wl:**\nView the whitelist/blacklist "
+        "configuration for all starboards\n\n"
+        "**sb!wl addrole <role> <starboard>:**\n"
+        "Add a role to the whitelist. Overrides any "
+        "blacklisted roles\n\n"
+        "**sb!wl addchannel <channel> <starboard>:**\n"
+        "Adds a channel to the whitelist, and blacklists "
+        "all other channels\n\n"
+        "**sb!wl removerole <role> <starboard>:**\n"
+        "Unwhitelists a role\n\n"
+        "**sb!wl removechannel <channel> <starboard>:**\n"
+        "Unwhitelists a channel\n\n"
+        "**sb!bl addrole <role> <starboard>:**\n"
+        "Blacklists a role, so users cannot star messages\n\n"
+        "**sb!bl addchannel <channel> <starboard>:**\n"
+        "Blacklists a channel, so messages there cannot "
+        "be starred\n\n"
+        "**sb!bl removerole <role> <starboard>:**\n"
+        "Unblacklists a role\n\n"
+        "**sb!bl removechannel <channel> <starboard>:**\n"
+        "Unblacklists a channel\n\n"
+        "This system is a bit confusing, so if you ever "
+        "need help, mention me for a link to the support "
+        "server."
     )
 }
 
@@ -135,7 +163,7 @@ numer_emojis = [
     "6️⃣",
     "7️⃣",
     "8️⃣",
-    "8️⃣"
+    "9️⃣"
 ]
 stop_emoji = "⏹️"
 
