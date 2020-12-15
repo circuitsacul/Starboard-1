@@ -63,25 +63,19 @@ async def _prefix_callable(bot, message):
         return commands.when_mentioned_or(
             bot_config.DEFAULT_PREFIX
         )(bot, message)
-    async with bot.db.lock:
-        prefixes = await list_prefixes(bot, message.guild.id)
+    prefixes = await list_prefixes(bot, message.guild.id)
     return commands.when_mentioned_or(*prefixes)(bot, message)
 
 
 async def get_one_prefix(bot, guild_id: int):
-    async with bot.db.lock:
-        prefixes = await list_prefixes(bot, guild_id)
+    prefixes = await list_prefixes(bot, guild_id)
     return prefixes[0] if len(prefixes) > 0 else '@' + bot.user.name + ' '
 
 
 async def list_prefixes(bot, guild_id: int):
-    get_prefixes = \
-        """SELECT * FROM prefixes WHERE guild_id=$1"""
-
-    conn = await bot.db.connect()
-    prefixes = await conn.fetch(get_prefixes, guild_id)
+    prefixes = bot.db.prefix_cache.get(guild_id, [])
     prefix_list = [bot_config.DEFAULT_PREFIX] if prefixes == [] else\
-        [p['prefix'] for p in prefixes]
+        [p for p in prefixes]
 
     return prefix_list
 
@@ -100,6 +94,7 @@ async def add_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
             bot.db, conn, bot, guild_id=guild_id
         )
         await bot.db.q.create_prefix.fetch(guild_id, prefix)
+    bot.db.prefix_cache[guild_id].append(prefix)
     return True, ''
 
 
@@ -114,6 +109,8 @@ async def remove_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
     conn = await bot.db.connect()
     async with conn.transaction():
         await conn.execute(del_prefix, prefix, guild_id)
+
+    bot.db.prefix_cache[guild_id].remove(prefix)
 
     return True, ''
 
@@ -324,3 +321,81 @@ async def orig_message_id(db, conn, message_id):
     rows = await conn.fetch(get_message, orig_messsage_id)
     sql_orig_message = rows[0]
     return int(orig_messsage_id), int(sql_orig_message['channel_id'])
+
+
+async def is_user_blacklisted(
+    bot: commands.Bot,
+    member: discord.Member,
+    starboard_id: int
+) -> None:
+    get_blacklisted_roles = \
+        """SELECT * FROM rolebl WHERE starboard_id=$1
+        AND is_whitelist=False"""
+    get_whitelisted_roles = \
+        """SELECT * FROM rolebl WHERE starboard_id=$1
+        AND is_whitelist=True"""
+
+    status = True
+
+    conn = bot.db.conn
+    async with bot.db.lock:
+        async with conn.transaction():
+            sql_rolebl = await conn.fetch(
+                get_blacklisted_roles, starboard_id
+            )
+            sql_rolewl = await conn.fetch(
+                get_whitelisted_roles, starboard_id
+            )
+
+    rolebl = [int(r['role_id']) for r in sql_rolebl]
+    rolewl = [int(r['role_id']) for r in sql_rolewl]
+
+    if rolebl == [] and rolewl != []:
+        status = False
+    else:
+        for rid in rolebl:
+            if rid in [r.id for r in member.roles]:
+                status = False
+    for rid in rolewl:
+        if rid in [r.id for r in member.roles]:
+            status = True
+
+    return not status
+
+
+async def is_message_blacklisted(
+    bot: commands.Bot,
+    message: discord.Message,  # assumes that it is the original,
+    starboard_id: int
+) -> bool:
+    get_blacklisted_channels = \
+        """SELECT * FROM channelbl WHERE starboard_id=$1
+        AND is_whitelist=False"""
+    get_whitelisted_channels = \
+        """SELECT * FROM channelbl WHERE starboard_id=$1
+        AND is_whitelist=True"""
+
+    channel_status = True
+
+    conn = bot.db.conn
+    async with bot.db.lock:
+        async with conn.transaction():
+            sql_channelbl = await conn.fetch(
+                get_blacklisted_channels, starboard_id
+            )
+            sql_channelwl = await conn.fetch(
+                get_whitelisted_channels, starboard_id
+            )
+
+    channelbl = [int(c['channel_id']) for c in sql_channelbl]
+    channelwl = [int(c['channel_id']) for c in sql_channelwl]
+
+    # Check channel status
+    if channelwl != []:
+        if message.channel.id not in channelwl:
+            channel_status = False
+    else:
+        if message.channel.id in channelbl:
+            channel_status = False
+
+    return not channel_status  # both must be true

@@ -1,6 +1,22 @@
 from discord import utils
 
 
+async def load_aschannels(bot):
+    check_aschannel = \
+        """SELECT * FROM aschannels"""
+
+    async with bot.db.lock:
+        async with bot.db.conn.transaction():
+            asc = await bot.db.conn.fetch(
+                check_aschannel
+            )
+
+    if asc != []:
+        bot.db.as_cache = set([int(a['id']) for a in asc])
+    else:
+        bot.db.as_cache = set()
+
+
 async def converted_emojis(emojis, guild):
     all_emojis = []
 
@@ -22,8 +38,6 @@ async def converted_emojis(emojis, guild):
 
 
 async def handle_message(bot, message):
-    check_aschannel = \
-        """SELECT * FROM aschannels WHERE id=$1"""
     get_emojis = \
         """SELECT * FROM asemojis WHERE aschannel_id=$1"""
 
@@ -31,18 +45,24 @@ async def handle_message(bot, message):
     guild = message.guild
     conn = bot.db.conn
 
+    if channel.id not in bot.db.as_cache:
+        return False
+
+    valid = True
+    reason = None
+
+    check_aschannel = \
+        """SELECT * FROM aschannels WHERE ID=$1"""
+
     async with bot.db.lock:
-        async with conn.transaction():
-            sasc = await conn.fetchrow(
+        async with bot.db.conn.transaction():
+            sasc = await bot.db.conn.fetchrow(
                 check_aschannel, channel.id
             )
 
     if sasc is None:
         return False
 
-    valid = True
-    reason = None
-    
     if len(message.content) < sasc['min_chars']:
         valid = False
         reason = f"messages must be at least {sasc['min_chars']} characters"

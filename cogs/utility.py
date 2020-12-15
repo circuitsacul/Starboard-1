@@ -44,7 +44,8 @@ async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
 
     if status is True:
         await starboard_events.handle_starboards(
-            db, bot, message_id, channel, message
+            db, bot, message_id, channel, message,
+            ctx.guild
         )
     return status
 
@@ -111,7 +112,8 @@ async def handle_forcing(
     )
 
     await starboard_events.handle_starboards(
-        bot.db, bot, message.id, message.channel, message
+        bot.db, bot, message.id, message.channel, message,
+        ctx.guild
     )
 
 
@@ -144,7 +146,7 @@ class Utility(commands.Cog):
             for i, msg in enumerate(frozen_messages):
                 from_msg = f"**[{msg['id']}]"\
                     "(https://discordapp.com/channels/"\
-                    "{msg['guild_id']}/{msg['channel_id']}/{msg['id']}/)**\n"
+                    f"{msg['guild_id']}/{msg['channel_id']}/{msg['id']}/)**\n"
                 all_strings.append(from_msg)
 
             size = 10
@@ -306,8 +308,7 @@ class Utility(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     async def clear_guild_cache(self, ctx):
         cache = self.bot.db.cache
-        async with cache.lock:
-            cache._messages[ctx.guild.id] = []
+        cache._messages[ctx.guild.id] = []
         await ctx.send("Message cache cleared")
 
     @commands.command(
@@ -469,7 +470,7 @@ class Utility(commands.Cog):
             await retotal.recount_reactions(self.bot, message)
             await handle_starboards(
                 self.bot.db, self.bot, message.id,
-                message.channel, message
+                message.channel, message, ctx.guild
             )
 
         await ctx.send("Finished!")
