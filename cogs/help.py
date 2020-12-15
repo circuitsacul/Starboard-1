@@ -1,33 +1,129 @@
 import discord
+import bot_config
 from paginators import disputils
 from discord.ext import commands
 
 
 pages = {
     'About Starboard': (
+        "If you're looking for information on "
+        "setting up the bot, skip to the next page."
+        "\n\nStarboard is an open-source bot created by "
+        "`Circuit#5585` with contributions from "
+        "`Theelx#4980`. If you would like to support "
+        "this project, you can view information with "
+        "`sb!donate`."
+    ),
+    'General Settings': (
+        "This bot allows you to have multiple "
+        "custom prefixes.\n\n"
+        "**sb!prefixes:**\nList all of your prefixes\n\n"
+        "**sb!prefix add <prefix>:**\nAdds a prefix\n\n"
+        "**sb!prefix remove <prefix>:**\n"
+        "Removes a prefix"
+    ),
+    'Starboards': (
         "Starboards are like democratic pins. "
         "A user can vote to pin a message by "
         "reacting to it with :star:, and after "
         "reaching a certain number of stars "
         "it is sent to the starboard. "
-        "\n\nTo setup Starboard, run `sb!setup`. "
-    ), 'Starboard Settings': (
+        "\n\nTo setup Starboard, run `sb!setup`. \n"
+        "Alternatively, you can use the normal commands "
+        "Wich are listed on the next page."
+    ),
+    'Starboard Commands': (
+        "(`sb!s` is an alternative way of typing "
+        "`sb!starboards`)\n\n"
+        "**sb!starboards:**\nView a list of starboards\n\n"
+        "**sb!starboards <channel>:**\nView the "
+        "configuration for a specific starboard\n\n"
+        "**sb!s add <channel>:**\nMake a channel a "
+        "starboard\n\n"
+        "**sb!s remove <channel>:**\nRemove a starboard "
+        "\n\n"
+        "**sb!s addEmoji <channel> <emoji>:**\nSet an "
+        "emoji as a star emoji, which can be used to "
+        "upvote messsages\n\n"
+        "**sb!s removeEmoji <channel> <emoji>:**\n"
+        "Remove an emoji from a starboard\n\n"
+        "On the next page, there is a list of settings "
+        "that can be configured either in the setup "
+        "wizard or using commands."
+        ""
+    ),
+    'Starboard Settings': (
+        "Each of these settings can be configured in "
+        "the setup wizard (`sb!setup`), or with the "
+        "commands listed below the setting.\n\n"
         "**requiredStars:**\nHow many stars are "
         "needed for a message to appear on the "
-        "starboard.\n\n"
+        "starboard.\n`sb!s rs <channel> <value>`\n\n"
         "**requiredToLose:**\nHow few stars are "
         "needed before a message is removed from "
-        "the starboard.\n\n"
+        "the starboard.\n`sb!s rtl <channel> <value>`\n\n"
         "**selfStar:**\nWether or not a user "
-        "can star their own messages.\n\n"
-        "**linkEdits:**\nIf the original message "
-        "is edited, should the starboard message "
-        "also be edited.\n\n"
-        "**linkDeletes:**\nIf the original message "
-        "is deleted, should the starboard message "
-        "also be deleted.\n\n"
-        "**botsOnStarboard:**\nWether or not bot "
-        "messages can be sent to the starboard."
+        "can star their own messages.\n"
+        "`sb!s ss <channel> <true|false>`\n\n"
+        "**linkEdits:**\nIf this is true, when the "
+        "original message is edited, then the starboard "
+        "message will also be edited."
+        "\n`sb!s le <channel> <true|false>`\n\n"
+        "**linkDeletes:**\nIf this is set to true, then "
+        "if the original message is deleted, the "
+        "starboard message will also also be deleted.\n"
+        "`sb!s ld <channel> <true|false>`\n\n"
+        "**botsOnStarboard:**\nIf this is set to false, "
+        "then bot messages cannot be starred\n"
+        "`sb!s bos <channel> <true|false>`"
+    ),
+    'AutoStar Channels': (
+        "AutoStar channels are channels where the "
+        "bot will automatically react to messages "
+        "with certain emojis (which you can set). "
+        "You can also set requirements for messages "
+        "to be starred, such as minimum characters "
+        "(minChars), wether or not an image is required "
+        "(requireImage), and wether or not to delete "
+        "messages that don't meet the requirements. "
+        "Go to the next page for instructions on setting up."
+    ),
+    'AutoStar Channel Commands': (
+        "AutoStar channels can be setup using the "
+        "setup wizard, `sb!setup`. Alternatively, you can "
+        "use these commands to manage them:\n\n"
+        "**sb!asc**\nView all AutoStar channels\n\n"
+        "**sb!asc <channel>**\nView the configuration for "
+        "an AutoStar channel\n\n"
+        "**sb!asc add <channel>**\nSet a channel as an "
+        "AutoStar Channel\n\n"
+        "**sb!asc remove <channel>**\nRemove an AutoStar "
+        "channel\n\n"
+        "**sb!asc addEmoji <channel> <emoji>**\nAdd an "
+        "emoji for the bot to auto react to messages with\n\n"
+        "**sb!asc removeEmoji <channel> <emoji>**\nRemoves "
+        "an emoji from an AutoStar channel\n\n"
+        "On the next page, there is a list of configurable "
+        "settings and an explanation of what they do."
+    ),
+    'AutoStar Channel Configuration': (
+        "Each of these settings can be set in the setup "
+        "wizard, or using the commands listed below "
+        "the setting:\n\n"
+        "**minChars**\nThe minimum number of letters/"
+        "numbers in order for a message to be AutoReacted "
+        "to.\n`sb!asc minChars <channel> <limit>`\n\n"
+        "**requireImage**\nWhether or not messages "
+        "must have an image/file attached in order "
+        "to be starred.\n`sb!asc requireImage <channel> "
+        "<true|false>`\n\n"
+        "**deleteInvalid**\nIf this is false, messages "
+        "that don't meet the requirements won't be "
+        "deleted, they simply won't receive reactions. "
+        "If set to true, then any messages that don't "
+        "meet the requirements will be automatically "
+        "deleted.\n`sb!asc deleteInvalid <channel> "
+        "<true|false>`\n\n"
     )
 }
 
@@ -45,13 +141,55 @@ class HelpCommand(commands.Cog):
         embeds = [
             discord.Embed(
                 title=t,
-                description=d
+                description=d,
+                color=bot_config.COLOR
             ) for t, d in pages.items()
         ]
-        p = disputils.EmbedPaginator(
-            self.bot, pages=embeds
+        embed_map = {}
+        for e in embeds:
+            embed_map[e.title] = e
+        multichoice = disputils.BotMultipleChoice(
+            ctx, [e.title for e in embeds],
+            title='Table of Contents'
         )
-        await p.run([ctx.message.author], ctx.channel)
+        multichoice.color = bot_config.COLOR
+
+        message = None
+        channel = ctx.channel
+        clear_reactions = True
+
+        while True:
+            if message:
+                multichoice.message = message
+                channel = None
+                clear_reactions = False
+            await multichoice.run(
+                [ctx.message.author], channel=channel,
+                message=message, clear_reactions=clear_reactions
+            )
+            message = multichoice.message
+
+            def check(p):
+                if p.user_id != ctx.message.author.id:
+                    return False
+                if p.message_id != message.id:
+                    return False
+                return True
+
+            if multichoice.choice is None:
+                await multichoice.quit("Exitted")
+                break
+            await message.edit(embed=embed_map[multichoice.choice])
+            try:
+                payload = await self.bot.wait_for(
+                    'raw_reaction_add', check=check, timeout=30
+                )
+                await message.remove_reaction(
+                    payload.emoji.name,
+                    payload.member
+                )
+            except Exception:
+                pass
 
 
 def setup(bot):
