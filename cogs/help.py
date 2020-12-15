@@ -1,5 +1,5 @@
 import discord
-import disputils
+from paginators import disputils
 from discord.ext import commands
 
 
