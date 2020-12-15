@@ -127,6 +127,23 @@ pages = {
     )
 }
 
+numer_emojis = [
+    "1️⃣",
+    "2️⃣",
+    "3️⃣",
+    "4️⃣",
+    "5️⃣",
+    "6️⃣",
+    "7️⃣",
+    "8️⃣",
+    "8️⃣"
+]
+stop_emoji = "⏹️"
+
+
+async def showpage(message, embed):
+    await message.edit(embed=embed)
+
 
 class HelpCommand(commands.Cog):
     def __init__(self, bot):
@@ -145,51 +162,43 @@ class HelpCommand(commands.Cog):
                 color=bot_config.COLOR
             ) for t, d in pages.items()
         ]
-        embed_map = {}
-        for e in embeds:
-            embed_map[e.title] = e
-        multichoice = disputils.BotMultipleChoice(
-            ctx, [e.title for e in embeds],
-            title='Table of Contents'
-        )
-        multichoice.color = bot_config.COLOR
+        mapping = {}
+        for x, e in enumerate(embeds):
+            mapping[numer_emojis[x]] = e
 
-        message = None
-        channel = ctx.channel
-        clear_reactions = True
+        contents = "Table of Contents:"
+        for x, e in enumerate(embeds):
+            emoji = numer_emojis[x]
+            contents += f"\n{emoji}: **{e.title}**"
 
-        while True:
-            if message:
-                multichoice.message = message
-                channel = None
-                clear_reactions = False
-            await multichoice.run(
-                [ctx.message.author], channel=channel,
-                message=message, clear_reactions=clear_reactions
+        running = True
+        message = await ctx.send(contents)
+
+        for emoji in mapping:
+            await message.add_reaction(emoji)
+        await message.add_reaction(stop_emoji)
+
+        def check(p):
+            if p.message_id != message.id:
+                return False
+            if p.user_id != ctx.message.author.id:
+                return False
+            return True
+
+        while running:
+            payload = await self.bot.wait_for(
+                'raw_reaction_add', check=check
             )
-            message = multichoice.message
-
-            def check(p):
-                if p.user_id != ctx.message.author.id:
-                    return False
-                if p.message_id != message.id:
-                    return False
-                return True
-
-            if multichoice.choice is None:
-                await multichoice.quit("Exitted")
-                break
-            await message.edit(embed=embed_map[multichoice.choice])
+            await message.remove_reaction(payload.emoji.name, payload.member)
             try:
-                payload = await self.bot.wait_for(
-                    'raw_reaction_add', check=check, timeout=30
-                )
-                await message.remove_reaction(
-                    payload.emoji.name,
-                    payload.member
-                )
+                page = mapping[payload.emoji.name]
             except Exception:
-                pass
+                running = False
+            else:
+                await showpage(message, page)
+
+        await message.edit(embed=None, content="Exited")
+        await message.clear_reactions()
 
 
 def setup(bot):
