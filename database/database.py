@@ -244,6 +244,7 @@ class Database:
     async def open(self, bot):
         # self.q = await CommonSql()
         await self._create_tables()
+        await self._apply_migrations()
         self.q = await CommonSql(await self.connect())
         self.cache = await BotCache(bot.event)
 

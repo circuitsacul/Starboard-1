@@ -469,8 +469,13 @@ async def calculate_points(conn, sql_message, sql_starboard, bot, guild):
         """SELECT * FROM users WHERE id=$1"""
     get_sbemojis = \
         """SELECT * FROM sbemojis WHERE starboard_id=$1"""
+    update_message = \
+        """UPDATE messages
+        SET points=$1
+        WHERE orig_message_id=$2
+        AND channel_id=$3"""
 
-    message_id = sql_message['id']
+    message_id = int(sql_message['id'])
     self_star = sql_starboard['self_star']
 
     async with bot.db.lock:
@@ -516,5 +521,12 @@ async def calculate_points(conn, sql_message, sql_starboard, bot, guild):
                 pass
 
             total_points += 1
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            await conn.execute(
+                update_message, total_points,
+                message_id, int(sql_starboard['id'])
+            )
 
     return total_points, emojis
