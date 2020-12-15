@@ -1,6 +1,5 @@
 import discord
 import bot_config
-from paginators import disputils
 from discord.ext import commands
 
 
