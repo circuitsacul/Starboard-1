@@ -284,6 +284,20 @@ class Database:
         conn = await self.connect()
         await conn.realcon.execute(sql)
 
+    async def _apply_migration(self, sql):
+        conn = await self.connect()
+        await conn.realcon.execute(sql)
+
+    async def _apply_migrations(self):
+        messages__addcolumn__points = \
+            """ALTER TABLE messages
+            ADD COLUMN IF NOT EXISTS points int DEFAULT NULL
+            """
+
+        await self.lock.acquire()
+        await self._apply_migration(messages__addcolumn__points)
+        self.lock.release()
+
     async def _create_tables(self):
         guilds_table = \
             """CREATE TABLE IF NOT EXISTS guilds (
@@ -456,6 +470,8 @@ class Database:
                 is_trashed bool NOT NULL DEFAULT false,
                 is_frozen bool NOT NULL DEFAULT false,
                 is_forced bool NOT NULL DEFAULT false,
+
+                points int DEFAULT NULL,
 
                 FOREIGN KEY (guild_id) REFERENCES guilds (id)
                     ON DELETE CASCADE,
