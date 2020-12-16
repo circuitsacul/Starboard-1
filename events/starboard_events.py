@@ -444,11 +444,12 @@ async def get_embed_from_message(message):
                     'url': msg_embed.url, 'type': 'image'
                 })
         elif msg_embed.type == 'gifv':
-            gifid = tenor.get_gif_id(msg_embed.url)
-            if gifid is None:
-                display_url = msg_embed.thumbnail.url
-            else:
-                display_url = await tenor.get_gif_url(gifid)
+            #gifid = tenor.get_gif_id(msg_embed.url)
+            #if gifid is None:
+            #    display_url = msg_embed.thumbnail.url
+            #else:
+            #    display_url = await tenor.get_gif_url(gifid)
+            display_url = msg_embed.thumbnail.url
             if msg_embed.url != discord.Embed.Empty:
                 urls.append({
                     'name': 'GIF', 'display_url': display_url,
