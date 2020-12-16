@@ -425,7 +425,14 @@ async def on_command_error(ctx, error):
                 "This problem was not reported. Please consider "
                 "joining the support server and explaining what happened."
             )
-    await ctx.send(f"{error}")
+    try:
+        await ctx.send(f"{error}")
+    except discord.errors.Forbidden:
+        await ctx.message.author.send(
+            "I don't have permission to send messages in "
+            f"{ctx.channel.mention}, so I can't respond "
+            "to your command!"
+        )
 
 
 @bot.event

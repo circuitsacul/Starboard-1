@@ -181,6 +181,7 @@ class HelpCommand(commands.Cog):
         description='Get help with the bot',
         brief='Get help with the bot'
     )
+    @commands.bot_has_permissions(embed_links=True, send_messages=True)
     async def help_command(self, ctx):
         embeds = [
             discord.Embed(
@@ -216,7 +217,10 @@ class HelpCommand(commands.Cog):
             payload = await self.bot.wait_for(
                 'raw_reaction_add', check=check
             )
-            await message.remove_reaction(payload.emoji.name, payload.member)
+            try:
+                await message.remove_reaction(payload.emoji.name, payload.member)
+            except Exception:
+                pass
             try:
                 page = mapping[payload.emoji.name]
             except Exception:
@@ -225,7 +229,10 @@ class HelpCommand(commands.Cog):
                 await showpage(message, page)
 
         await message.edit(embed=None, content="Exited")
-        await message.clear_reactions()
+        try:
+            await message.clear_reactions()
+        except Exception:
+            pass
 
 
 def setup(bot):
