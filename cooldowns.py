@@ -60,7 +60,10 @@ class Cooldown:
         return Cooldown(self.rate, self.per)
 
     def __repr__(self):
-        return '<Cooldown rate: {0.rate} per: {0.per} window: {0._window} tokens: {0._tokens}>'.format(self)
+        return (
+            f"<Cooldown rate: {self.rate} per: {self.per} window: "
+            f"{self._window} tokens: {self._tokens}>"
+        )
 
 
 class CooldownMapping:
@@ -87,9 +90,12 @@ class CooldownMapping:
     def _verify_cache_integrity(self, current=None):
         # we want to delete all cache objects that haven't been used
         # in a cooldown window. e.g. if we have a  command that has a
-        # cooldown of 60s and it has not been used in 60s then that key should be deleted
+        # cooldown of 60s and it has not been used in 60s then that
+        # key should be deleted
         current = current or time.time()
-        dead_keys = [k for k, v in self._cache.items() if current > v._last + v.per]
+        dead_keys = [
+            k for k, v in self._cache.items() if current > v._last + v.per
+        ]
         for k in dead_keys:
             del self._cache[k]
 
