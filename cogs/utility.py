@@ -201,6 +201,19 @@ class Utility(commands.Cog):
                 await conn.execute(freeze_message, message_id)
                 message = f"Message **{message_id}** is now frozen"
 
+        mid = int(sql_message['id'])
+        cid = int(sql_message['channel_id'])
+        channel = self.bot.get_channel(cid)
+        try:
+            message_obj = await functions.fetch(self.bot, mid, channel)
+        except Exception:
+            message_obj = None
+
+        await starboard_events.handle_starboards(
+            self.bot.db, self.bot, message_id, channel,
+            message_obj, ctx.guild
+        )
+
         await ctx.send(message)
 
     @commands.command(
@@ -233,6 +246,19 @@ class Utility(commands.Cog):
                 else:
                     await conn.execute(freeze_message, message_id)
                     message = f"Message **{message_id}** is now unfrozen"
+
+        mid = int(sql_message['id'])
+        cid = int(sql_message['channel_id'])
+        channel = self.bot.get_channel(cid)
+        try:
+            message_obj = await functions.fetch(self.bot, mid, channel)
+        except Exception:
+            message_obj = None
+
+        await starboard_events.handle_starboards(
+            self.bot.db, self.bot, mid, channel,
+            message_obj, ctx.guild
+        )
 
         await ctx.send(message)
 
