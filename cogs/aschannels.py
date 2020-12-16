@@ -3,13 +3,115 @@ import discord
 import bot_config
 import settings
 import functions
+from discord import utils
 from discord.ext import commands
 from typing import Union
+
+
+async def converted_emojis(emojis, guild):
+    all_emojis = []
+
+    for emoji in emojis:
+        emoji_name = emoji['name']
+        try:
+            emoji_id = int(emoji_name)
+        except ValueError:
+            emoji_id = None
+
+        if emoji_id is not None:
+            emoji_obj = utils.get(guild.emojis, id=emoji_id)
+            if emoji_obj is not None:
+                all_emojis.append(emoji_obj)
+        else:
+            all_emojis.append(emoji_name)
+
+    return all_emojis
 
 
 class AutoStarChannels(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.cooldown = commands.CooldownMapping.from_cooldown(
+            3, 10, commands.BucketType.channel
+        )
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        bucket = self.cooldown.get_bucket(message)
+        retry_after = bucket.update_rate_limit(
+            message.created_at.timestamp()
+        )
+        if retry_after:
+            return
+        get_emojis = \
+            """SELECT * FROM asemojis WHERE aschannel_id=$1"""
+
+        if message.author.bot:
+            return
+
+        channel = message.channel
+        guild = message.guild
+        conn = self.bot.db.conn
+
+        if channel.id not in self.bot.db.as_cache:
+            return False
+
+        valid = True
+        reason = None
+
+        check_aschannel = \
+            """SELECT * FROM aschannels WHERE ID=$1"""
+
+        async with self.bot.db.lock:
+            async with self.bot.db.conn.transaction():
+                sasc = await self.bot.db.conn.fetchrow(
+                    check_aschannel, channel.id
+                )
+
+        if sasc is None:
+            return False
+
+        if len(message.content) < sasc['min_chars']:
+            valid = False
+            reason = (
+                f"messages must be at least {sasc['min_chars']} "
+                "characters"
+            )
+        elif len(message.attachments) == 0 and sasc['require_image']:
+            valid = False
+            reason = "messages must have an image attached"
+
+        if sasc['delete_invalid'] and not valid:
+            try:
+                await message.delete()
+                await message.author.send(
+                    f"Your message in {channel.mention} "
+                    f"was deleted because {reason}.\n"
+                    "I saved your message for you though, here it is:\n"
+                    f"```\n{message.content}\n```"
+                )
+            except Exception:
+                pass
+            finally:
+                return
+        elif not valid:
+            return True
+
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                s_emojis = await conn.fetch(
+                    get_emojis, channel.id
+                )
+
+        asemojis = await converted_emojis(s_emojis, guild)
+
+        for e in asemojis:
+            try:
+                await message.add_reaction(e)
+            except Exception:
+                pass
+
+        return True
 
     @commands.group(
         name='aschannels', aliases=['asc', 'as', 'a'],

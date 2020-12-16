@@ -20,7 +20,6 @@ dotenv.load_dotenv()
 
 import bot_config
 from events import starboard_events
-from events import autostar_events
 
 from database.database import Database
 from api import post_guild_count
@@ -86,6 +85,23 @@ bot = Bot(
 web_server = HttpWebHook(bot, db)
 
 
+# Load Cache
+async def load_aschannels(bot):
+    check_aschannel = \
+        """SELECT * FROM aschannels"""
+
+    async with bot.db.lock:
+        async with bot.db.conn.transaction():
+            asc = await bot.db.conn.fetch(
+                check_aschannel
+            )
+
+    if asc != []:
+        bot.db.as_cache = set([int(a['id']) for a in asc])
+    else:
+        bot.db.as_cache = set()
+
+
 # Info Commands
 @bot.command(
     name='links', aliases=['invite', 'support'],
@@ -122,20 +138,6 @@ async def show_vote_info(ctx):
         f"\n\n**[Click Here to Vote For Starboard!]({bot_config.VOTE})**"
     embed.description = description
     await ctx.send(embed=embed)
-    
-    # literally ignore everything below this
-    def check(m):
-        if m.author.id != 772492831138775050:
-            return False
-        return True
-
-    try:
-        m = await bot.wait_for('message', check=check, timeout=5)
-        await m.delete()
-        await ctx.send(embed=embed)
-    except asyncio.TimeoutError:
-        pass
-
 
 
 @bot.command(
@@ -318,10 +320,6 @@ async def on_message(message):
     if message.author.bot:
         return
 
-    was_aschannel = await autostar_events.handle_message(bot, message)
-    if was_aschannel:
-        return
-
     elif message.content.replace('!', '') == bot.user.mention:
         async with db.lock:
             conn = await db.connect()
@@ -451,7 +449,7 @@ async def on_ready():
 async def main():
     await db.open(bot)
 
-    await autostar_events.load_aschannels(bot)
+    await load_aschannels(bot)
     await bot.load_prefixes()
 
     if bot_config.DONATE_BOT_ON is True:
