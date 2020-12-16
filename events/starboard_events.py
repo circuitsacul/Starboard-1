@@ -2,10 +2,16 @@ import discord
 import functions
 import bot_config
 import asyncpg
+import cooldowns
 from discord.errors import Forbidden
 from discord import utils
 from events import leveling
 from api import tenor
+
+
+edit_message_cooldown = cooldowns.CooldownMapping.from_cooldown(
+    3, 5
+)
 
 
 async def handle_reaction(
@@ -146,15 +152,24 @@ async def handle_starboards(db, bot, message_id, channel, message, guild):
                     get_starboards, sql_message['guild_id']
                 )
 
+    b = edit_message_cooldown.get_bucket(message_id)
+    retry_after = b.update_rate_limit()
+    on_cooldown = False
+    if retry_after:
+        on_cooldown = True
+
     if sql_message is not None:
         for sql_starboard in sql_starboards:
             await handle_starboard(
                 db, bot, sql_message, message, sql_starboard,
-                guild
+                guild, on_cooldown=on_cooldown
             )
 
 
-async def handle_starboard(db, bot, sql_message, message, sql_starboard, guild):
+async def handle_starboard(
+    db, bot, sql_message, message, sql_starboard, guild,
+    on_cooldown=False
+):
     get_starboard_message = \
         """SELECT * FROM messages WHERE orig_message_id=$1 AND channel_id=$2"""
     delete_starboard_message = \
@@ -214,9 +229,10 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard, guild):
                 )
 
     recount = True
-    if len(rows) != 0:
-        if sql_message['is_frozen'] \
-                and sql_starboard_message['points'] is not None:
+    if len(rows) != 0 and sql_starboard_message['points'] is not None:
+        if sql_message['is_frozen']:
+            recount = False
+        if on_cooldown:
             recount = False
 
     if recount:
@@ -275,13 +291,14 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard, guild):
     await update_message(
         db, message, sql_message['channel_id'], starboard_message,
         starboard, points, forced, frozen, trashed, add, remove, link_edits,
-        emojis
+        emojis, on_cooldown=on_cooldown
     )
 
 
 async def update_message(
     db, orig_message, orig_channel_id, sb_message, starboard, points,
-    forced, frozen, trashed, add, remove, link_edits, emojis
+    forced, frozen, trashed, add, remove, link_edits, emojis,
+    on_cooldown=False
 ):
     update = orig_message is not None
 
@@ -292,10 +309,11 @@ async def update_message(
         if sb_message is not None:
             embed = discord.Embed(title='Trashed Message')
             embed.description = "This message was trashed by a moderator."
-            try:
-                await sb_message.edit(embed=embed)
-            except discord.errors.NotFound:
-                pass
+            if not on_cooldown:
+                try:
+                    await sb_message.edit(embed=embed)
+                except discord.errors.NotFound:
+                    pass
     elif remove:
         try:
             await sb_message.delete()
@@ -345,9 +363,10 @@ async def update_message(
                     await sb_message.delete()
 
         elif update and sb_message and link_edits:
-            await sb_message.edit(
-                content=plain_text, embed=embed
-            )
+            if not on_cooldown:
+                await sb_message.edit(
+                    content=plain_text, embed=embed
+                )
         elif sb_message:
             await sb_message.edit(
                 content=plain_text
