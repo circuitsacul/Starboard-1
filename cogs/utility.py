@@ -88,15 +88,15 @@ async def handle_forcing(
 
     message = await functions.fetch(bot, int(message_id), channel)
 
+    await functions.check_or_create_existence(
+        bot,
+        guild_id=ctx.guild.id, user=message.author,
+        do_member=True
+    )
+
     async with bot.db.lock:
         conn = await bot.db.connect()
         async with conn.transaction():
-            await functions.check_or_create_existence(
-                bot.db, conn, bot,
-                guild_id=ctx.guild.id, user=message.author,
-                do_member=True
-            )
-
             sql_message = await conn.fetchrow(check_message, message_id)
             if sql_message is None:
                 await bot.db.q.create_message.fetch(
@@ -457,16 +457,16 @@ class Utility(commands.Cog):
         check_message = \
             """SELECT * FROM messages WHERE id=$1"""
 
+        await functions.check_or_create_existence(
+            self.bot,
+            guild_id=ctx.guild.id,
+            user=message.author,
+            do_member=True
+        )
+
         conn = self.bot.db.conn
         async with self.bot.db.lock:
             async with conn.transaction():
-                await functions.check_or_create_existence(
-                    self.bot.db, conn, self.bot,
-                    guild_id=ctx.guild.id,
-                    user=message.author,
-                    do_member=True
-                )
-
                 sql_message = await conn.fetchrow(
                     check_message, message.id
                 )

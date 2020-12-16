@@ -60,13 +60,10 @@ async def handle_reaction(
         else:
             user = _users[0]
 
-        async with db.lock:
-            conn = db.conn
-            async with conn.transaction():
-                await functions.check_or_create_existence(
-                    db, conn, bot, guild_id=guild_id,
-                    user=user, do_member=True
-                )
+        await functions.check_or_create_existence(
+            bot, guild_id=guild_id,
+            user=user, do_member=True
+        )
 
         if user is not None and user.bot:
             return
@@ -79,19 +76,19 @@ async def handle_reaction(
     except (discord.errors.NotFound, discord.errors.Forbidden, AttributeError):
         message = None
 
+    if message:
+        await functions.check_or_create_existence(
+            bot, guild_id=guild_id,
+            user=message.author, do_member=True
+        )
+    await functions.check_or_create_existence(
+        bot,
+        guild_id=guild_id
+    )
+
     async with db.lock:
         conn = await db.connect()
         async with conn.transaction():
-            if message:
-                await functions.check_or_create_existence(
-                    db, conn, bot, guild_id=guild_id,
-                    user=message.author, do_member=True
-                )
-            await functions.check_or_create_existence(
-                db, conn, bot,
-                guild_id=guild_id
-            )
-
             rows = await conn.fetch(get_message, message_id)
             if message:
                 if len(rows) == 0:

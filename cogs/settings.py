@@ -150,15 +150,16 @@ class Settings(commands.Cog):
         get_user = \
             """SELECT * FROM users WHERE id=$1"""
 
+        await functions.check_or_create_existence(
+            self.bot,
+            guild_id=ctx.guild.id if ctx.guild is not None else None,
+            user=ctx.message.author,
+            do_member=True if ctx.guild is not None else None
+        )
+
         async with self.db.lock:
             conn = await self.db.connect()
             async with conn.transaction():
-                await functions.check_or_create_existence(
-                    self.db, conn, self.bot,
-                    guild_id=ctx.guild.id if ctx.guild is not None else None,
-                    user=ctx.message.author,
-                    do_member=True if ctx.guild is not None else None
-                )
                 sql_user = await conn.fetchrow(get_user, ctx.message.author.id)
 
         settings_str = ""
@@ -232,10 +233,9 @@ class Settings(commands.Cog):
             )
             return
 
-        async with self.bot.db.lock:
-            status, status_msg = await functions.add_prefix(
-                self.bot, ctx.guild.id, prefix
-            )
+        status, status_msg = await functions.add_prefix(
+            self.bot, ctx.guild.id, prefix
+        )
         if status is True:
             await ctx.send(f"Added prefix `{prefix}`")
         else:
@@ -247,10 +247,9 @@ class Settings(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
     async def remove_prefix(self, ctx, prefix: str):
-        async with self.bot.db.lock:
-            status, status_msg = await functions.remove_prefix(
-                self.bot, ctx.guild.id, prefix
-            )
+        status, status_msg = await functions.remove_prefix(
+            self.bot, ctx.guild.id, prefix
+        )
         if status is True:
             await ctx.send(f"Removed prefix `{prefix}`")
         else:
@@ -272,13 +271,10 @@ class Settings(commands.Cog):
     )
     @commands.guild_only()
     async def run_setup_wizard(self, ctx):
-        async with self.bot.db.lock:
-            conn = self.bot.db.conn
-            async with conn.transaction():
-                await functions.check_or_create_existence(
-                    self.db, conn, self.bot, guild_id=ctx.guild.id,
-                    user=ctx.message.author, do_member=True
-                )
+        await functions.check_or_create_existence(
+            self.bot, guild_id=ctx.guild.id,
+            user=ctx.message.author, do_member=True
+        )
 
         wizard = SetupWizard(ctx, self.bot)
         try:

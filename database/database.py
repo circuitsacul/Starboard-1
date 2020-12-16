@@ -140,11 +140,6 @@ class CommonSql(aobject):
             await conn.prepare(
                 """INSERT INTO guilds (id) VALUES($1)"""
             )
-        self.create_prefix = \
-            await conn.prepare(
-                """INSERT INTO prefixes (guild_id, prefix)
-                VALUES($1, $2)"""
-            )
         self.create_user = \
             await conn.prepare(
                 """INSERT INTO users (id, is_bot)
@@ -239,7 +234,6 @@ class Database:
         self.conn = None
         self.cache = None
         self.as_cache = None
-        self.prefix_cache = {}
 
     async def open(self, bot):
         # self.q = await CommonSql()
@@ -294,15 +288,24 @@ class Database:
             """ALTER TABLE messages
             ADD COLUMN IF NOT EXISTS points int DEFAULT NULL
             """
+        guilds__addcolumn__prefixes = \
+            """ALTER TABLE guilds
+            ADD COLUMN IF NOT EXISTS prefixes VARCHAR(8) ARRAY
+            DEFAULT '{"sb!"}'"""
+        deltable__prefixes = \
+            """DROP TABLE IF EXISTS prefixes"""
 
         await self.lock.acquire()
         await self._apply_migration(messages__addcolumn__points)
+        await self._apply_migration(guilds__addcolumn__prefixes)
+        await self._apply_migration(deltable__prefixes)
         self.lock.release()
 
     async def _create_tables(self):
         guilds_table = \
             """CREATE TABLE IF NOT EXISTS guilds (
                 id numeric PRIMARY KEY,
+                prefixes VARCHAR(8) ARRAY DEFAULT "{'sb!'}",
 
                 stars_given integer NOT NULL DEFAULT 0,
                 stars_recv integer NOT NULL DEFAULT 0

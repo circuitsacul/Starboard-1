@@ -53,20 +53,6 @@ class Bot(commands.AutoShardedBot):
         self.db = db
         self.wizzard_lock = Lock
 
-    async def load_prefixes(self):
-        get_prefixes = \
-            """SELECT * FROM prefixes"""
-
-        conn = self.db.conn
-        async with self.db.lock:
-            async with conn.transaction():
-                prefixes = await conn.fetch(get_prefixes)
-
-        for p in prefixes:
-            gid = int(p['guild_id'])
-            self.db.prefix_cache.setdefault(gid, [])
-            self.db.prefix_cache[gid].append(p['prefix'])
-
 
 bot = Bot(
     db, command_prefix=functions._prefix_callable,
@@ -314,14 +300,11 @@ async def on_message(message):
         return
 
     elif message.content.replace('!', '') == bot.user.mention:
-        async with db.lock:
-            conn = await db.connect()
-            if message.guild is not None:
-                async with conn.transaction():
-                    await functions.check_or_create_existence(
-                        db, conn, bot, message.guild.id, message.author,
-                        do_member=True
-                    )
+        if message.guild is not None:
+            await functions.check_or_create_existence(
+                bot, message.guild.id, message.author,
+                do_member=True
+            )
 
         if message.guild is not None:
             p = await functions.get_one_prefix(bot, message.guild.id)
@@ -445,7 +428,6 @@ async def main():
     await db.open(bot)
 
     await load_aschannels(bot)
-    await bot.load_prefixes()
 
     if bot_config.DONATE_BOT_ON is True:
         await web_server.start()

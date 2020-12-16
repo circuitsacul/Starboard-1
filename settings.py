@@ -145,12 +145,12 @@ async def add_aschannel(bot: commands.Bot, channel: discord.TextChannel):
             "I need the `ADD REACTIONS` permission in that channel."
         )
 
+    await functions.check_or_create_existence(
+        bot, guild_id=guild.id
+    )
+
     async with bot.db.lock:
         async with conn.transaction():
-            await functions.check_or_create_existence(
-                bot.db, conn, bot, guild_id=guild.id
-            )
-
             all_aschannels = await conn.fetch(
                 get_aschannels, guild.id
             )
@@ -311,12 +311,11 @@ async def add_starboard(bot: commands.Bot, channel: discord.TextChannel):
     )
     conn = bot.db.conn
 
+    await functions.check_or_create_existence(
+        bot, channel.guild.id
+    )
     async with bot.db.lock:
         async with conn.transaction():
-            await functions.check_or_create_existence(
-                bot.db, conn, bot, channel.guild.id
-            )
-
             all_starboards = await conn.fetch(
                 get_starboards, guild.id
             )

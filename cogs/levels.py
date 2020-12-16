@@ -79,14 +79,15 @@ class Levels(commands.Cog):
             lvl=$2
             WHERE id=$3"""
 
+        await functions.check_or_create_existence(
+            self.bot,
+            guild_id=ctx.guild.id, user=user,
+            do_member=True, user_is_id=True
+        )
+
         conn = self.bot.db.conn
         async with self.bot.db.lock:
             async with conn.transaction():
-                await functions.check_or_create_existence(
-                    self.db, conn, self.bot,
-                    guild_id=ctx.guild.id, user=user,
-                    do_member=True, user_is_id=True
-                )
                 sql_member = await conn.fetchrow(
                     get_member, user, ctx.guild.id
                 )
@@ -133,14 +134,15 @@ class Levels(commands.Cog):
             lvl=$2
             WHERE id=$3"""
 
+        await functions.check_or_create_existence(
+            self.bot,
+            guild_id=ctx.guild.id, user=user,
+            do_member=True, user_is_id=True
+        )
+
         conn = self.bot.db.conn
         async with self.bot.db.lock:
             async with conn.transaction():
-                await functions.check_or_create_existence(
-                    self.db, conn, self.bot,
-                    guild_id=ctx.guild.id, user=user,
-                    do_member=True, user_is_id=True
-                )
                 sql_member = await conn.fetchrow(
                     get_member, user, ctx.guild.id
                 )
@@ -178,13 +180,14 @@ class Levels(commands.Cog):
         get_member = \
             """SELECT * FROM members WHERE user_id=$1 and guild_id=$2"""
 
+        await functions.check_or_create_existence(
+            self.bot, guild_id=ctx.guild.id,
+            user=user, do_member=True
+        )
+
         async with self.db.lock:
             conn = await self.db.connect()
             async with conn.transaction():
-                await functions.check_or_create_existence(
-                    self.bot.db, conn, self.bot, guild_id=ctx.guild.id,
-                    user=user, do_member=True
-                )
                 sql_member = await conn.fetchrow(
                     get_member, user.id, ctx.guild.id
                 )
