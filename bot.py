@@ -71,10 +71,6 @@ class Bot(commands.AutoShardedBot):
 bot = Bot(
     db, command_prefix=functions._prefix_callable,
     help_command=None,
-    #help_command=PrettyHelp(
-    #    color=bot_config.COLOR, no_category="Info", active=30,
-    #    navigation=navigation, show_index=False
-    #),
     case_insensitive=True,
     intents=intents,
     description=BOT_DESCRIPTION
