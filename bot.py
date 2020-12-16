@@ -9,11 +9,8 @@ from bot_config import SUPPORT_SERVER
 import functions
 import traceback
 import pretty_help
-import time
-import checks
 import errors as cerrors
 from discord.ext import commands
-from pretty_help import PrettyHelp
 from asyncio import Lock
 
 dotenv.load_dotenv()
