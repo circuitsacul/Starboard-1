@@ -235,8 +235,6 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard, guild):
             async with conn.transaction():
                 emojis = await conn.fetch(get_sbemojis, sql_starboard['id'])
 
-    print(points)
-
     deleted = message is None
     blacklisted = False if deleted else \
         await functions.is_message_blacklisted(
