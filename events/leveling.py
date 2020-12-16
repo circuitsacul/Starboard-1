@@ -1,6 +1,14 @@
-import datetime
 import functions
+import cooldowns
 from math import sqrt
+
+
+give_cooldown = cooldowns.CooldownMapping.from_cooldown(
+    3, 60
+)
+recv_cooldown = cooldowns.CooldownMapping.from_cooldown(
+    3, 60
+)
 
 
 async def next_level_xp(current_level):
@@ -23,20 +31,14 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
         print(emoji)
         return
 
-    now = datetime.datetime.now()
-    timestamp = now.timestamp()
-    cooldown_end = now + datetime.timedelta(minutes=1)
-
     cooldown_over = True
-    async with db.lock:
-        db_stars = db.cooldowns['giving_stars']
-        db_stars.setdefault(guild_id, {})
-        if timestamp < db_stars[guild_id].get(
-            reacter_id, 0
-        ):  # Y2038 (was 2147483647)
-            cooldown_over = False
-        if cooldown_over:
-            db_stars[guild_id][reacter_id] = cooldown_end.timestamp()
+    if is_add:
+        b = give_cooldown.get_bucket(reacter_id)
+    else:
+        b = recv_cooldown.get_bucket(reacter_id)
+    retry_after = b.update_rate_limit()
+    if retry_after:
+        cooldown_over = False
 
     get_member = \
         """SELECT * FROM members WHERE user_id=$1 AND guild_id=$2"""
