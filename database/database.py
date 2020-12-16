@@ -244,6 +244,7 @@ class Database:
     async def open(self, bot):
         # self.q = await CommonSql()
         await self._create_tables()
+        await self._apply_migrations()
         self.q = await CommonSql(await self.connect())
         self.cache = await BotCache(bot.event)
 
@@ -283,6 +284,20 @@ class Database:
     async def _create_index(self, sql):
         conn = await self.connect()
         await conn.realcon.execute(sql)
+
+    async def _apply_migration(self, sql):
+        conn = await self.connect()
+        await conn.realcon.execute(sql)
+
+    async def _apply_migrations(self):
+        messages__addcolumn__points = \
+            """ALTER TABLE messages
+            ADD COLUMN IF NOT EXISTS points int DEFAULT NULL
+            """
+
+        await self.lock.acquire()
+        await self._apply_migration(messages__addcolumn__points)
+        self.lock.release()
 
     async def _create_tables(self):
         guilds_table = \
@@ -456,6 +471,8 @@ class Database:
                 is_trashed bool NOT NULL DEFAULT false,
                 is_frozen bool NOT NULL DEFAULT false,
                 is_forced bool NOT NULL DEFAULT false,
+
+                points int DEFAULT NULL,
 
                 FOREIGN KEY (guild_id) REFERENCES guilds (id)
                     ON DELETE CASCADE,

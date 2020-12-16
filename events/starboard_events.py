@@ -166,6 +166,8 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard, guild):
         """DELETE FROM messages WHERE orig_message_id=$1 and channel_id=$2"""
     get_author = \
         """SELECT * FROM users WHERE id=$1"""
+    get_sbemojis = \
+        """SELECT * FROM sbemojis WHERE starboard_id=$1"""
 
     starboard_id = sql_starboard['id']
     starboard = bot.get_channel(int(starboard_id))
@@ -216,10 +218,24 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard, guild):
                     sql_starboard['id']
                 )
 
-    points, emojis = await calculate_points(
-        conn, sql_message, sql_starboard, bot,
-        guild
-    )
+    recount = True
+    if len(rows) != 0:
+        if sql_message['is_frozen'] \
+                and sql_starboard_message['points'] is not None:
+            recount = False
+
+    if recount:
+        points, emojis = await calculate_points(
+            conn, sql_message, sql_starboard, bot,
+            guild
+        )
+    else:
+        points = sql_starboard_message['points']
+        async with bot.db.lock:
+            async with conn.transaction():
+                emojis = await conn.fetch(get_sbemojis, sql_starboard['id'])
+
+    print(points)
 
     deleted = message is None
     blacklisted = False if deleted else \
@@ -263,16 +279,16 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard, guild):
         if not on_starboard:
             add = True
 
-    if not frozen:
-        await update_message(
-            db, message, sql_message['channel_id'], starboard_message,
-            starboard, points, forced, trashed, add, remove, link_edits, emojis
-        )
+    await update_message(
+        db, message, sql_message['channel_id'], starboard_message,
+        starboard, points, forced, frozen, trashed, add, remove, link_edits,
+        emojis
+    )
 
 
 async def update_message(
     db, orig_message, orig_channel_id, sb_message, starboard, points,
-    forced, trashed, add, remove, link_edits, emojis
+    forced, frozen, trashed, add, remove, link_edits, emojis
 ):
     update = orig_message is not None
 
@@ -293,8 +309,10 @@ async def update_message(
         except discord.errors.NotFound:
             pass
     else:
-        plain_text = \
-            f"**{points} | <#{orig_channel_id}>{' | 🔒' if forced else ''}**"
+        plain_text = (
+            f"**{points} | <#{orig_channel_id}>{' | 🔒' if forced else ''}"
+            f"{' | ❄️' if frozen else ''}**"
+        )
 
         embed = await get_embed_from_message(
             orig_message
@@ -469,8 +487,13 @@ async def calculate_points(conn, sql_message, sql_starboard, bot, guild):
         """SELECT * FROM users WHERE id=$1"""
     get_sbemojis = \
         """SELECT * FROM sbemojis WHERE starboard_id=$1"""
+    update_message = \
+        """UPDATE messages
+        SET points=$1
+        WHERE orig_message_id=$2
+        AND channel_id=$3"""
 
-    message_id = sql_message['id']
+    message_id = int(sql_message['id'])
     self_star = sql_starboard['self_star']
 
     async with bot.db.lock:
@@ -516,5 +539,12 @@ async def calculate_points(conn, sql_message, sql_starboard, bot, guild):
                 pass
 
             total_points += 1
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            await conn.execute(
+                update_message, total_points,
+                message_id, int(sql_starboard['id'])
+            )
 
     return total_points, emojis
