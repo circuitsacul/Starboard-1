@@ -38,6 +38,11 @@ class AutoStarChannels(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
+        if message.author.bot:
+            return
+        if message.channel.id not in self.bot.db.as_cache:
+            return
+
         bucket = self.cooldown.get_bucket(message)
         retry_after = bucket.update_rate_limit(
             message.created_at.replace(
@@ -49,15 +54,9 @@ class AutoStarChannels(commands.Cog):
         get_emojis = \
             """SELECT * FROM asemojis WHERE aschannel_id=$1"""
 
-        if message.author.bot:
-            return
-
         channel = message.channel
         guild = message.guild
         conn = self.bot.db.conn
-
-        if channel.id not in self.bot.db.as_cache:
-            return False
 
         valid = True
         reason = None
