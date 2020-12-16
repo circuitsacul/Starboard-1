@@ -2,7 +2,6 @@ import discord
 import functions
 import bot_config
 import asyncpg
-from events import retotal
 from discord.errors import Forbidden
 from discord import utils
 from events import leveling
