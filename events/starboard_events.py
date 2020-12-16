@@ -2,11 +2,16 @@ import discord
 import functions
 import bot_config
 import asyncpg
-from events import retotal
+import cooldowns
 from discord.errors import Forbidden
 from discord import utils
 from events import leveling
 from api import tenor
+
+
+edit_message_cooldown = cooldowns.CooldownMapping.from_cooldown(
+    3, 5
+)
 
 
 async def handle_reaction(
@@ -55,13 +60,10 @@ async def handle_reaction(
         else:
             user = _users[0]
 
-        async with db.lock:
-            conn = db.conn
-            async with conn.transaction():
-                await functions.check_or_create_existence(
-                    db, conn, bot, guild_id=guild_id,
-                    user=user, do_member=True
-                )
+        await functions.check_or_create_existence(
+            bot, guild_id=guild_id,
+            user=user, do_member=True
+        )
 
         if user is not None and user.bot:
             return
@@ -74,19 +76,19 @@ async def handle_reaction(
     except (discord.errors.NotFound, discord.errors.Forbidden, AttributeError):
         message = None
 
+    if message:
+        await functions.check_or_create_existence(
+            bot, guild_id=guild_id,
+            user=message.author, do_member=True
+        )
+    await functions.check_or_create_existence(
+        bot,
+        guild_id=guild_id
+    )
+
     async with db.lock:
         conn = await db.connect()
         async with conn.transaction():
-            if message:
-                await functions.check_or_create_existence(
-                    db, conn, bot, guild_id=guild_id,
-                    user=message.author, do_member=True
-                )
-            await functions.check_or_create_existence(
-                db, conn, bot,
-                guild_id=guild_id
-            )
-
             rows = await conn.fetch(get_message, message_id)
             if message:
                 if len(rows) == 0:
@@ -127,10 +129,10 @@ async def handle_reaction(
                 db, user_id, message.author, guild, _emoji, is_add
             )
 
-    await handle_starboards(db, bot, message_id, channel, message)
+    await handle_starboards(db, bot, message_id, channel, message, guild)
 
 
-async def handle_starboards(db, bot, message_id, channel, message):
+async def handle_starboards(db, bot, message_id, channel, message, guild):
     get_message = \
         """SELECT * FROM messages WHERE id=$1"""
     get_starboards = \
@@ -147,24 +149,32 @@ async def handle_starboards(db, bot, message_id, channel, message):
                     get_starboards, sql_message['guild_id']
                 )
 
-    #needs_recount = await retotal.needs_recount(bot, message)
-    #if needs_recount:
-    #    await retotal.recount_reactions(bot, message)
+    b = edit_message_cooldown.get_bucket(message_id)
+    retry_after = b.update_rate_limit()
+    on_cooldown = False
+    if retry_after:
+        on_cooldown = True
 
     if sql_message is not None:
         for sql_starboard in sql_starboards:
             await handle_starboard(
-                db, bot, sql_message, message, sql_starboard
+                db, bot, sql_message, message, sql_starboard,
+                guild, on_cooldown=on_cooldown
             )
 
 
-async def handle_starboard(db, bot, sql_message, message, sql_starboard):
+async def handle_starboard(
+    db, bot, sql_message, message, sql_starboard, guild,
+    on_cooldown=False
+):
     get_starboard_message = \
         """SELECT * FROM messages WHERE orig_message_id=$1 AND channel_id=$2"""
     delete_starboard_message = \
         """DELETE FROM messages WHERE orig_message_id=$1 and channel_id=$2"""
     get_author = \
         """SELECT * FROM users WHERE id=$1"""
+    get_sbemojis = \
+        """SELECT * FROM sbemojis WHERE starboard_id=$1"""
 
     starboard_id = sql_starboard['id']
     starboard = bot.get_channel(int(starboard_id))
@@ -214,11 +224,30 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
                     delete_starboard_message, sql_message['id'],
                     sql_starboard['id']
                 )
-            points, emojis = await calculate_points(
-                conn, sql_message, sql_starboard, bot
-            )
+
+    recount = True
+    if len(rows) != 0 and sql_starboard_message['points'] is not None:
+        if sql_message['is_frozen']:
+            recount = False
+        if on_cooldown:
+            recount = False
+
+    if recount:
+        points, emojis = await calculate_points(
+            conn, sql_message, sql_starboard, bot,
+            guild
+        )
+    else:
+        points = sql_starboard_message['points']
+        async with bot.db.lock:
+            async with conn.transaction():
+                emojis = await conn.fetch(get_sbemojis, sql_starboard['id'])
 
     deleted = message is None
+    blacklisted = False if deleted else \
+        await functions.is_message_blacklisted(
+            bot, message, int(sql_starboard['id'])
+        )
     on_starboard = starboard_message is not None
 
     link_deletes = sql_starboard['link_deletes']
@@ -248,21 +277,25 @@ async def handle_starboard(db, bot, sql_message, message, sql_starboard):
         if on_starboard:
             remove = True
 
+    if blacklisted:
+        add = False
+
     if forced is True:
         remove = False
         if not on_starboard:
             add = True
 
-    if not frozen:
-        await update_message(
-            db, message, sql_message['channel_id'], starboard_message,
-            starboard, points, forced, trashed, add, remove, link_edits, emojis
-        )
+    await update_message(
+        db, message, sql_message['channel_id'], starboard_message,
+        starboard, points, forced, frozen, trashed, add, remove, link_edits,
+        emojis, on_cooldown=on_cooldown
+    )
 
 
 async def update_message(
     db, orig_message, orig_channel_id, sb_message, starboard, points,
-    forced, trashed, add, remove, link_edits, emojis
+    forced, frozen, trashed, add, remove, link_edits, emojis,
+    on_cooldown=False
 ):
     update = orig_message is not None
 
@@ -273,18 +306,21 @@ async def update_message(
         if sb_message is not None:
             embed = discord.Embed(title='Trashed Message')
             embed.description = "This message was trashed by a moderator."
-            try:
-                await sb_message.edit(embed=embed)
-            except discord.errors.NotFound:
-                pass
+            if not on_cooldown:
+                try:
+                    await sb_message.edit(embed=embed)
+                except discord.errors.NotFound:
+                    pass
     elif remove:
         try:
             await sb_message.delete()
         except discord.errors.NotFound:
             pass
     else:
-        plain_text = \
-            f"**{points} | <#{orig_channel_id}>{' | 🔒' if forced else ''}**"
+        plain_text = (
+            f"**{points} | <#{orig_channel_id}>{' | 🔒' if forced else ''}"
+            f"{' | ❄️' if frozen else ''}**"
+        )
 
         embed = await get_embed_from_message(
             orig_message
@@ -324,9 +360,10 @@ async def update_message(
                     await sb_message.delete()
 
         elif update and sb_message and link_edits:
-            await sb_message.edit(
-                content=plain_text, embed=embed
-            )
+            if not on_cooldown:
+                await sb_message.edit(
+                    content=plain_text, embed=embed
+                )
         elif sb_message:
             await sb_message.edit(
                 content=plain_text
@@ -404,11 +441,12 @@ async def get_embed_from_message(message):
                     'url': msg_embed.url, 'type': 'image'
                 })
         elif msg_embed.type == 'gifv':
-            gifid = tenor.get_gif_id(msg_embed.url)
-            if gifid is None:
-                display_url = msg_embed.thumbnail.url
-            else:
-                display_url = await tenor.get_gif_url(gifid)
+            #gifid = tenor.get_gif_id(msg_embed.url)
+            #if gifid is None:
+            #    display_url = msg_embed.thumbnail.url
+            #else:
+            #    display_url = await tenor.get_gif_url(gifid)
+            display_url = msg_embed.thumbnail.url
             if msg_embed.url != discord.Embed.Empty:
                 urls.append({
                     'name': 'GIF', 'display_url': display_url,
@@ -452,17 +490,26 @@ async def get_embed_from_message(message):
     return embed
 
 
-async def calculate_points(conn, sql_message, sql_starboard, bot):
+async def calculate_points(conn, sql_message, sql_starboard, bot, guild):
     get_reactions = \
-        """SELECT * FROM reactions WHERE message_id=$1 AND name=$2"""
+        """SELECT * FROM reactions WHERE message_id=$1"""
     get_user = \
         """SELECT * FROM users WHERE id=$1"""
     get_sbemojis = \
         """SELECT * FROM sbemojis WHERE starboard_id=$1"""
+    update_message = \
+        """UPDATE messages
+        SET points=$1
+        WHERE orig_message_id=$2
+        AND channel_id=$3"""
 
-    emojis = await conn.fetch(get_sbemojis, sql_starboard['id'])
-    message_id = sql_message['id']
+    message_id = int(sql_message['id'])
     self_star = sql_starboard['self_star']
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            emojis = await conn.fetch(get_sbemojis, sql_starboard['id'])
+            all_reactions = await conn.fetch(get_reactions, message_id)
 
     used_users = set()
 
@@ -470,10 +517,10 @@ async def calculate_points(conn, sql_message, sql_starboard, bot):
     for emoji in emojis:
         emoji_id = int(emoji['d_id']) if emoji['d_id'] is not None else None
         emoji_name = None if emoji_id is not None else emoji['name']
-        reactions = await conn.fetch(
-            get_reactions, message_id,
-            emoji_name if emoji_id is None else str(emoji_id)
-        )
+        reactions = [
+            r for r in all_reactions if r['name']
+            in [str(emoji_id), emoji_name]
+        ]
         for sql_reaction in reactions:
             user_id = sql_reaction['user_id']
             if user_id in used_users:
@@ -481,11 +528,33 @@ async def calculate_points(conn, sql_message, sql_starboard, bot):
             used_users.add(user_id)
             if user_id == sql_message['user_id'] and self_star is False:
                 continue
-            rows = await conn.fetch(get_user, user_id)
-            sql_user = rows[0]
+
+            async with bot.db.lock:
+                async with conn.transaction():
+                    sql_user = await conn.fetchrow(get_user, user_id)
+
             if sql_user['is_bot'] is True:
                 continue
 
+            member_list = await functions.get_members(
+                [int(sql_user['id'])], guild
+            )
+            try:
+                member = member_list[0]
+                if member and await functions.is_user_blacklisted(
+                    bot, member, int(sql_starboard['id'])
+                ):
+                    continue
+            except IndexError:
+                pass
+
             total_points += 1
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            await conn.execute(
+                update_message, total_points,
+                message_id, int(sql_starboard['id'])
+            )
 
     return total_points, emojis

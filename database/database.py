@@ -140,11 +140,6 @@ class CommonSql(aobject):
             await conn.prepare(
                 """INSERT INTO guilds (id) VALUES($1)"""
             )
-        self.create_prefix = \
-            await conn.prepare(
-                """INSERT INTO prefixes (guild_id, prefix)
-                VALUES($1, $2)"""
-            )
         self.create_user = \
             await conn.prepare(
                 """INSERT INTO users (id, is_bot)
@@ -193,6 +188,16 @@ class CommonSql(aobject):
                 """INSERT INTO asemojis (aschannel_id, name)
                 VALUES($1, $2)"""
             )
+        self.create_channelbl = \
+            await conn.prepare(
+                """INSERT INTO channelbl (starboard_id, channel_id, guild_id, is_whitelist)
+                VALUES($1, $2, $3, $4)"""
+            )
+        self.create_rolebl = \
+            await conn.prepare(
+                """INSERT INTO rolebl (starboard_id, role_id, guild_id, is_whitelist)
+                VALUES($1, $2, $3, $4)"""
+            )
         self.create_message = \
             await conn.prepare(
                 """INSERT INTO messages (id, guild_id,
@@ -229,11 +234,11 @@ class Database:
         self.conn = None
         self.cache = None
         self.as_cache = None
-        self.prefix_cache = {}
 
     async def open(self, bot):
         # self.q = await CommonSql()
         await self._create_tables()
+        await self._apply_migrations()
         self.q = await CommonSql(await self.connect())
         self.cache = await BotCache(bot.event)
 
@@ -274,10 +279,33 @@ class Database:
         conn = await self.connect()
         await conn.realcon.execute(sql)
 
+    async def _apply_migration(self, sql):
+        conn = await self.connect()
+        await conn.realcon.execute(sql)
+
+    async def _apply_migrations(self):
+        messages__addcolumn__points = \
+            """ALTER TABLE messages
+            ADD COLUMN IF NOT EXISTS points int DEFAULT NULL
+            """
+        guilds__addcolumn__prefixes = \
+            """ALTER TABLE guilds
+            ADD COLUMN IF NOT EXISTS prefixes VARCHAR(8) ARRAY
+            DEFAULT '{"sb!"}'"""
+        deltable__prefixes = \
+            """DROP TABLE IF EXISTS prefixes"""
+
+        await self.lock.acquire()
+        await self._apply_migration(messages__addcolumn__points)
+        await self._apply_migration(guilds__addcolumn__prefixes)
+        await self._apply_migration(deltable__prefixes)
+        self.lock.release()
+
     async def _create_tables(self):
         guilds_table = \
             """CREATE TABLE IF NOT EXISTS guilds (
                 id numeric PRIMARY KEY,
+                prefixes VARCHAR(8) ARRAY DEFAULT "{'sb!'}",
 
                 stars_given integer NOT NULL DEFAULT 0,
                 stars_recv integer NOT NULL DEFAULT 0
@@ -407,6 +435,32 @@ class Database:
                     ON DELETE CASCADE
             )"""
 
+        channelbl_table = \
+            """CREATE TABLE IF NOT EXISTS channelbl (
+                starboard_id numeric NOT NULL,
+                channel_id numeric NOT NULL,
+                guild_id numeric NOT NULL,
+                is_whitelist bool NOT NULL DEFAULT False,
+
+                FOREIGN KEY (starboard_id) REFERENCES starboards (id)
+                    ON DELETE CASCADE,
+                FOREIGN KEY (guild_id) REFERENCES guilds (id)
+                    ON DELETE CASCADE
+            )"""
+
+        rolebl_table = \
+            """CREATE TABLE IF NOT EXISTS rolebl (
+                starboard_id numeric NOT NULL,
+                role_id numeric NOT NULL,
+                guild_id numeric NOT NULL,
+                is_whitelist bool NOT NULL DEFAULT False,
+
+                FOREIGN KEY (starboard_id) REFERENCES starboards (id)
+                    ON DELETE CASCADE,
+                FOREIGN KEY (guild_id) REFERENCES guilds (id)
+                    ON DELETE CASCADE
+            )"""
+
         messages_table = \
             """CREATE TABLE IF NOT EXISTS messages (
                 id numeric PRIMARY KEY,
@@ -420,6 +474,8 @@ class Database:
                 is_trashed bool NOT NULL DEFAULT false,
                 is_frozen bool NOT NULL DEFAULT false,
                 is_forced bool NOT NULL DEFAULT false,
+
+                points int DEFAULT NULL,
 
                 FOREIGN KEY (guild_id) REFERENCES guilds (id)
                     ON DELETE CASCADE,
@@ -468,6 +524,7 @@ class Database:
             ON sbemojis(starboard_id)"""
 
         await self.lock.acquire()
+
         await self._create_table(guilds_table)
         await self._create_table(prefixes_table)
         await self._create_table(users_table)
@@ -479,6 +536,8 @@ class Database:
         await self._create_table(sbemoijs_table)
         await self._create_table(aschannels_table)
         await self._create_table(asemojis_table)
+        await self._create_table(channelbl_table)
+        await self._create_table(rolebl_table)
         await self._create_table(messages_table)
         await self._create_table(reactions_table)
         await self._create_table(sqlruntimes_table)
@@ -487,4 +546,5 @@ class Database:
         await self._create_index(msg_orig_msg_id_index)
         await self._create_index(member_uid_index)
         await self._create_index(sbemojis_starboard_index)
+
         self.lock.release()

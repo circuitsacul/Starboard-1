@@ -44,7 +44,8 @@ async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
 
     if status is True:
         await starboard_events.handle_starboards(
-            db, bot, message_id, channel, message
+            db, bot, message_id, channel, message,
+            ctx.guild
         )
     return status
 
@@ -87,15 +88,15 @@ async def handle_forcing(
 
     message = await functions.fetch(bot, int(message_id), channel)
 
+    await functions.check_or_create_existence(
+        bot,
+        guild_id=ctx.guild.id, user=message.author,
+        do_member=True
+    )
+
     async with bot.db.lock:
         conn = await bot.db.connect()
         async with conn.transaction():
-            await functions.check_or_create_existence(
-                bot.db, conn, bot,
-                guild_id=ctx.guild.id, user=message.author,
-                do_member=True
-            )
-
             sql_message = await conn.fetchrow(check_message, message_id)
             if sql_message is None:
                 await bot.db.q.create_message.fetch(
@@ -111,7 +112,8 @@ async def handle_forcing(
     )
 
     await starboard_events.handle_starboards(
-        bot.db, bot, message.id, message.channel, message
+        bot.db, bot, message.id, message.channel, message,
+        ctx.guild
     )
 
 
@@ -199,6 +201,19 @@ class Utility(commands.Cog):
                 await conn.execute(freeze_message, message_id)
                 message = f"Message **{message_id}** is now frozen"
 
+        mid = int(sql_message['id'])
+        cid = int(sql_message['channel_id'])
+        channel = self.bot.get_channel(cid)
+        try:
+            message_obj = await functions.fetch(self.bot, mid, channel)
+        except Exception:
+            message_obj = None
+
+        await starboard_events.handle_starboards(
+            self.bot.db, self.bot, message_id, channel,
+            message_obj, ctx.guild
+        )
+
         await ctx.send(message)
 
     @commands.command(
@@ -231,6 +246,19 @@ class Utility(commands.Cog):
                 else:
                     await conn.execute(freeze_message, message_id)
                     message = f"Message **{message_id}** is now unfrozen"
+
+        mid = int(sql_message['id'])
+        cid = int(sql_message['channel_id'])
+        channel = self.bot.get_channel(cid)
+        try:
+            message_obj = await functions.fetch(self.bot, mid, channel)
+        except Exception:
+            message_obj = None
+
+        await starboard_events.handle_starboards(
+            self.bot.db, self.bot, mid, channel,
+            message_obj, ctx.guild
+        )
 
         await ctx.send(message)
 
@@ -429,16 +457,16 @@ class Utility(commands.Cog):
         check_message = \
             """SELECT * FROM messages WHERE id=$1"""
 
+        await functions.check_or_create_existence(
+            self.bot,
+            guild_id=ctx.guild.id,
+            user=message.author,
+            do_member=True
+        )
+
         conn = self.bot.db.conn
         async with self.bot.db.lock:
             async with conn.transaction():
-                await functions.check_or_create_existence(
-                    self.bot.db, conn, self.bot,
-                    guild_id=ctx.guild.id,
-                    user=message.author,
-                    do_member=True
-                )
-
                 sql_message = await conn.fetchrow(
                     check_message, message.id
                 )
@@ -468,7 +496,7 @@ class Utility(commands.Cog):
             await retotal.recount_reactions(self.bot, message)
             await handle_starboards(
                 self.bot.db, self.bot, message.id,
-                message.channel, message
+                message.channel, message, ctx.guild
             )
 
         await ctx.send("Finished!")

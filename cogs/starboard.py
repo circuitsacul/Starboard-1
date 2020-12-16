@@ -43,13 +43,13 @@ class Starboard(commands.Cog):
         p = await functions.get_one_prefix(self.bot, ctx.guild.id)
 
         if starboard is None:
+            _ = await functions.check_or_create_existence(
+                self.bot, guild_id=ctx.guild.id,
+                user=ctx.message.author, do_member=True
+            )
             async with self.db.lock:
                 conn = await self.db.connect()
                 async with conn.transaction():
-                    _ = await functions.check_or_create_existence(
-                        self.db, conn, self.bot, guild_id=ctx.guild.id,
-                        user=ctx.message.author, do_member=True
-                    )
                     rows = await conn.fetch(get_starboards, ctx.guild.id)
 
                     if len(rows) == 0:
@@ -84,13 +84,13 @@ class Starboard(commands.Cog):
             else:
                 await ctx.send(embed=embed)
         else:
+            await functions.check_or_create_existence(
+                self.bot, guild_id=ctx.guild.id,
+                user=ctx.message.author, do_member=True
+            )
             async with self.db.lock:
                 conn = await self.db.connect()
                 async with conn.transaction():
-                    await functions.check_or_create_existence(
-                        self.db, conn, self.bot, guild_id=ctx.guild.id,
-                        user=ctx.message.author, do_member=True
-                    )
                     sql_starboard = await conn.fetchrow(
                         get_starboard, starboard.id
                     )

@@ -31,6 +31,8 @@ This documentation gives you a quick start to using the bot. If you see a proble
 
 - Supports multiple starboards
 
+- Advanced Channel/Role Whitlisting/Blacklisting
+
 - AutoStar Channels (media channels)
 
 - Supports multiple normal and custom emojis for *each* starboard
@@ -39,11 +41,11 @@ This documentation gives you a quick start to using the bot. If you see a proble
 
 - Starboard moderation, such as:
 
-- Freezing a message, preventing the points from updating on it
+  - Freezing a message, preventing the points from updating on it
 
-- Forcing a message, so it's on the starboard no matter what
+  - Forcing a message, so it's on the starboard no matter what
 
-- Trashing a message, in case a bad message gets on the starboard
+  - Trashing a message, in case a bad message gets on the starboard
 
 - Advanced customization, giving you complete control over the bot
 

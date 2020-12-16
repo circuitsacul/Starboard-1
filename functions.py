@@ -73,9 +73,18 @@ async def get_one_prefix(bot, guild_id: int):
 
 
 async def list_prefixes(bot, guild_id: int):
-    prefixes = bot.db.prefix_cache.get(guild_id, [])
-    prefix_list = [bot_config.DEFAULT_PREFIX] if prefixes == [] else\
-        [p for p in prefixes]
+    get_guild = \
+        """SELECT * FROM guilds WHERE id=$1"""
+
+    await check_or_create_existence(
+        bot, guild_id=guild_id
+    )
+
+    async with bot.db.lock:
+        async with bot.db.conn.transaction():
+            guild = await bot.db.conn.fetchrow(get_guild, guild_id)
+
+    prefix_list = [p for p in guild['prefixes']]
 
     return prefix_list
 
@@ -88,13 +97,19 @@ async def add_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
         return False, \
             "That prefix is too long. It must be less than 9 characters."
 
-    conn = await bot.db.connect()
-    async with conn.transaction():
-        await check_or_create_existence(
-            bot.db, conn, bot, guild_id=guild_id
-        )
-        await bot.db.q.create_prefix.fetch(guild_id, prefix)
-    bot.db.prefix_cache[guild_id].append(prefix)
+    modify_guild = \
+        """UPDATE guilds
+        SET prefixes=$1
+        WHERE id=$2"""
+
+    current_prefixes.append(prefix)
+    await check_or_create_existence(
+        bot, guild_id=guild_id
+    )
+    async with bot.db.lock:
+        conn = await bot.db.connect()
+        async with conn.transaction():
+            await conn.execute(modify_guild, current_prefixes, guild_id)
     return True, ''
 
 
@@ -103,14 +118,17 @@ async def remove_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
     if prefix not in current_prefixes:
         return False, "That prefix does not exist"
 
-    del_prefix = \
-        """DELETE FROM prefixes WHERE prefix=$1 AND guild_id=$2"""
+    current_prefixes.remove(prefix)
 
-    conn = await bot.db.connect()
-    async with conn.transaction():
-        await conn.execute(del_prefix, prefix, guild_id)
+    modify_guild = \
+        """UPDATE guilds
+        SET prefixes=$1
+        WHERE id=$2"""
 
-    bot.db.prefix_cache[guild_id].remove(prefix)
+    async with bot.db.lock:
+        conn = await bot.db.connect()
+        async with conn.transaction():
+            await conn.execute(modify_guild, current_prefixes, guild_id)
 
     return True, ''
 
@@ -127,7 +145,7 @@ async def check_single_exists(conn, sql, params):
 
 
 async def check_or_create_existence(
-    db, conn, bot, guild_id=None, user=None,
+    bot, guild_id=None, user=None,
     starboard_id=None, do_member=False, create_new=True,
     user_is_id=False,
 ):
@@ -140,13 +158,17 @@ async def check_or_create_existence(
     check_member = \
         """SELECT * FROM members WHERE user_id=$1 AND guild_id=$2"""
 
+    db = bot.db
+    conn = bot.db.conn
+
     if guild_id is not None:
-        gexists = await check_single_exists(conn, check_guild, (guild_id,))
-        if not gexists and create_new:
-            await db.q.create_guild.fetch(guild_id)
-            prefixes = await list_prefixes(bot, guild_id)
-            if len(prefixes) == 0:
-                await add_prefix(bot, guild_id, bot_config.DEFAULT_PREFIX)
+        async with bot.db.lock:
+            async with conn.transaction():
+                gexists = await check_single_exists(
+                    conn, check_guild, (guild_id,)
+                )
+                if not gexists and create_new:
+                    await db.q.create_guild.fetch(guild_id)
     else:
         gexists = None
 
@@ -158,32 +180,42 @@ async def check_or_create_existence(
                 uexists = None
             else:
                 user = users[0]
-                uexists = await check_single_exists(
-                    conn, check_user, (user.id,)
-                )
-                if not uexists and create_new:
-                    await db.q.create_user.fetch(user.id, user.bot)
+                async with bot.db.lock:
+                    async with conn.transaction():
+                        uexists = await check_single_exists(
+                            conn, check_user, (user.id,)
+                        )
+                        if not uexists and create_new:
+                            await db.q.create_user.fetch(user.id, user.bot)
         else:
-            uexists = await check_single_exists(conn, check_user, (user.id,))
-            if not uexists and create_new:
-                await db.q.create_user.fetch(user.id, user.bot)
+            async with bot.db.lock:
+                async with conn.transaction():
+                    uexists = await check_single_exists(
+                        conn, check_user, (user.id,)
+                    )
+                    if not uexists and create_new:
+                        await db.q.create_user.fetch(user.id, user.bot)
     else:
         uexists = None
 
     if starboard_id is not None and guild_id is not None:
-        s_exists = await check_single_exists(
-            conn, check_starboard, (starboard_id,)
-        )
-        if not s_exists and create_new:
-            await db.q.create_starboard.fetch(starboard_id, guild_id)
+        async with bot.db.lock:
+            async with conn.transaction():
+                s_exists = await check_single_exists(
+                    conn, check_starboard, (starboard_id,)
+                )
+                if not s_exists and create_new:
+                    await db.q.create_starboard.fetch(starboard_id, guild_id)
     else:
         s_exists = None
     if do_member and user is not None and guild_id is not None:
-        mexists = await check_single_exists(
-            conn, check_member, (user.id, guild_id)
-        )
-        if not mexists and create_new:
-            await db.q.create_member.fetch(user.id, guild_id)
+        async with bot.db.lock:
+            async with conn.transaction():
+                mexists = await check_single_exists(
+                    conn, check_member, (user.id, guild_id)
+                )
+                if not mexists and create_new:
+                    await db.q.create_member.fetch(user.id, guild_id)
 
     else:
         mexists = None
@@ -321,3 +353,81 @@ async def orig_message_id(db, conn, message_id):
     rows = await conn.fetch(get_message, orig_messsage_id)
     sql_orig_message = rows[0]
     return int(orig_messsage_id), int(sql_orig_message['channel_id'])
+
+
+async def is_user_blacklisted(
+    bot: commands.Bot,
+    member: discord.Member,
+    starboard_id: int
+) -> None:
+    get_blacklisted_roles = \
+        """SELECT * FROM rolebl WHERE starboard_id=$1
+        AND is_whitelist=False"""
+    get_whitelisted_roles = \
+        """SELECT * FROM rolebl WHERE starboard_id=$1
+        AND is_whitelist=True"""
+
+    status = True
+
+    conn = bot.db.conn
+    async with bot.db.lock:
+        async with conn.transaction():
+            sql_rolebl = await conn.fetch(
+                get_blacklisted_roles, starboard_id
+            )
+            sql_rolewl = await conn.fetch(
+                get_whitelisted_roles, starboard_id
+            )
+
+    rolebl = [int(r['role_id']) for r in sql_rolebl]
+    rolewl = [int(r['role_id']) for r in sql_rolewl]
+
+    if rolebl == [] and rolewl != []:
+        status = False
+    else:
+        for rid in rolebl:
+            if rid in [r.id for r in member.roles]:
+                status = False
+    for rid in rolewl:
+        if rid in [r.id for r in member.roles]:
+            status = True
+
+    return not status
+
+
+async def is_message_blacklisted(
+    bot: commands.Bot,
+    message: discord.Message,  # assumes that it is the original,
+    starboard_id: int
+) -> bool:
+    get_blacklisted_channels = \
+        """SELECT * FROM channelbl WHERE starboard_id=$1
+        AND is_whitelist=False"""
+    get_whitelisted_channels = \
+        """SELECT * FROM channelbl WHERE starboard_id=$1
+        AND is_whitelist=True"""
+
+    channel_status = True
+
+    conn = bot.db.conn
+    async with bot.db.lock:
+        async with conn.transaction():
+            sql_channelbl = await conn.fetch(
+                get_blacklisted_channels, starboard_id
+            )
+            sql_channelwl = await conn.fetch(
+                get_whitelisted_channels, starboard_id
+            )
+
+    channelbl = [int(c['channel_id']) for c in sql_channelbl]
+    channelwl = [int(c['channel_id']) for c in sql_channelwl]
+
+    # Check channel status
+    if channelwl != []:
+        if message.channel.id not in channelwl:
+            channel_status = False
+    else:
+        if message.channel.id in channelbl:
+            channel_status = False
+
+    return not channel_status  # both must be true
