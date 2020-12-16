@@ -3,6 +3,7 @@ import discord
 import bot_config
 import settings
 import functions
+import datetime
 from discord import utils
 from discord.ext import commands
 from typing import Union
@@ -39,7 +40,9 @@ class AutoStarChannels(commands.Cog):
     async def on_message(self, message):
         bucket = self.cooldown.get_bucket(message)
         retry_after = bucket.update_rate_limit(
-            message.created_at.timestamp()
+            message.created_at.replace(
+                tzinfo=datetime.timezone.utc
+            ).timestamp()
         )
         if retry_after:
             return
