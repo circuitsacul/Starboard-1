@@ -376,11 +376,6 @@ async def on_command_error(ctx, error):
         error = "I don't have the permissions to do that!"
     elif type(error) is discord.http.Forbidden:
         error = "I don't have the permissions to do that!"
-    #elif type(error) is discord.ext.commands.errors.CommandInvokeError:
-    #    if "Forbidden" in str(error):
-    #        error = "I don't have the permissions to do that"
-    #    elif "ValueError" in str(error):
-    #        error = str(error)
     else:
         print(f"Error {type(error)}: {error}")
         traceback.print_exception(
