@@ -76,6 +76,10 @@ async def list_prefixes(bot, guild_id: int):
     get_guild = \
         """SELECT * FROM guilds WHERE id=$1"""
 
+    await check_or_create_existence(
+        bot, guild_id=guild_id
+    )
+
     async with bot.db.lock:
         async with bot.db.conn.transaction():
             guild = await bot.db.conn.fetchrow(get_guild, guild_id)
