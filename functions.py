@@ -94,6 +94,7 @@ async def add_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
             bot.db, conn, bot, guild_id=guild_id
         )
         await bot.db.q.create_prefix.fetch(guild_id, prefix)
+    bot.db.prefix_cache.setdefault(guild_id, [])
     bot.db.prefix_cache[guild_id].append(prefix)
     return True, ''
 
@@ -110,7 +111,10 @@ async def remove_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
     async with conn.transaction():
         await conn.execute(del_prefix, prefix, guild_id)
 
-    bot.db.prefix_cache[guild_id].remove(prefix)
+    try:
+        bot.db.prefix_cache[guild_id].remove(prefix)
+    except Exception:
+        return False, "You can't remove the default prefix"
 
     return True, ''
 
