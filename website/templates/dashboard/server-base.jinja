@@ -1,0 +1,42 @@
+{% extends 'base.jinja' %}
+
+{% block topstatic %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/server-base.css') }}">
+{% endblock %}
+
+{% block content %}
+<script>
+    let currentGuildId = "{{ gid }}";
+</script>
+
+<!--
+<div class="tab">
+    <button class="tablinks active" onclick="">General</button>
+    <button class="tablinks" onclick="">Starboards</button>
+    <button class="tablinks" onclick="">AutoStar Channels</button>
+</div>
+!-->
+
+<div style="width: 100%">
+    <div class='container bg-dark settings-container'>
+        <div class="row d-flex justify-content-center align-items-middle bg-transparent">
+            <div class='col-md-5 setting-card'>
+                <h3 class='text-center'>Prefixes</h3>
+                <input id='add-prefix-input' class='form-control my-form-control' type='text' maxlength=8 placeholder="Enter a prefix to add">
+                <br>
+                <ul class="list-group" id="prefix-list">
+                </ul>
+            </div>
+            <div class='col-md-5 setting-card'>
+                <h3 class='text-center'>Starboards</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/server-general.js') }}"></script>
+
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

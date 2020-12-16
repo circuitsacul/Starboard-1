@@ -1,0 +1,174 @@
+{% extends 'base.jinja' %}
+
+{% block topstatic %}
+<link rel='stylesheet' href="{{ url_for('static', filename='css/home.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class='jumbotron jumbotron-fluid bg-transparent bottom-yellow-wave-1 jumbo-nomargin outer-home-div'>
+    <div class='main-home-div'>
+        <h1 class='text-center'>Starboard</h1>
+        <h4 class='text-center'>The most advanced starboard</h4>
+        <p class='text-center'>{{ gcount }} servers | {{ mcount }} users</p>
+        <div class="justify-content-center align-items-middle bg-transparent text-center">
+            <a class='btn mybtn btn-myprimary' href="{{ url_for('servers') }}">Get Started</a>
+            <a class='btn mybtn btn-mysecondary' href="#features">See Features</a>
+        </div>
+    </div>
+</div>
+<div id='features'></div>
+<div class='jumbotron jumbotron-fluid bg-myyellow bottom-dgrey-wave-1'>
+    <h2 class='text-center' style="color: black;">Why This Starboard?</h2>
+    <p class='text-center' style="color: darkslategrey;">There are so many bots that come with a starboard - but here's why this one is better:</p>
+    <div class='container bot-features'>
+        <div class="row d-flex justify-content-center align-items-middle bg-transparent">
+            <div class='col-md-3 text-center feature-card'>
+                <h3>Multiple Starboards</h3>
+                Each server can have up to 3 starboards
+                <br>
+                <button type='button' class='btn btn-myprimary feature-button' data-toggle='modal' data-target="#starboardsModal">
+                    Read More
+                </button>
+            </div>
+            <div class='col-md-3 text-center feature-card'>
+                <h3>Multiple Emojis</h3>
+                Multiple star emojis per for each starboard
+                <br>
+                <button type='button' class='btn btn-myprimary feature-button' data-toggle='modal' data-target="#emojisModal">
+                    Read More
+                </button>
+            </div>
+            <div class='col-md-3 text-center feature-card'>
+                <h3>Message Moderation</h3>
+                Easy message management for keeping the starboard clean and quality
+                <br>
+                <button type='button' class='btn btn-myprimary feature-button' data-toggle='modal' data-target='#modModal'>
+                    Read More
+                </button>
+            </div>
+            <div class='col-md-3 text-center feature-card'>
+                <h3>AutoStar Channels</h3>
+                Channels where the bot automatically star messages, so other users can star them easily
+                <br>
+                <button type='button' class='btn btn-myprimary feature-button' data-toggle='modal' data-target='#autostarModal'>
+                    Read More
+                </button>
+            </div>
+            <div class='col-md-3 text-center feature-card'>
+                <h3>Leveling and XP</h3>
+                Users gain XP every minute they receive stars, gaining levels and working their way up the leaderboard
+                <br>
+                <button type='button' class='btn btn-myprimary feature-button' data-toggle='modal' data-target='#xpModal'>
+                    Read More
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class='jumbotron jumbotron-fluid bg-transparent'>
+    <h2 class='text-center'>Ready to try Starboard?</h2>
+    <div class="justify-content-center align-items-middle bg-transparent text-center">
+        <a class='btn mybtn btn-myprimary' href="{{ url_for('servers') }}">Get Started</a>
+    </div>
+</div>
+
+<div class='modal fade' id='starboardsModal'>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class='modal-content bg-dark'>
+
+            <div class='modal-header'>
+                <h1>Multiple Starboards</h1>
+                <button type='button' class='close' data-dismiss='modal'>×</button>
+            </div>
+
+            <div class='modal-body'>
+                <p>Unlike most starboards, this bot allows you to have multiple starboards, each with its own configuration. For example, you could have a regular starboard, which requires 3 stars, and a super-starboard, which requires 5 stars.
+            </div>
+
+            <div class='modal-footer'>
+                <button type='button' class='btn btn-mysecondary' data-dismiss='modal'>Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class='modal fade' id='emojisModal'>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class='modal-content bg-dark'>
+
+            <div class='modal-header'>
+                <h1>Multiple Emojis</h1>
+                <button type='button' class='close' data-dismiss='modal'>×</button>
+            </div>
+
+            <div class='modal-body'>
+                <p>Each of your starboards can have multiple "star" emojis on them, normal or custom, giving your users multiple ways to star messages.
+            </div>
+
+            <div class='modal-footer'>
+                <button type='button' class='btn btn-mysecondary' data-dismiss='modal'>Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class='modal fade' id='modModal'>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class='modal-content bg-dark'>
+
+            <div class='modal-header'>
+                <h1>Message Moderation</h1>
+                <button type='button' class='close' data-dismiss='modal'>×</button>
+            </div>
+
+            <div class='modal-body'>
+                <p>Starboard comes with very useful message moderation features, such as trashing, which effectively deletes a message from all starboards, forcing, which sends a message to the starboard regardless of its stars, and freezing, which prevents a message from gaining or loosing stars.</p>
+            </div>
+
+            <div class='modal-footer'>
+                <button type='button' class='btn btn-mysecondary' data-dismiss='modal'>Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class='modal fade' id='autostarModal'>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class='modal-content bg-dark'>
+
+            <div class='modal-header'>
+                <h1>AutoStar Channels</h1>
+                <button type='button' class='close' data-dismiss='modal'>×</button>
+            </div>
+
+            <div class='modal-body'>
+                <p>A unique feature of this starboard is AutoStar channels. These are channels where messages sent will be automatically starred, if they meet the requirments you set. You can set a character limit, wether or not it requires an image, and wether invalid messages are auto-deleted.</p>
+            </div>
+
+            <div class='modal-footer'>
+                <button type='button' class='btn btn-mysecondary' data-dismiss='modal'>Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class='modal fade' id='xpModal'>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class='modal-content bg-dark'>
+
+            <div class='modal-header'>
+                <h1>Leveling and XP</h1>
+                <button type='button' class='close' data-dismiss='modal'>×</button>
+            </div>
+
+            <div class='modal-body'>
+                <p>Most starboard bots simply count the number of stars a user receives. While this works, this encourages things like star-for-star and reaction spamming. This bot takes a different approach. Every minute a user stars another user, that user receives 1 XP. Then, the more XP they gain, the higher their level is, giving servers a spam-free but still fun leaderboard system.</p>
+            </div>
+
+            <div class='modal-footer'>
+                <button type='button' class='btn btn-mysecondary' data-dismiss='modal'>Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

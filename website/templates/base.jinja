@@ -1,0 +1,140 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Starboard" />
+    <meta property="og:description" content="The best discord starboard" />
+    <meta property="og:url" content="" />
+    <meta property="og:image" content="{{ url_for('static', filename='img/starboard-logo.png') }}"/>
+
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>{% block title %}Starboard{% endblock %}</title>
+
+    <style>
+    .bottom-yellow-wave-1{
+        background-image: url("{{ url_for('static', filename='img/yellow-wave-1.png') }}");
+        background-position: bottom;
+        background-repeat: no-repeat;
+        background-size: 100% 250px;
+    }
+
+    .bottom-dgrey-wave-1 {
+        background-image: url("{{ url_for('static', filename='img/grey-wave-1.png') }}");
+        background-position: bottom;
+        background-repeat: no-repeat;
+        background-size: 100% 250px;
+    }
+
+    .bottom-grey-wave-1 {
+        background-image: url("{{ url_for('static', filename='img/lightgrey-wave-1.png') }}");
+        background-position: bottom;
+        background-repeat: no-repeat;
+        background-size: 100% 250px;
+    }
+    </style>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/starboard-logo.png') }}">
+
+    {% block topstatic %}
+    {% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg bg-dark navbar-dark" id='thenavbar'>
+        <a class="navbar-brand" href="{{ url_for('home') }}">
+            <img src="{{ url_for('static', filename='img/starboard-logo.png') }}" style='width: 40px;'>
+        </a>
+
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="collapsibleNavbar">
+            <ul class="navbar-nav mr-auto">
+                <li class='nav-item'>
+                    <a class='nav-link' href='{{ url_for("home") }}'>Home</a>
+                </li>
+                <li class='nav-item'>
+                    <a class='nav-link' href="{{ url_for('servers') }}">Dashboard</a>
+                </li>
+                <li class='nav-item'>
+                    <a class='nav-link' href="{{ url_for('show_partners') }}">Partners</a>
+                </li>
+                <li class='nav-item'>
+                    <a class='nav-link' href="{{ url_for('support') }}" target='_blank'>Discord</a>
+                </li>
+            </ul>
+            <ul class='navbar-nav'>
+                {% if guild %}
+                    <li class='nav-item dropdown'>
+                        <a class='nav-link dropdown-toggle' href="#" id="navbardrop" data-toggle="dropdown">
+                            <img src="{{ icon }}" alt="Server Icon" style="width: 30px;" class="rounded-circle">
+                            {{ guild.name }}
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right" style="background-color: #2d3236">
+                            <a class="dropdown-item my-dropdown-btn" href="{{ url_for('servers') }}">Back to All Servers</a>
+                        </div>
+                    </li>
+                {% endif %}
+                {% if authorized %}
+                    <li class='nav-item dropdown'>
+                        <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
+                            <img src="{{ user.avatar_url }}" alt="Your Avatar" style='width: 30px;' class='rounded-circle'>
+                            {{ user.name }}#{{ user.discriminator }}
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right" style="background-color: #2d3236">
+                            <a class="dropdown-item my-dropdown-btn" href="{{ url_for('servers') }}">Servers</a>
+                            <a class="dropdown-item my-dropdown-btn">Premium</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item my-dropdown-btn" href="{{ url_for('logout') }}">Logout</a>
+                        </div>
+                    </li>
+                {% else %}
+                    <li class='nav-item'>
+                        <a class='nav-link' href="{{ url_for('login') }}">Login</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    {% block content %}
+    {% endblock %}
+
+    {% block footer %}
+        <div class='jumbotron jumbotron-fluid bg-transparent bottom-grey-wave-1 jumbo-nomargin footer'>
+            <div class='container text-center'>
+                {% block footerbody %}
+                <a href="{{ url_for('github') }}" target='_blank'>GitHub</a><br>
+                <a href='https://patreon.com/CircuitSacul' target='_blank'>Patreon</a><br>
+                <a href='https://donatebot.io/checkout/725336160112738385' target='_blank'>Donate</a><br>
+                <a href="{{ url_for('support') }}" target='_blank'>Support</a><br>
+                <a href="{{ url_for('invite') }}" target='_blank'>Invite</a>
+                {% endblock %}
+            </div>
+        </div>
+    {% endblock %}
+
+    <script type="text/javascript">
+        var csrf_token = "{{ csrf_token() }}";
+
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrf_token);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

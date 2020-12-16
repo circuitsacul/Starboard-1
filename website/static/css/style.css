@@ -1,0 +1,124 @@
+html {
+    scroll-behavior: smooth;
+}
+
+a {
+    transition: 0.1s;
+    color: rgba(255,255,255,.5);
+    text-decoration: none;
+}
+
+a:hover {
+    color: rgba(255,255,255, 0.8);
+    text-decoration: none;
+}
+
+body {
+    background-color: #23272A;
+    color: white;
+}
+
+.footer {
+    height: 300px!important;
+    padding-top: 150px!important;
+    background-size: 100% 100% !important;
+}
+
+.mybtn {
+    margin: 5px;
+    width: 200px!important;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.btn-myprimary {
+    background-color: #ffe16c;
+    border: 2px solid #ffe16c;
+}
+
+.btn-myprimary:hover {
+    background-color: #e2c862;
+    border: 2px solid #e2c862;
+    color: black;
+}
+
+.btn-mysecondary {
+    background-color: transparent;
+    border: 2px solid #ffe16c;
+    color: #ffe16c;
+}
+
+.btn-mysecondary:hover {
+    background-color: #ffe16c;
+    color: black;
+}
+
+.jumbo-nomargin {
+    margin: 0px !important;
+}
+
+.bg-transparent {
+    background-color: transparent !important;
+}
+
+.sb-text-yellow {
+    color: #ffe16c;
+}
+
+.bg-myyellow {
+    background-color: #ffe16c;
+}
+
+.server-box-container {
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.server-box {
+    transition: 0.25s;
+    text-align: center;
+    border-radius: 5px;
+    margin: 5px;
+    padding: 0px;
+}
+
+.inner-server-box {
+    padding: 5px;
+    width: 100%;
+    height: 100%;
+}
+
+.server-box:hover {
+    transition: 0.25s;
+    background-color: #ffe16c;
+    transform: translate(0, -5px);
+    box-shadow: 5px 5px 6px rgb(26, 26, 26);
+}
+
+.server-box a {
+    transition: 0.25s;
+    text-decoration: none;
+    color: white;
+}
+
+.server-box:hover a {
+    transition: 0.25s;
+    color: black;
+}
+
+#logout-dropdown-btn {
+    color: white;
+}
+
+#logout-dropdown-btn:hover {
+    background-color: #dc3545;
+}
+
+.my-dropdown-btn {
+    color: white;
+}
+
+.my-dropdown-btn:hover {
+    background-color: #ffe16c;
+    color: black;
+}

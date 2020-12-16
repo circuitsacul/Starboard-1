@@ -6,3 +6,6 @@ disputils
 aiohttp-requests
 statcord.py
 dblpy
+quart
+discord-ext-ipc
+Quart-Discord

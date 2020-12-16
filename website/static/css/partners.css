@@ -1,0 +1,47 @@
+.partner-box-container {
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.partner-box {
+    transition: 0.25s;
+    margin: 10px;
+    border-radius: 10px 10px 10px 10px;
+    border: 4px solid transparent;
+    padding: 5px;
+}
+
+.partner-box:hover {
+    transition: 0.25s;
+    transform: translate(0px, -5px);
+    box-shadow: 5px 5px 6px rgb(26, 26, 26);
+}
+
+.inner-partner-box {
+    margin: 0px;
+    padding: 0px;
+    height: 100%;
+}
+
+.partner-splash-area {
+    margin: 0px;
+    padding: 0px;
+    text-align: center;
+}
+
+.partner-splash-area img {
+    margin: 0px;
+    padding: 0px;
+    max-height: 40px;
+    max-width: 40px;
+    border-radius: 100%;
+}
+
+.partner-box a {
+    color: white;
+    text-decoration: none;
+}
+
+.partner-desc {
+    padding: 10px;
+}
