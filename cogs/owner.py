@@ -14,6 +14,7 @@ from discord.ext import commands
 def ms(t):
     return round(t*1000, 5)
 
+
 class Owner(commands.Cog):
     def __init__(self, bot, db):
         self.db = db
@@ -225,6 +226,32 @@ class Owner(commands.Cog):
             await self.bot.db.conn.dump()
 
         await ctx.send("Done")
+
+    @commands.command(name='clean')
+    @commands.is_owner()
+    async def clean_database(self, ctx):
+        """Cleans several different things from the database"""
+
+        conn = self.bot.db.conn
+
+        # Remove starboard messages of starboards that were deleted
+        get_starboards = \
+            """SELECT * FROM starboards"""
+        clean_sb_messages = \
+            """DELETE FROM messages
+            WHERE channel_id!=ALL($1::numeric[])
+            AND is_orig=False"""
+
+        await ctx.send("Removing messages...")
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                starboards = await conn.fetch(
+                    get_starboards
+                )
+                sids = [s['id'] for s in starboards]
+                await conn.execute(clean_sb_messages, sids)
+
+        await ctx.send("Finished cleaning")
 
 
 def setup(bot):
