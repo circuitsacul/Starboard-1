@@ -43,22 +43,21 @@ class Starboard(commands.Cog):
             AND is_forced=False
             AND is_trashed=False
             AND is_orig=False
-            AND is_nsfw=False
-            AND points>=$2
-            """ +
-            ("AND channel_id=$3" if starboard else "")
+            AND is_nsfw=False""" +
+            (" AND points>=$2" if stars != 0 or starboard else "") +
+            (" AND channel_id=$3" if starboard else "")
         )
         conn = self.bot.db.conn
         async with self.bot.db.lock:
             async with conn.transaction():
+                args = []
+                if stars != 0 or starboard:
+                    args.append(stars)
                 if starboard:
-                    m = await conn.fetch(
-                        query, ctx.guild.id, stars, starboard.id
-                    )
-                else:
-                    m = await conn.fetch(
-                        query, ctx.guild.id, stars
-                    )
+                    args.append(starboard.id)
+                m = await conn.fetch(
+                    query, ctx.guild.id, *args
+                )
 
         if len(m) == 0:
             await ctx.send(
