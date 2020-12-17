@@ -1,6 +1,7 @@
 import discord
 import bot_config
 from discord.ext import commands
+from discord import utils
 
 
 pages = {
@@ -185,6 +186,32 @@ numer_emojis = [
 stop_emoji = "⏹️"
 
 
+def get_usage(
+    ctx, command: commands.Command
+):
+    clean_prefix = utils.escape_markdown(ctx.prefix)
+    usage = (
+        f"{clean_prefix}{command.qualified_name} {command.signature}"
+    )
+    return usage
+
+
+def get_command_embed(
+    ctx, command: commands.Command
+):
+    usage = get_usage(ctx, command)
+    embed = discord.Embed(
+        title='Command Help',
+        description=command.description,
+        color=bot_config.COLOR
+    )
+    embed.add_field(
+        name='Usage',
+        value=f"```\n{usage}\n```"
+    )
+    return embed
+
+
 async def showpage(message, embed):
     await message.edit(embed=embed)
 
@@ -195,11 +222,33 @@ class HelpCommand(commands.Cog):
 
     @commands.command(
         name='help', aliases=['h', '?'],
+        brief="Get help with the bot",
+        description="Get help with the bot"
+    )
+    @commands.bot_has_permissions(send_messages=True)
+    async def help(self, ctx, *, command: str = None):
+        p = ctx.prefix
+        if not command:
+            await ctx.send(
+                "For a tutorial on using the bot, run "
+                f"`{p}tutorial`. To get help on a specific "
+                f"command, run `{p}help <command>`"
+            )
+        else:
+            cmd = self.bot.get_command(command)
+            if not cmd:
+                await ctx.send("I couldn't find that command")
+                return
+            e = get_command_embed(ctx, cmd)
+            await ctx.send(embed=e)
+
+    @commands.command(
+        name='tutorial',
         description='Get help with the bot',
         brief='Get help with the bot'
     )
     @commands.bot_has_permissions(embed_links=True, send_messages=True)
-    async def help_command(self, ctx):
+    async def run_tutorial(self, ctx):
         embeds = [
             discord.Embed(
                 title=t,
