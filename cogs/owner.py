@@ -267,7 +267,17 @@ class Owner(commands.Cog):
     async def gitpull(self, ctx):
         async with ctx.typing():
             output = out('git pull')
-        await ctx.send(output)
+        await ctx.send(f"```dif\n{output}\n```")
+
+
+    @commands.command(name='run')
+    @commands.is_owner()
+    async def run_command(self, ctx, *, command: str):
+        async with ctx.typing():
+            output = out(command)
+        if len(output) > 2000:
+            output = output[0:2000] + '...'
+        await ctx.send(f"```\n{output}\n```")
 
 
     @commands.command(name='reload')
