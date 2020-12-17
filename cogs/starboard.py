@@ -29,13 +29,18 @@ class Starboard(commands.Cog):
         self.db = db
 
     @commands.command(
-        name='random', aliases=['explore']
+        name='random', aliases=['explore'],
+        brief="Get a random message from the starboard"
     )
     @commands.guild_only()
     async def random_message(
         self, ctx,
         stars: int = None
     ):
+        """Gets a ramdom message form the starboard.
+
+        [stars] is an optional argument specifying the minimum
+        number of stars a message must have"""
         query = (
             """SELECT * FROM messages
             WHERE orig_message_id IN (

@@ -202,7 +202,7 @@ def get_command_embed(
     usage = get_usage(ctx, command)
     embed = discord.Embed(
         title='Command Help',
-        description=command.description,
+        description=command.description + '\n\n' + command.help,
         color=bot_config.COLOR
     )
     embed.add_field(
