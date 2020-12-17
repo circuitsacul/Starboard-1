@@ -38,11 +38,14 @@ class Starboard(commands.Cog):
     ):
         query = (
             """SELECT * FROM messages
-            WHERE guild_id=$1
-            AND is_forced=False
-            AND is_trashed=False
-            AND is_orig=False
-            AND is_nsfw=False""" +
+            WHERE orig_message_id IN (
+                SELECT id FROM messages
+                WHERE is_trashed=False
+                AND is_forced=False
+                AND is_nsfw=False
+            )
+            AND guild_id=$1
+            AND is_orig=False""" +
             (" AND points>=$2" if stars is not None else '')
         )
         conn = self.bot.db.conn
