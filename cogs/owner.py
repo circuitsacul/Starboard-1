@@ -262,14 +262,6 @@ class Owner(commands.Cog):
 
         await ctx.send("Finished cleaning")
 
-    @commands.command(name='pull')
-    @commands.is_owner()
-    async def gitpull(self, ctx):
-        async with ctx.typing():
-            output = out('git pull')
-        await ctx.send(f"```dif\n{output}\n```")
-
-
     @commands.command(name='run')
     @commands.is_owner()
     async def run_command(self, ctx, *, command: str):
