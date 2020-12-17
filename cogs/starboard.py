@@ -42,8 +42,15 @@ class Starboard(commands.Cog):
     ):
         """Gets a ramdom message form the starboard.
 
-        [stars] is an optional argument specifying the minimum
-        number of stars a message must have"""
+        [--by] is an optional argument specifying the author
+        of the message.
+
+        [--stars] is an optional argument specifying the minimum
+        number of stars a message must have
+
+        [--in] is an optional argument specifying the starboard
+        to search for messages in
+        """
 
         stars = flags['stars']
         starboard = flags['in']
