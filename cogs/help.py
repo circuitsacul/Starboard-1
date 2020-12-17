@@ -13,15 +13,17 @@ pages = {
         "this project, you can view information with "
         "`sb!donate`."
     ),
-    'General Settings': (
+    'General Settings/Commands': (
         "This bot allows you to have multiple "
         "custom prefixes.\n\n"
         "**sb!prefixes:**\nList all of your prefixes\n\n"
         "**sb!prefix add <prefix>:**\nAdds a prefix\n\n"
         "**sb!prefix remove <prefix>:**\n"
-        "Removes a prefix"
+        "Removes a prefix\n\n"
+        "**sb!random [min-stars] [#starboard]:**\n"
+        "Sends a random starred message\n\n"
     ),
-    'Starboards': (
+    'Starboard Commands': (
         "Starboards are like democratic pins. "
         "A user can vote to pin a message by "
         "reacting to it with :star:, and after "
@@ -29,9 +31,7 @@ pages = {
         "it is sent to the starboard. "
         "\n\nTo setup Starboard, run `sb!setup`. \n"
         "Alternatively, you can use the normal commands "
-        "Wich are listed on the next page."
-    ),
-    'Starboard Commands': (
+        "Wich are listed on the next page.\n\n"
         "(`sb!s` is an alternative way of typing "
         "`sb!starboards`)\n\n"
         "**sb!starboards:**\nView a list of starboards\n\n"
@@ -76,7 +76,7 @@ pages = {
         "then bot messages cannot be starred\n"
         "`sb!s bos <channel> <true|false>`"
     ),
-    'AutoStar Channels': (
+    'AutoStar Channel Commands': (
         "AutoStar channels are channels where the "
         "bot will automatically react to messages "
         "with certain emojis (which you can set). "
@@ -85,9 +85,7 @@ pages = {
         "(minChars), wether or not an image is required "
         "(requireImage), and wether or not to delete "
         "messages that don't meet the requirements. "
-        "Go to the next page for instructions on setting up."
-    ),
-    'AutoStar Channel Commands': (
+        "\n\n"
         "AutoStar channels can be setup using the "
         "setup wizard, `sb!setup`. Alternatively, you can "
         "use these commands to manage them:\n\n"
@@ -151,6 +149,25 @@ pages = {
         "This system is a bit confusing, so if you ever "
         "need help, mention me for a link to the support "
         "server."
+    ),
+    'Message Moderation': (
+        "With this bot, you can manage messages easily.\n\n"
+        "**sb!force <message id> [channel]**\n"
+        "Sends a message to all starboards, regardless "
+        "of the number of stars it actually has."
+        "**sb!unforce <message id> [channel]**\n"
+        "Unforces a message\n"
+        "**sb!trash <message id> [channel]**\n"
+        "Trashes a message to hide it's content and prevent "
+        "it from appearing on starboards\n\n"
+        "**sb!untrash <message id> [channel]**\n"
+        "Untrashes a message\n\n"
+        "**sb!freeze <message id> [channel]**\n"
+        "Prevents a message from loosing or gaining "
+        "reactions\n\n"
+        "**sb!unfreeze <message id> [channel]**\n"
+        "Unfreezes a message\n\n"
+        "**sb!frozen**\nView a list of frozen messages"
     )
 }
 
