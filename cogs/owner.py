@@ -273,14 +273,22 @@ class Owner(commands.Cog):
 
     @commands.command(name='reload')
     @commands.is_owner()
-    async def reoloadext(self, ctx, ext: str):
+    async def reoloadext(self, ctx, ext: str = None):
+        message = (
+            f"Reloaded {ext}" if ext else
+            "Reloaded all extensions"
+        )
         try:
             async with ctx.typing():
-                self.bot.reload_extension(ext)
+                if ext:
+                    self.bot.reload_extension(ext)
+                else:
+                    for extname in self.bot.extensions:
+                        self.bot.reload_extension(extname)
         except Exception as e:
             await ctx.send(f"Failed: {e}")
         else:
-            await ctx.send(f"Reloaded `{ext}`")
+            await ctx.send(message)
 
 
 def setup(bot):
