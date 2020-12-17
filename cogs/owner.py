@@ -3,6 +3,7 @@ import discord
 import checks
 import time
 import bot_config
+from subprocess import PIPE, run
 from paginators import disputils
 from asyncpg.exceptions._base import InterfaceError
 from discord.ext import tasks
@@ -13,6 +14,14 @@ from discord.ext import commands
 
 def ms(t):
     return round(t*1000, 5)
+
+
+def out(command):
+    result = run(
+        command, stdout=PIPE, stderr=PIPE,
+        universal_newlines=True, shell=True
+    )
+    return result.stdout
 
 
 class Owner(commands.Cog):
@@ -252,6 +261,25 @@ class Owner(commands.Cog):
                 await conn.execute(clean_sb_messages, sids)
 
         await ctx.send("Finished cleaning")
+
+    @commands.command(name='pull')
+    @commands.is_owner()
+    async def gitpull(self, ctx):
+        async with ctx.typing():
+            output = out('git pull')
+        await ctx.send(output)
+
+
+    @commands.command(name='reload')
+    @commands.is_owner()
+    async def reoloadext(self, ctx, ext: str):
+        try:
+            async with ctx.typing():
+                self.bot.reload_extension(ext)
+        except Exception as e:
+            await ctx.send(f"Failed: {e}")
+        else:
+            await ctx.send(f"Reloaded `{ext}`")
 
 
 def setup(bot):
