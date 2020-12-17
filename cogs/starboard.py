@@ -36,6 +36,7 @@ class Starboard(commands.Cog):
         name='random', aliases=['explore'],
         brief="Get a random message from the starboard"
     )
+    @commands.cooldown(3, 5, type=commands.BucketType.user)
     @commands.guild_only()
     async def random_message(
         self, ctx, **flags
