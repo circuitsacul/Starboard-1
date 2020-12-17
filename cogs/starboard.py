@@ -5,6 +5,7 @@ import settings
 import random
 from events import starboard_events
 from discord.ext import commands
+from discord.ext import flags
 from typing import Union
 from settings import change_starboard_settings
 
@@ -28,19 +29,34 @@ class Starboard(commands.Cog):
         self.bot = bot
         self.db = db
 
-    @commands.command(
+    @flags.add_flag('--by', type=discord.User, default=None)
+    @flags.add_flag('--stars', type=int, default=None)
+    @flags.add_flag('--in', type=discord.TextChannel, default=None)
+    @flags.command(
         name='random', aliases=['explore'],
         brief="Get a random message from the starboard"
     )
     @commands.guild_only()
     async def random_message(
-        self, ctx,
-        stars: int = None
+        self, ctx, **flags
     ):
         """Gets a ramdom message form the starboard.
 
         [stars] is an optional argument specifying the minimum
         number of stars a message must have"""
+
+        stars = flags['stars']
+        starboard = flags['in']
+        user = flags['by']
+
+        sid = None
+        uid = None
+
+        if starboard:
+            sid = starboard.id
+        if user:
+            uid = user.id
+
         query = (
             """SELECT * FROM messages
             WHERE orig_message_id IN (
@@ -48,19 +64,19 @@ class Starboard(commands.Cog):
                 WHERE is_trashed=False
                 AND is_forced=False
                 AND is_nsfw=False
+                AND ($2::numeric is null or user_id=$2)
             )
             AND guild_id=$1
-            AND is_orig=False""" +
-            (" AND points>=$2" if stars is not None else '')
+            AND is_orig=False
+            AND ($3::int is null or points >= $3)
+            AND ($4::numeric is null or channel_id=$4)
+            """
         )
         conn = self.bot.db.conn
         async with self.bot.db.lock:
             async with conn.transaction():
-                args = []
-                if stars:
-                    args.append(stars)
                 m = await conn.fetch(
-                    query, ctx.guild.id, *args
+                    query, ctx.guild.id, uid, stars, sid
                 )
 
         if len(m) == 0:
