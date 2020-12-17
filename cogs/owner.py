@@ -279,7 +279,6 @@ class Owner(commands.Cog):
             output = output[0:2000] + '...'
         await ctx.send(f"```\n{output}\n```")
 
-
     @commands.command(name='reload')
     @commands.is_owner()
     async def reoloadext(self, ctx, ext: str):
