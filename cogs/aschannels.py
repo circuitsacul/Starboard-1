@@ -117,7 +117,6 @@ class AutoStarChannels(commands.Cog):
 
     @commands.group(
         name='aschannels', aliases=['asc', 'as', 'a'],
-        description="Manage AutoStar Channels",
         invoke_without_command=True
     )
     @commands.guild_only()
