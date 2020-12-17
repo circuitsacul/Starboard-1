@@ -34,8 +34,7 @@ class Starboard(commands.Cog):
     @commands.guild_only()
     async def random_message(
         self, ctx,
-        stars: int = 0,
-        starboard: discord.TextChannel = None
+        stars: int = None
     ):
         query = (
             """SELECT * FROM messages
@@ -44,17 +43,14 @@ class Starboard(commands.Cog):
             AND is_trashed=False
             AND is_orig=False
             AND is_nsfw=False""" +
-            (" AND points>=$2" if stars != 0 or starboard else "") +
-            (" AND channel_id=$3" if starboard else "")
+            (" AND points>=$2" if stars is not None else '')
         )
         conn = self.bot.db.conn
         async with self.bot.db.lock:
             async with conn.transaction():
                 args = []
-                if stars != 0 or starboard:
+                if stars:
                     args.append(stars)
-                if starboard:
-                    args.append(starboard.id)
                 m = await conn.fetch(
                     query, ctx.guild.id, *args
                 )
