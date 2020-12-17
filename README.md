@@ -1,4 +1,3 @@
-
 ## About Starboard
 
 Starboard is an advanced, reliable, and highly customizable starboard bot, allowing for multiple starboards, multiple emojis, auto-star channels, and much more coming!

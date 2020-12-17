@@ -3,6 +3,7 @@ import discord
 import checks
 import time
 import bot_config
+from subprocess import PIPE, run
 from paginators import disputils
 from asyncpg.exceptions._base import InterfaceError
 from discord.ext import tasks
@@ -13,6 +14,15 @@ from discord.ext import commands
 
 def ms(t):
     return round(t*1000, 5)
+
+
+def out(command):
+    result = run(
+        command, stdout=PIPE, stderr=PIPE,
+        universal_newlines=True, shell=True
+    )
+    return result.stdout
+
 
 class Owner(commands.Cog):
     def __init__(self, bot, db):
@@ -225,6 +235,60 @@ class Owner(commands.Cog):
             await self.bot.db.conn.dump()
 
         await ctx.send("Done")
+
+    @commands.command(name='clean')
+    @commands.is_owner()
+    async def clean_database(self, ctx):
+        """Cleans several different things from the database"""
+
+        conn = self.bot.db.conn
+
+        # Remove starboard messages of starboards that were deleted
+        get_starboards = \
+            """SELECT * FROM starboards"""
+        clean_sb_messages = \
+            """DELETE FROM messages
+            WHERE channel_id!=ALL($1::numeric[])
+            AND is_orig=False"""
+
+        await ctx.send("Removing messages...")
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                starboards = await conn.fetch(
+                    get_starboards
+                )
+                sids = [s['id'] for s in starboards]
+                await conn.execute(clean_sb_messages, sids)
+
+        await ctx.send("Finished cleaning")
+
+    @commands.command(name='run')
+    @commands.is_owner()
+    async def run_command(self, ctx, *, command: str):
+        async with ctx.typing():
+            output = out(command)
+        if len(output) > 2000:
+            output = output[0:2000] + '...'
+        await ctx.send(f"```\n{output}\n```")
+
+    @commands.command(name='reload')
+    @commands.is_owner()
+    async def reoloadext(self, ctx, ext: str = None):
+        message = (
+            f"Reloaded {ext}" if ext else
+            "Reloaded all extensions"
+        )
+        try:
+            async with ctx.typing():
+                if ext:
+                    self.bot.reload_extension(ext)
+                else:
+                    for extname in self.bot.extensions:
+                        self.bot.reload_extension(extname)
+        except Exception as e:
+            await ctx.send(f"Failed: {e}")
+        else:
+            await ctx.send(message)
 
 
 def setup(bot):
