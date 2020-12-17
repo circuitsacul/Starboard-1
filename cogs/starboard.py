@@ -40,7 +40,7 @@ class Starboard(commands.Cog):
     async def random_message(
         self, ctx, **flags
     ):
-        """Gets a random message form the starboard.
+        """Gets a random message from the starboard.
 
         [--by] is an optional argument specifying the author
         of the message.
