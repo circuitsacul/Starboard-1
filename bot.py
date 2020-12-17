@@ -93,18 +93,19 @@ async def get_guild_data(data):
     gid = data.gid
     get_guild = \
         """SELECT * FROM guilds WHERE id=$1"""
+
+    await functions.check_or_create_existence(
+        bot, guild_id=int(gid)
+    )
     conn = bot.db.conn
     async with bot.db.lock:
         async with conn.transaction():
-            await functions.check_or_create_existence(
-                bot.db, conn, bot, guild_id=int(gid)
-            )
             guild_data = await conn.fetchrow(
                 get_guild, int(gid)
             )
-            prefixes = await functions.list_prefixes(
-                bot, int(gid)
-            )
+    prefixes = await functions.list_prefixes(
+        bot, int(gid)
+    )
     data = json.dumps({
         "id": str(guild_data['id']),
         "prefixes": list(prefixes)
@@ -119,16 +120,14 @@ async def modify_guild(data):
     modifydata = json.loads(data.modifydata)
 
     try:
-        async with bot.db.lock:
-            async with bot.db.conn.transaction():
-                if action == 'prefix.add':
-                    await functions.add_prefix(
-                        bot, int(gid), modifydata['prefix']
-                    )
-                elif action == 'prefix.remove':
-                    await functions.remove_prefix(
-                        bot, int(gid), modifydata['prefix']
-                    )
+        if action == 'prefix.add':
+            await functions.add_prefix(
+                bot, int(gid), modifydata['prefix']
+            )
+        elif action == 'prefix.remove':
+            await functions.remove_prefix(
+                bot, int(gid), modifydata['prefix']
+            )
     except Exception as e:
         print(e)
 
