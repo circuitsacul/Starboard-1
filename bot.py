@@ -352,6 +352,7 @@ async def on_command_error(ctx, error):
     elif type(error) in [
         cerrors.BotNeedsPerms, cerrors.DoesNotExist, cerrors.NoPremiumError,
         cerrors.AlreadyExists, cerrors.InvalidArgument,
+        cerrors.NotEnoughCredits
     ]:
         pass
     elif type(error) in [

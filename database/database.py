@@ -288,7 +288,7 @@ class Database:
             """DROP TABLE IF EXISTS donations"""
         users__addcolumn__credits = \
             """ALTER TABLE users
-            ADD COLUMN IF NOT EXISTS credits smallint DEFAULT 0"""
+            ADD COLUMN IF NOT EXISTS credits int DEFAULT 0"""
         users__addcolumn__payment = \
             """ALTER TABLE users
             ADD COLUMN IF NOT EXISTS payment smallint DEFAULT 0"""
@@ -336,7 +336,7 @@ class Database:
                 is_bot bool NOT NULL,
 
                 payment smallint DEFAULT 0,
-                credits smallint DEFAULT 0,
+                credits int DEFAULT 0,
 
                 lvl_up_msgs bool DEFAULT True
             )"""

@@ -304,6 +304,18 @@ class Owner(commands.Cog):
         )
         await ctx.send("Done")
 
+    @commands.command(name='givecredits')
+    @commands.is_owner()
+    async def give_credits(
+        self, ctx,
+        user_id: int,
+        credits: int
+    ) -> None:
+        await functions.givecredits(
+            self.bot, user_id, credits
+        )
+        await ctx.send("Done")
+
 
 def setup(bot):
     bot.add_cog(Owner(bot, bot.db))

@@ -192,7 +192,7 @@ class Premium(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(
-        name='premium', aliases=['donate', 'patron'],
+        name='premium', aliases=['donate', 'patron', 'credits'],
         description='View information on how you can donate and what the '
         'benefits are',
         brief='View donation info'
@@ -201,9 +201,17 @@ class Premium(commands.Cog):
         embed = discord.Embed(
             color=bot_config.COLOR, title='Premium Info'
         )
+        is_patron, payment = await functions.is_patron(
+            self.bot, ctx.message.author.id
+        )
+        credits = await functions.get_credits(
+            self.bot, ctx.message.author.id
+        )
         embed.description = (
-            "If you want premium perks, you must [become "
-            f"a patron]({bot_config.DONATE})\n\n"
+            f"You have **{credits}** credits.\n"
+            "To gain more, you must [become "
+            f"a patron]({bot_config.DONATE}) or "
+            f"[donate](https://donatebot.io/checkout/725336160112738385)\n\n"
             "To make things as simple as possible, we use a "
             "credit system for premium. It works much like "
             "discord boosts -- every $ you send to us gives "
@@ -215,11 +223,17 @@ class Premium(commands.Cog):
             "give you X credits/month, depending on your tier).\n\n"
             "If you ever have any questions feel free to join "
             f"the [support server]({bot_config.SUPPORT_SERVER})"
+        ) if not is_patron else (
+            "Thanks for being a patron! It would appear you "
+            f"are paying ${payment}/month, so you get "
+            f"{payment} credits every month.\n\n"
+            f"You currently have **{credits}** credits."
         )
-        embed.add_field(
-            name='Perks',
-            value=bot_config.PREMIUM_DISPLAY
-        )
+        if is_patron:
+            embed.add_field(
+                name='Perks',
+                value=bot_config.PREMIUM_DISPLAY
+            )
 
         await ctx.send(embed=embed)
 

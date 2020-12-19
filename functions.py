@@ -7,6 +7,7 @@ import bot_config
 import discord
 import functions
 import datetime
+import errors
 
 
 async def is_starboard_emoji(db, guild_id, emoji):
@@ -235,6 +236,68 @@ async def handle_role(bot, db, user_id, guild_id, role_id, add):
 
 
 # PREMIUM FUNCTIONS
+async def redeem(
+    bot,
+    user_id: int,
+    guild_id: int,
+    months: int
+) -> None:
+    credits = months*bot_config.PREMIUM_COST
+    await givecredits(bot, user_id, 0-credits)
+    await give_months(bot, guild_id, months)
+
+
+async def givecredits(
+    bot,
+    user_id: int,
+    credits: int
+) -> None:
+    current_credits = await get_credits(bot, user_id)
+    await setcredits(bot, user_id, current_credits+credits)
+
+
+async def setcredits(
+    bot,
+    user_id: int,
+    credits: int
+) -> None:
+    if credits < 0:
+        raise errors.NotEnoughCredits(
+            "You do not have enough credits to do this!"
+        )
+
+    update_user = \
+        """UPDATE users
+        SET credits=$1
+        WHERE id=$2"""
+
+    conn = bot.db.conn
+    async with bot.db.lock:
+        async with conn.transaction():
+            await conn.execute(
+                update_user, credits, user_id
+            )
+
+
+async def get_credits(
+    bot,
+    user_id: int
+) -> None:
+    get_user = \
+        """SELECT * FROM users WHERE id=$1"""
+    user = await bot.fetch_user(user_id)
+    await check_or_create_existence(
+        bot, user=user
+    )
+    conn = bot.db.conn
+    async with bot.db.lock:
+        async with conn.transaction():
+            sql_user = await conn.fetchrow(
+                get_user, user_id
+            )
+    return sql_user['credits']
+
+
 async def give_months(
     bot,
     guild_id: int,
@@ -287,7 +350,7 @@ async def is_patron(
                 get_user, user_id
             )
 
-    return sql_user['payment'] != 0
+    return sql_user['payment'] != 0, sql_user['payment']
 
 
 async def get_prem_endsat(

@@ -16,3 +16,7 @@ class BotNeedsPerms(Exception):
 
 class InvalidArgument(Exception):
     pass
+
+
+class NotEnoughCredits(Exception):
+    pass
