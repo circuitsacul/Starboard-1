@@ -289,9 +289,9 @@ class Database:
         users__addcolumn__credits = \
             """ALTER TABLE users
             ADD COLUMN IF NOT EXISTS credits smallint DEFAULT 0"""
-        users__addcolumn__cents = \
+        users__addcolumn__payment = \
             """ALTER TABLE users
-            ADD COLUMN IF NOT EXISTS cents int DEFAULT 0"""
+            ADD COLUMN IF NOT EXISTS payment smallint DEFAULT 0"""
 
         await self.lock.acquire()
         await self._apply_migration(messages__addcolumn__points)
@@ -300,7 +300,7 @@ class Database:
         await self._apply_migration(deltable__patrons)
         await self._apply_migration(deltable__donations)
         await self._apply_migration(users__addcolumn__credits)
-        await self._apply_migration(users__addcolumn__cents)
+        await self._apply_migration(users__addcolumn__payment)
         self.lock.release()
 
     async def _create_tables(self):
@@ -328,7 +328,7 @@ class Database:
                 id numeric PRIMARY KEY,
                 is_bot bool NOT NULL,
 
-                cents int DEFAULT 0,
+                payment smallint DEFAULT NULL,
                 credits smallint DEFAULT 0,
 
                 lvl_up_msgs bool DEFAULT True
