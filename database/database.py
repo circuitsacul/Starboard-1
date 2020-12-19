@@ -306,6 +306,10 @@ class Database:
             """ALTER TABLE aschannels
             ADD COLUMN IF NOT EXISTS locked
             bool NOT NULL DEFAULT False"""
+        members__addcolumn__autoredeem = \
+            """ALTER TABLE members
+            ADD COLUMN IF NOT EXISTS autoredeem
+            bool NOT NULL DEFAULT False"""
 
         await self.lock.acquire()
         await self._apply_migration(messages__addcolumn__points)
@@ -317,6 +321,7 @@ class Database:
         await self._apply_migration(users__addcolumn__payment)
         await self._apply_migration(guilds__addcolumn__premium_end)
         await self._apply_migration(aschannels__addcolumn__locked)
+        await self._apply_migration(members__addcolumn__autoredeem)
         self.lock.release()
 
     async def _create_tables(self):
@@ -379,6 +384,8 @@ class Database:
 
                 xp int NOT NULL DEFAULT 0,
                 lvl int NOT NULL DEFAULT 0,
+
+                autoredeem bool NOT NULL DEFAULT False,
 
                 FOREIGN KEY (user_id) REFERENCES users (id)
                     ON DELETE CASCADE,
