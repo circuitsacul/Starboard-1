@@ -6,6 +6,7 @@ import emoji
 import bot_config
 import discord
 import functions
+import datetime
 
 
 async def is_starboard_emoji(db, guild_id, emoji):
@@ -223,29 +224,6 @@ async def check_or_create_existence(
     return dict(ge=gexists, ue=uexists, se=s_exists, me=mexists)
 
 
-async def required_patron_level(db, user_id, level):
-    all_levels = [
-        bot_config.PATRON_LEVELS[p['product_id']]['num']
-        for p in await get_patron_levels(db, user_id)
-    ]
-    largest = max(all_levels) if all_levels != [] else None
-    if largest is not None and largest >= level:
-        return True
-    else:
-        return False
-
-
-async def get_patron_levels(db, user_id):
-    get_patrons = \
-        """SELECT * FROM patrons WHERE user_id=$1"""
-
-    async with db.lock:
-        conn = await db.connect()
-        async with conn.transaction():
-            rows = await conn.fetch(get_patrons, user_id)
-    return rows
-
-
 async def handle_role(bot, db, user_id, guild_id, role_id, add):
     guild = bot.get_guild(guild_id)
     member = (await functions.get_members([int(user_id)], guild))[0]
@@ -256,16 +234,75 @@ async def handle_role(bot, db, user_id, guild_id, role_id, add):
         await member.remove_roles(role)
 
 
-async def get_limit(db, item, guild):
-    owner_id = guild.owner_id
+# PREMIUM FUNCTIONS
+async def give_months(
+    bot,
+    guild_id: int,
+    months: int
+) -> None:
+    current_endsat = await get_prem_endsat(
+        bot, guild_id
+    )
+    if current_endsat is None:
+        current_endsat = datetime.datetime.now()
+    months_append = datetime.timedelta(days=(31*months))
+    new = current_endsat + months_append
+
+    modify_guild = \
+        """UPDATE guilds
+        SET premium_end=$1
+        WHERE id=$2"""
+
+    conn = bot.db.conn
+    async with bot.db.lock:
+        async with conn.transaction():
+            await conn.execute(modify_guild, new, guild_id)
+
+
+async def get_limit(
+    bot,
+    item: str,
+    guild: discord.Guild
+) -> Union[int, bool]:
     max_of_item = bot_config.DEFAULT_LEVEL[item]
-    levels = await get_patron_levels(db, owner_id)
-    for _patron in levels:
-        product_id = _patron['product_id']
-        temp_max = bot_config.PATRON_LEVELS[product_id]['perks'][item]
-        if temp_max == float('inf') or temp_max > max_of_item:
-            max_of_item = temp_max
+
+    # check guild premium status
+    if await get_prem_endsat(bot, guild) is not None:
+        max_of_item = bot_config.PREMIUM_PERKS[item]
+
     return max_of_item
+
+
+async def is_patron(
+    bot,
+    user_id: int
+) -> bool:
+    get_user = \
+        """SELECT * FROM users WHERE id=$1"""
+
+    conn = bot.db.conn
+    async with bot.db.lock:
+        async with conn.transaction():
+            sql_user = await conn.fetchrow(
+                get_user, user_id
+            )
+
+    return sql_user['payment'] != 0
+
+
+async def get_prem_endsat(
+    bot,
+    guild_id: int
+) -> Union[datetime.datetime, None]:
+    get_guild = \
+        """SELECT * FROM guilds WHERE id=$1"""
+
+    conn = bot.db.conn
+    async with bot.db.lock:
+        async with conn.transaction():
+            sql_guild = await conn.fetchrow(get_guild, guild_id)
+
+    return sql_guild['premium_end']
 
 
 async def pretty_emoji_string(emojis, guild):

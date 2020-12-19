@@ -1,6 +1,7 @@
 import asyncio
 import discord
 import bot_config
+import functions
 from discord.ext import tasks, commands
 import os
 
@@ -21,6 +22,14 @@ class Premium(commands.Cog):
 
         self.access_token = os.getenv("PATREON_TOKEN")
         self.client = API(self.access_token)
+
+        self.update_patrons.start()
+
+    @tasks.loop(minutes=1)
+    async def update_patrons(self):
+        print("Updating patrons...")
+        all_patrons = await self.get_all_patrons()
+        print(f"Patrons: {all_patrons}")
 
     async def get_all_patrons(self):
         """Get the list of all patrons
@@ -119,7 +128,19 @@ class Premium(commands.Cog):
         await ctx.send(await self.get_all_patrons())
 
     @commands.command(
-        name='patron', aliases=['donate', 'premium'],
+        name='guildPremium', aliases=['serverPremium'],
+        breif="View server premium status"
+    )
+    async def get_guild_premium(self, ctx):
+        """Shows the premium status of the current
+        guild/server"""
+        endsat = await functions.get_prem_endsat(
+            self.bot, ctx.guild.id
+        )
+        await ctx.send(str(endsat))
+
+    @commands.command(
+        name='premium', aliases=['donate', 'patron'],
         description='View information on how you can donate and what the '
         'benefits are',
         brief='View donation info'

@@ -292,6 +292,10 @@ class Database:
         users__addcolumn__payment = \
             """ALTER TABLE users
             ADD COLUMN IF NOT EXISTS payment smallint DEFAULT 0"""
+        guilds__addcolumn__premium_end = \
+            """ALTER TABLE guilds
+            ADD COLUMN IF NOT EXISTS premium_end
+            timestamp DEFAULT NULL"""
 
         await self.lock.acquire()
         await self._apply_migration(messages__addcolumn__points)
@@ -301,6 +305,7 @@ class Database:
         await self._apply_migration(deltable__donations)
         await self._apply_migration(users__addcolumn__credits)
         await self._apply_migration(users__addcolumn__payment)
+        await self._apply_migration(guilds__addcolumn__premium_end)
         self.lock.release()
 
     async def _create_tables(self):
@@ -308,6 +313,8 @@ class Database:
             """CREATE TABLE IF NOT EXISTS guilds (
                 id numeric PRIMARY KEY,
                 prefixes VARCHAR(8) ARRAY DEFAULT "{'sb!'}",
+
+                premium_end timestamp DEFAULT NULL,
 
                 stars_given integer NOT NULL DEFAULT 0,
                 stars_recv integer NOT NULL DEFAULT 0
@@ -328,7 +335,7 @@ class Database:
                 id numeric PRIMARY KEY,
                 is_bot bool NOT NULL,
 
-                payment smallint DEFAULT NULL,
+                payment smallint DEFAULT 0,
                 credits smallint DEFAULT 0,
 
                 lvl_up_msgs bool DEFAULT True
