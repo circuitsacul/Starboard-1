@@ -438,8 +438,7 @@ async def main():
 
     await load_aschannels(bot)
 
-    if bot_config.DONATE_BOT_ON is True:
-        await web_server.start()
+    await web_server.start()
     if not BETA:
         bot.loop.create_task(post_guild_count.loop_post(bot))
 
@@ -448,13 +447,14 @@ async def main():
         'cogs.levels',
         'cogs.owner',
         'cogs.patron',
+        'cogs.patreon',
         'cogs.settings',
         'cogs.starboard',
         'cogs.stats',
         'cogs.utility',
         'cogs.voting',
         'cogs.rand_messages',
-        'cogs.help'
+        'cogs.help',
     ]
 
     for ext in extensions:

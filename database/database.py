@@ -145,22 +145,10 @@ class CommonSql(aobject):
                 """INSERT INTO users (id, is_bot)
                 VALUES($1, $2)"""
             )
-        self.create_patron = \
-            await conn.prepare(
-                """INSERT INTO patrons (user_id, product_id)
-                VALUES($1, $2)"""
-            )
         self.create_vote = \
             await conn.prepare(
                 """INSERT INTO votes (user_id, expires)
                 VALUES($1, $2)"""
-            )
-        self.create_donation = \
-            await conn.prepare(
-                """INSERT INTO donations
-                (txn_id, user_id, product_id, role_id, guild_id,
-                email, price, currency, recurring, status)
-                VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)"""
             )
         self.create_member = \
             await conn.prepare(
@@ -294,11 +282,25 @@ class Database:
             DEFAULT '{"sb!"}'"""
         deltable__prefixes = \
             """DROP TABLE IF EXISTS prefixes"""
+        deltable__patrons = \
+            """DROP TABLE IF EXISTS patrons"""
+        deltable__donations = \
+            """DROP TABLE IF EXISTS donations"""
+        users__addcolumn__credits = \
+            """ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS credits smallint DEFAULT 0"""
+        users__addcolumn__cents = \
+            """ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS cents int DEFAULT 0"""
 
         await self.lock.acquire()
         await self._apply_migration(messages__addcolumn__points)
         await self._apply_migration(guilds__addcolumn__prefixes)
         await self._apply_migration(deltable__prefixes)
+        await self._apply_migration(deltable__patrons)
+        await self._apply_migration(deltable__donations)
+        await self._apply_migration(users__addcolumn__credits)
+        await self._apply_migration(users__addcolumn__cents)
         self.lock.release()
 
     async def _create_tables(self):
@@ -326,14 +328,10 @@ class Database:
                 id numeric PRIMARY KEY,
                 is_bot bool NOT NULL,
 
-                lvl_up_msgs bool DEFAULT True
-            )"""
+                cents int DEFAULT 0,
+                credits smallint DEFAULT 0,
 
-        patrons_table = \
-            """CREATE TABLE IF NOT EXISTS patrons (
-                id SERIAL PRIMARY KEY,
-                user_id numeric NOT NULL,
-                product_id text NOT NULL
+                lvl_up_msgs bool DEFAULT True
             )"""
 
         votes_table = \
@@ -345,23 +343,6 @@ class Database:
 
                 FOREIGN KEY (user_id) REFERENCES users (id)
                     ON DELETE CASCADE
-            )"""
-
-        donations_table = \
-            """CREATE TABLE IF NOT EXISTS donations (
-                id SERIAL PRIMARY KEY,
-                txn_id integer NOT NULL,
-                user_id integer NOT NULL,
-                product_id text DEFAULT NULL,
-                role_id numeric DEFAULT NULL,
-                guild_id integer NOT NULL,
-
-                email text NOT NULL,
-                price integer NOT NULL,
-                currency text NOT NULL,
-
-                recurring bool NOT NULL,
-                status text NOT NULL
             )"""
 
         members_table = \
@@ -532,9 +513,7 @@ class Database:
         await self._create_table(guilds_table)
         await self._create_table(prefixes_table)
         await self._create_table(users_table)
-        await self._create_table(patrons_table)
         await self._create_table(votes_table)
-        await self._create_table(donations_table)
         await self._create_table(members_table)
         await self._create_table(starboards_table)
         await self._create_table(sbemoijs_table)
