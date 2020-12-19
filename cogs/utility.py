@@ -118,6 +118,7 @@ async def handle_forcing(
 
 
 class Utility(commands.Cog):
+    """Useful utility commands for your server"""
     def __init__(self, bot, db):
         self.bot = bot
         self.db = db

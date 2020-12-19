@@ -10,6 +10,7 @@ def do_now() -> bool:
 
 
 class RandomMessages(commands.Cog):
+    """Occasionaly sends a random messages after a command is run"""
     def __init__(self, bot):
         self.bot = bot
 

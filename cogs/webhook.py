@@ -6,6 +6,7 @@ HOOK_AUTH = os.getenv("TOP_HOOK_AUTH")
 
 
 class HttpWebHook():
+    """Listens for different web stuff"""
     def __init__(self, bot, db):
         self.bot = bot
         self.db = db

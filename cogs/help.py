@@ -216,14 +216,15 @@ async def showpage(message, embed):
     await message.edit(embed=embed)
 
 
-class HelpCommand(commands.Cog):
+class Help(commands.Cog):
+    """Help commands"""
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command(
         name='help', aliases=['h', '?'],
         brief="Get help with the bot",
-        description="Get help with the bot"
+        description="Get help with the bot",
     )
     @commands.bot_has_permissions(send_messages=True)
     async def help(self, ctx, *, command: str = None):
@@ -231,8 +232,10 @@ class HelpCommand(commands.Cog):
         if not command:
             await ctx.send(
                 "For a tutorial on using the bot, run "
-                f"`{p}tutorial`. To get help on a specific "
-                f"command, run `{p}help <command>`"
+                f"`{p}tutorial`. You can view a complete "
+                f"command list with `{p}commands`, and "
+                "you can get help with a specific "
+                f"command by running `{p}commands <commane>`"
             )
         else:
             cmd = self.bot.get_command(command)
@@ -302,4 +305,4 @@ class HelpCommand(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(HelpCommand(bot))
+    bot.add_cog(Help(bot))

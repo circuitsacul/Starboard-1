@@ -25,6 +25,7 @@ def out(command):
 
 
 class Owner(commands.Cog):
+    """Owner only commands"""
     def __init__(self, bot, db):
         self.db = db
         self.bot = bot

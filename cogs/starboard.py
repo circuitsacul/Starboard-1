@@ -25,6 +25,7 @@ async def pretty_emoji_string(emojis, guild):
 
 
 class Starboard(commands.Cog):
+    """Starboard related commands"""
     def __init__(self, bot, db):
         self.bot = bot
         self.db = db

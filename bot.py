@@ -10,6 +10,7 @@ import functions
 import traceback
 import pretty_help
 import errors as cerrors
+import pretty_help
 from discord.ext import commands
 from asyncio import Lock
 
@@ -54,11 +55,19 @@ class Bot(commands.AutoShardedBot):
         self.wizzard_lock = Lock
 
 
+help_command = pretty_help.PrettyHelp(
+    color=bot_config.COLOR,
+    command_attrs={
+        "name": "commands",
+    }
+)
+
+
 bot = Bot(
     db, command_prefix=functions._prefix_callable,
-    help_command=None,
     case_insensitive=True,
     intents=intents,
+    help_command=help_command,
     description=BOT_DESCRIPTION
 )
 web_server = HttpWebHook(bot, db)

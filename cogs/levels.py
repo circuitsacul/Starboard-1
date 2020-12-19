@@ -52,6 +52,7 @@ async def get_rank(bot, user_id: int, guild):
 
 
 class Levels(commands.Cog):
+    """View your rank and your servers leaderboard"""
     def __init__(self, bot, db):
         self.bot = bot
         self.db = db

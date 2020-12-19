@@ -30,6 +30,7 @@ async def converted_emojis(emojis, guild):
 
 
 class AutoStarChannels(commands.Cog):
+    """Manage AutoStarChannel"""
     def __init__(self, bot):
         self.bot = bot
         self.cooldown = commands.CooldownMapping.from_cooldown(

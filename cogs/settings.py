@@ -134,6 +134,7 @@ async def change_user_setting(
 
 
 class Settings(commands.Cog):
+    """Manage server settings"""
     def __init__(self, bot, db):
         self.bot = bot
         self.db = db

@@ -45,7 +45,8 @@ async def update_patron_for_user(bot, db, user_id, product_id, add: bool):
             pass
 
 
-class PatronCommands(commands.Cog):
+class Premium(commands.Cog):
+    """Premium related commands"""
     def __init__(self, bot, db):
         self.bot = bot
         self.db = db
@@ -142,4 +143,4 @@ class PatronCommands(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(PatronCommands(bot, bot.db))
+    bot.add_cog(Premium(bot, bot.db))
