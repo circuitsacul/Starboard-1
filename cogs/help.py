@@ -169,6 +169,27 @@ pages = {
         "**sb!unfreeze <message id> [channel]**\n"
         "Unfreezes a message\n\n"
         "**sb!frozen**\nView a list of frozen messages"
+    ),
+    'Starboard Premium': (
+        "If you want premium perks, you must [become "
+        f"a patron]({bot_config.DONATE})\n\n"
+        "To make things as simple as possible, we use a "
+        "credit system for premium. It works much like "
+        "discord boosts -- every $ you send to us gives "
+        "you 1 premium credit, and once you have "
+        f"{bot_config.PREMIUM_COST} "
+        "credits you can convert that to 1 month "
+        "of premium for 1 server. You can gain credits "
+        "by donating, or by becoming a patron (which will "
+        "give you X credits/month, depending on your tier).\n\n"
+        "If you ever have any questions feel free to join "
+        f"the [support server]({bot_config.SUPPORT_SERVER})\n\n"
+        "**sb!redeem <months>**\n"
+        "Redeems X months of premium in "
+        f"the server you use the command in. {bot_config.PREMIUM_COST}"
+        " credits equals 1 month of premium for a server.\n\n"
+        "**sb!premium**\nView premium info, including your "
+        "current pledge and credits."
     )
 }
 

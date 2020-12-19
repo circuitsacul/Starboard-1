@@ -1,4 +1,6 @@
 import asyncio
+import discord
+import bot_config
 from discord.ext import tasks, commands
 import os
 
@@ -12,6 +14,7 @@ from patreon.version_compatibility.utc_timezone import utc_timezone
 from six.moves.urllib.parse import urlparse, parse_qs, urlencode
 
 
+# I stole this from the patreon lib and converted to async
 class API(object):
     def __init__(self, access_token):
         super(API, self).__init__()
@@ -113,8 +116,8 @@ class API(object):
         return dt
 
 
-class Patreon(commands.Cog):
-    """Handles interactions with Patreon"""
+class Premium(commands.Cog):
+    """Premium related commands"""
     def __init__(self, bot):
         self.bot = bot
 
@@ -217,6 +220,38 @@ class Patreon(commands.Cog):
     async def get_patrons(self, ctx):
         await ctx.send(await self.get_all_patrons())
 
+    @commands.command(
+        name='patron', aliases=['donate', 'premium'],
+        description='View information on how you can donate and what the '
+        'benefits are',
+        brief='View donation info'
+    )
+    async def show_donate_info(self, ctx):
+        embed = discord.Embed(
+            color=bot_config.COLOR, title='Premium Info'
+        )
+        embed.description = (
+            "If you want premium perks, you must [become "
+            f"a patron]({bot_config.DONATE})\n\n"
+            "To make things as simple as possible, we use a "
+            "credit system for premium. It works much like "
+            "discord boosts -- every $ you send to us gives "
+            "you 1 premium credit, and once you have "
+            f"{bot_config.PREMIUM_COST} "
+            "credits you can convert that to 1 month "
+            "of premium for 1 server. You can gain credits "
+            "by donating, or by becoming a patron (which will "
+            "give you X credits/month, depending on your tier).\n\n"
+            "If you ever have any questions feel free to join "
+            f"the [support server]({bot_config.SUPPORT_SERVER})"
+        )
+        embed.add_field(
+            name='Perks',
+            value=bot_config.PREMIUM_DISPLAY
+        )
+
+        await ctx.send(embed=embed)
+
 
 def setup(bot):
-    bot.add_cog(Patreon(bot))
+    bot.add_cog(Premium(bot))
