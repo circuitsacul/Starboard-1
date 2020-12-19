@@ -4,8 +4,10 @@ import bot_config
 import functions
 import datetime
 import humanize
-from discord.ext import tasks, commands
 import os
+from discord.ext import tasks, commands
+
+from paginators import disputils
 
 from aiohttp_requests import requests
 
@@ -163,6 +165,7 @@ class Premium(commands.Cog):
         name='guildPremium', aliases=['serverPremium'],
         breif="View server premium status"
     )
+    @commands.guild_only()
     async def get_guild_premium(self, ctx):
         """Shows the premium status of the current
         guild/server"""
@@ -174,7 +177,7 @@ class Premium(commands.Cog):
             natural_endsin = humanize.naturaldelta(endsat-now)
         else:
             natural_endsin = None
-        natural_endsat = humanize.naturalday(endsat)
+        natural_endsat = humanize.naturaldate(endsat)
         description = (
             "It looks like this server doesn't have "
             "premium yet. Somone with premium credits "
@@ -236,6 +239,52 @@ class Premium(commands.Cog):
             )
 
         await ctx.send(embed=embed)
+
+    @commands.command(
+        name='redeem',
+        brief="Redeems premium on a server"
+    )
+    async def redeem_premium(
+        self, ctx,
+        months: int
+    ) -> None:
+        """Spend some of your credits to give
+        the current server premium.
+
+        <months>: A required argument for the
+        number of months to give the current
+        server."""
+        prem_cost = bot_config.PREMIUM_COST
+        p = disputils.Confirmation(
+            self.bot, bot_config.COLOR
+        )
+        if await p.confirm(
+            "Are you sure? This will cost you "
+            f"{prem_cost*months} credits and will "
+            f"give {ctx.guild.name} {months} months "
+            "of premium.", ctx.message.author,
+            channel=ctx.channel
+        ) is True:
+            try:
+                await functions.redeem(
+                    self.bot, ctx.message.author.id,
+                    ctx.guild.id, months
+                )
+            except Exception as e:
+                await p.quit(str(e))
+            else:
+                new_endsat = humanize.naturaldate(
+                    await functions.get_prem_endsat(
+                        self.bot, ctx.guild.id
+                    )
+                )
+                await p.quit(
+                    f"You have spent {months*prem_cost} "
+                    f"credits, and {ctx.guild.name} now "
+                    f"has premium until {new_endsat}"
+                )
+        else:
+            await p.quit("Cancelled.")
 
 
 # I stole this from the patreon lib and converted to async
