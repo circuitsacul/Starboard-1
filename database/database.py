@@ -302,6 +302,10 @@ class Database:
             """ALTER TABLE guilds
             ADD COLUMN IF NOT EXISTS premium_end
             timestamp DEFAULT NULL"""
+        aschannels__addcolumn__locked = \
+            """ALTER TABLE aschannels
+            ADD COLUMN IF NOT EXISTS locked
+            bool NOT NULL DEFAULT False"""
 
         await self.lock.acquire()
         await self._apply_migration(messages__addcolumn__points)
@@ -312,6 +316,7 @@ class Database:
         await self._apply_migration(users__addcolumn__credits)
         await self._apply_migration(users__addcolumn__payment)
         await self._apply_migration(guilds__addcolumn__premium_end)
+        await self._apply_migration(aschannels__addcolumn__locked)
         self.lock.release()
 
     async def _create_tables(self):
@@ -420,7 +425,9 @@ class Database:
 
                 min_chars int NOT NULL DEFAULT 0,
                 require_image bool NOT NULL DEFAULT False,
-                delete_invalid bool NOT NULL DEFAULT False
+                delete_invalid bool NOT NULL DEFAULT False,
+
+                locked bool NOT NULL DEFAULT False
             )"""
 
         asemojis_table = \

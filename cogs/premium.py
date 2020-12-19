@@ -195,11 +195,15 @@ class Premium(commands.Cog):
 
         for sg in sql_prem_guilds:
             if sg['premium_end'] < now:
+                # Premium for this guild has expired
                 async with self.bot.db.lock:
                     async with conn.transaction():
                         await conn.execute(
                             expire_prem, sg['id']
                         )
+                await functions.refresh_guild_premium(
+                    self.bot, int(sg['id'])
+                )
 
     async def get_all_patrons(self):
         """Get the list of all patrons
@@ -411,6 +415,7 @@ class Premium(commands.Cog):
                     ctx.guild.id, months
                 )
             except Exception as e:
+                print(type(e), e)
                 await p.quit(str(e))
             else:
                 new_endsat = humanize.naturaldate(

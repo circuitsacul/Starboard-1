@@ -235,7 +235,261 @@ async def handle_role(bot, db, user_id, guild_id, role_id, add):
         await member.remove_roles(role)
 
 
+async def set_sb_lock(bot, id: int, locked: bool) -> None:
+    conn = bot.db.conn
+    async with bot.db.lock:
+        async with conn.transaction():
+            await conn.execute(
+                """UPDATE starboards
+                SET locked=$1
+                WHERE id=$2""", locked, id
+            )
+
+
+async def set_asc_lock(bot, id: int, locked: bool) -> None:
+    conn = bot.db.conn
+    async with bot.db.lock:
+        async with conn.transaction():
+            await conn.execute(
+                """UPDATE aschannels
+                SET locked=$1
+                WHERE id=$2""", locked, id
+            )
+
+
 # PREMIUM FUNCTIONS
+async def refresh_guild_premium(
+    bot,
+    guild_id: int,
+    send_alert: bool = True
+) -> None:
+    ispremium = (await get_prem_endsat(bot, guild_id)) is not None
+    if not ispremium:
+        await remove_all_locks(bot, guild_id)
+        await disable_guild_premium(bot, guild_id)
+        if send_alert:
+            await channel_alert(
+                bot, guild_id, (
+                    "Premium has expired on this server, "
+                    "so this channel has been locked "
+                    "(as it exceeds the non-premium limit). "
+                    "If you reapply premium, this channel "
+                    "will be automatically unlocked.\n"
+                    "If you would rather have a different "
+                    "channel locked, you can use the "
+                    "`sb!movelock` command. Run "
+                    "`sb!commands movelock` for more info."
+                ), locked=True
+            )
+    else:
+        if send_alert:
+            await channel_alert(
+                bot, guild_id, (
+                    "Premium has been re-added to this "
+                    "server, so this channel has been unlocked."
+                ), locked=True
+            )
+        await remove_all_locks(bot, guild_id)
+
+
+async def channel_alert(
+    bot,
+    guild_id: int,
+    message: str,
+    locked: Union[bool, None] = False,
+    starboards: bool = True,
+    aschannels: bool = True
+) -> None:
+    await bot.wait_until_ready()
+    conn = bot.db.conn
+    guild = bot.get_guild(int(guild_id))
+
+    all_asc = []
+    all_sb = []
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            if aschannels:
+                all_asc = await conn.fetch(
+                    """SELECT id FROM aschannels
+                    WHERE guild_id=$1
+                    AND ($2::bool is NULL or locked=$2)""",
+                    guild_id, locked
+                )
+            if starboards:
+                all_sb = await conn.fetch(
+                    """SELECT id FROM starboards
+                    WHERE guild_id=$1
+                    AND ($2::bool is NULL or locked=$2)""",
+                    guild_id, locked
+                )
+
+    for ascid in all_asc:
+        c = guild.get_channel(int(ascid['id']))
+        try:
+            await c.send(message)
+        except Exception:
+            pass
+    for sid in all_sb:
+        c = guild.get_channel(int(sid['id']))
+        try:
+            await c.send(message)
+        except Exception:
+            pass
+
+
+async def remove_all_locks(
+    bot,
+    guild_id: int
+) -> None:  # only to be used by refresh_guild_premium
+    conn = bot.db.conn
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            await conn.execute(
+                """UPDATE starboards
+                SET locked=False
+                WHERE guild_id=$1""",
+                guild_id
+            )
+            await conn.execute(
+                """UPDATE aschannels
+                SET locked=False
+                WHERE guild_id=$1""",
+                guild_id
+            )
+
+
+async def move_starboard_lock(
+    bot,
+    current_channel: discord.TextChannel,
+    new_channel: discord.TextChannel
+) -> None:
+    conn = bot.db.conn
+    async with bot.db.lock:
+        async with conn.transaction():
+            is_curr_locked = await conn.fetchval(
+                """SELECT locked FROM starboards
+                WHERE id=$1""", current_channel.id
+            )
+            is_new_unlocked = not await conn.fetchval(
+                """SELECT locked FROM starboards
+                WHERE id=$1""", new_channel.id
+            )
+
+    if is_curr_locked in [False, None]:
+        raise errors.DoesNotExist(
+            f"Either {current_channel.mention} is not a starboard, "
+            "or it is not locked."
+        )
+    if is_new_unlocked in [False, None]:
+        raise errors.DoesNotExist(
+            f"Either {new_channel.mention} is not a starboard, "
+            "or it is already locked."
+        )
+
+    await set_sb_lock(bot, current_channel.id, False)
+    await set_sb_lock(bot, new_channel.id, True)
+    await current_channel.send(
+        "This channel has been unlocked, and "
+        f"{new_channel.mention} has been locked instead."
+    )
+    await new_channel.send(
+        f"{current_channel.mention} was unlocked, and "
+        "this one was locked instead."
+    )
+
+
+async def move_aschannel_lock(
+    bot,
+    current_channel: discord.TextChannel,
+    new_channel: discord.TextChannel
+) -> None:
+    conn = bot.db.conn
+    async with bot.db.lock:
+        async with conn.transaction():
+            is_curr_locked = await conn.fetchval(
+                """SELECT locked FROM aschannels
+                WHERE id=$1""", current_channel.id
+            )
+            is_new_unlocked = not await conn.fetchval(
+                """SELECT locked FROM aschannels
+                WHERE id=$1""", new_channel.id
+            )
+
+    if is_curr_locked in [False, None]:
+        raise errors.DoesNotExist(
+            f"Either {current_channel.mention} is not an AutoStar channel, "
+            "or it is not locked."
+        )
+    if is_new_unlocked in [False, None]:
+        raise errors.DoesNotExist(
+            f"Either {new_channel.mention} is not an AutoStar channel, "
+            "or it is already locked."
+        )
+
+    await set_asc_lock(bot, current_channel.id, False)
+    await set_asc_lock(bot, new_channel.id, True)
+    await current_channel.send(
+        "This channel has been unlocked, and "
+        f"{new_channel.mention} has been locked instead."
+    )
+    await new_channel.send(
+        f"{current_channel.mention} was unlocked, and "
+        "this one was locked instead."
+    )
+
+
+async def disable_guild_premium(
+    bot,
+    guild_id: int
+) -> None:
+    conn = bot.db.conn
+
+    # Get Values
+    async with bot.db.lock:
+        async with conn.transaction():
+            num_starboards = int(await conn.fetchval(
+                """SELECT COUNT(*) FROM starboards
+                WHERE guild_id=$1 AND locked=False""", guild_id
+            ))
+            num_asc = int(await conn.fetchval(
+                """SELECT COUNT(*) FROM aschannels
+                WHERE guild_id=$1 AND locked=False""", guild_id
+            ))
+
+    limit_starboards = bot_config.DEFAULT_LEVEL['starboards']
+    limit_asc = bot_config.DEFAULT_LEVEL['aschannels']
+
+    sb_to_lock = num_starboards - limit_starboards
+    asc_to_lock = num_asc - limit_asc
+
+    # Lock extra starboards
+    if sb_to_lock > 0:
+        async with bot.db.lock:
+            async with conn.transaction():
+                sb_chosen = await conn.fetch(
+                    """SELECT * FROM starboards
+                    WHERE guild_id=$1 AND locked=False
+                    LIMIT $2""",
+                    guild_id, sb_to_lock
+                )
+        for s in sb_chosen:
+            await set_sb_lock(bot, int(s['id']), True)
+
+    # Lock extra aschannels
+    if asc_to_lock > 0:
+        async with bot.db.lock:
+            async with conn.transaction():
+                asc_chosen = await conn.fetch(
+                    """SELECT * FROM aschannels
+                    WHERE guild_id=$1 AND locked=False
+                    LIMIT $2""", guild_id, asc_to_lock
+                )
+        for a in asc_chosen:
+            await set_asc_lock(bot, int(a['id']), True)
+
+
 async def do_payroll(bot) -> None:
     get_patrons = \
         """SELECT * FROM users WHERE payment != 0"""
@@ -267,6 +521,7 @@ async def redeem(
     credits = months*bot_config.PREMIUM_COST
     await givecredits(bot, user_id, 0-credits)
     await give_months(bot, guild_id, months)
+    await refresh_guild_premium(bot, guild_id)
 
 
 async def givecredits(

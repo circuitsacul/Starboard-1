@@ -502,6 +502,61 @@ class Utility(commands.Cog):
 
         await ctx.send("Finished!")
 
+    @commands.command(
+        name='movelock',
+        brief="Moves a premium lock from one channel to another"
+    )
+    @commands.has_permissions(manage_channels=True)
+    @commands.cooldown(30, 120, type=commands.BucketType.guild)
+    @commands.guild_only()
+    async def move_prem_lock(
+        self, ctx,
+        current_channel: discord.TextChannel,
+        new_channel: discord.TextChannel
+    ) -> None:
+        """Moves a premium lock from one channel to a different
+        channel, for either starboards or AutoStar channels.
+
+        [current_channel]: The channel that is currently locked
+        (can be a starboard or autostar channel)
+
+        [new_channel]: The channel that you want to move the
+        lock to. Cannot already be locked (starboard or autostar
+        channel)"""
+        get_starboard = \
+            """SELECT * FROM starboards
+            WHERE id=$1"""
+        get_aschannel = \
+            """SELECT * FROM aschannels
+            WHERE id=$1"""
+
+        conn = self.bot.db.conn
+
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                is_sb = await conn.fetchrow(
+                    get_starboard, current_channel.id
+                ) is not None
+                is_asc = await conn.fetchrow(
+                    get_aschannel, current_channel.id
+                ) is not None
+        
+        if is_sb:
+            await functions.move_starboard_lock(
+                self.bot, current_channel, new_channel
+            )
+        elif is_asc:
+            await functions.move_aschannel_lock(
+                self.bot, current_channel, new_channel
+            )
+        else:
+            await ctx.send(
+                f"{current_channel.mention} isn't a starboard "
+                "or autostar channel."
+            )
+            return
+        await ctx.send("Done")
+
 
 def setup(bot):
     bot.add_cog(Utility(bot, bot.db))

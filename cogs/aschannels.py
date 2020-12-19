@@ -71,7 +71,7 @@ class AutoStarChannels(commands.Cog):
                     check_aschannel, channel.id
                 )
 
-        if sasc is None:
+        if sasc is None or sasc['locked']:
             return False
 
         if len(message.content) < sasc['min_chars']:
