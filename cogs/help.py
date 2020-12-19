@@ -189,7 +189,9 @@ pages = {
         f"the server you use the command in. {bot_config.PREMIUM_COST}"
         " credits equals 1 month of premium for a server.\n\n"
         "**sb!premium**\nView premium info, including your "
-        "current pledge and credits."
+        "current pledge and credits.\n\n"
+        "**sb!guildpremium**\nView the current servers "
+        "premium status."
     )
 }
 
