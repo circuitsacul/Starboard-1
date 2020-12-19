@@ -236,6 +236,28 @@ async def handle_role(bot, db, user_id, guild_id, role_id, add):
 
 
 # PREMIUM FUNCTIONS
+async def do_payroll(bot) -> None:
+    get_patrons = \
+        """SELECT * FROM users WHERE payment != 0"""
+
+    conn = bot.db.conn
+    async with bot.db.lock:
+        async with conn.transaction():
+            sql_patrons = await conn.fetch(get_patrons)
+
+    for sql_user in sql_patrons:
+        user = await bot.fetch_user(int(sql_user['id']))
+        await givecredits(
+            bot, user.id, int(sql_user['payment'])
+        )
+        await user.send(
+            "It is a new month, and you have received "
+            f"{sql_user['payment']} credits for your "
+            "pledge on Patreon! See `sb!premium` for more "
+            "info."
+        )
+
+
 async def redeem(
     bot,
     user_id: int,

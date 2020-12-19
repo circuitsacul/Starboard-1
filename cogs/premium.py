@@ -19,6 +19,28 @@ from patreon.version_compatibility.utc_timezone import utc_timezone
 from six.moves.urllib.parse import urlparse, parse_qs, urlencode
 
 
+async def alert_patron(
+    bot, user_id: int, text: str
+) -> None:
+    user = await bot.fetch_user(user_id)
+    if user is None:
+        raise Exception(f"Couldn't Find Patron {user_id}")
+    try:
+        await user.send(text)
+    except Exception as e:
+        raise Exception(
+            f"Couldn't send messages to patron {user_id}"
+            f"\n\n{e}"
+        )
+
+
+async def alert_owner(
+    bot, text: str
+) -> None:
+    owner = await bot.fetch_user(bot_config.OWNER_ID)
+    await owner.send(text)
+
+
 class Premium(commands.Cog):
     """Premium related commands"""
     def __init__(self, bot):
@@ -29,16 +51,131 @@ class Premium(commands.Cog):
 
         self.update_patrons.start()
         self.check_expired_premium.start()
+        self.do_payroll.start()
 
     @tasks.loop(minutes=1)
     async def update_patrons(self):
-        print("Updating patrons...")
-        all_patrons = await self.get_all_patrons()
-        print(f"Patrons: {all_patrons}")
+        update_user = \
+            """UPDATE users
+            SET payment=$1
+            WHERE id=$2"""
+        get_user = \
+            """SELECT * FROM users
+            WHERE id=$1"""
+        get_sql_patrons = \
+            """SELECT * FROM users
+            WHERE payment != 0"""
 
-    @tasks.loop(hours=1)
+        all_patrons = await self.get_all_patrons()
+        all_patron_ids = [
+            p['discord_id']
+            for p in all_patrons
+            if p['discord_id'] is not None
+        ]
+        conn = self.bot.db.conn
+        for patron in all_patrons:
+            if patron['discord_id'] is None:
+                await alert_owner(self.bot, f"{patron} has no discord id")
+                continue
+            if patron['declined'] is True:
+                await alert_owner(self.bot, f"{patron} was declined")
+                continue
+            user = await self.bot.fetch_user(int(patron['discord_id']))
+            await functions.check_or_create_existence(
+                self.bot, user=user
+            )
+            async with self.bot.db.lock:
+                async with conn.transaction():
+                    suser = await conn.fetchrow(
+                        get_user, patron['discord_id']
+                    )
+            if suser['payment'] != patron['payment']:
+                async with self.bot.db.lock:
+                    async with conn.transaction():
+                        await conn.execute(
+                            update_user, patron['payment'],
+                            patron['discord_id']
+                        )
+
+                if suser['payment'] == 0:
+                    await functions.givecredits(
+                        self.bot, int(suser['id']),
+                        patron['payment']
+                    )
+
+                text = (
+                    "Thanks for becoming a patron! You "
+                    f"have received {patron['payment']} "
+                    "credits, which can be redeemed "
+                    "for premium (see `sb!premium` for "
+                    "more info)."
+                ) if suser['payment'] == 0 else (
+                    "Looks like you downgraded to "
+                    f"${patron['payment']}/month. You "
+                    f"have just now received {patron['payment']} "
+                    "credits, you will receive that much "
+                    "every month from now on."
+                ) if suser['payment'] > patron['payment'] else (
+                    "Looks like you upgraded to "
+                    f"${patron['payment']}/month! "
+                    "You have just no received "
+                    f"{patron['payment']} credits, "
+                    "and you will receive that much "
+                    "every month from now on."
+                )
+                try:
+                    await alert_patron(
+                        self.bot, patron['discord_id'], text
+                    )
+                except Exception as e:
+                    await alert_owner(e)
+
+        # Check any removed patrons
+        removed = []
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                sql_all_patrons = await conn.fetch(
+                    get_sql_patrons
+                )
+                for u in sql_all_patrons:
+                    if int(u['id']) not in all_patron_ids:
+                        await conn.execute(
+                            update_user, 0, u['id']
+                        )
+                        removed.append(int(u['id']))
+        for uid in removed:
+            try:
+                await alert_patron(
+                    self.bot, uid,
+                    "It looks like you removed your pledge. "
+                    "We're sorry to see you go, but we "
+                    "are very grateful for all the support "
+                    "you've given us in the past!"
+                )
+            except Exception as e:
+                await alert_owner(e)
+
+    @tasks.loop(minutes=10)
+    async def do_payroll(self):
+        get_latest_payroll = \
+            """SELECT MAX (paydate) FROM payrolls"""
+        create_payroll = \
+            """INSERT INTO payrolls VALUES ($1)"""
+
+        conn = self.bot.db.conn
+        now = datetime.datetime.now()
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                last_date = await conn.fetchval(
+                    get_latest_payroll
+                )
+                await conn.execute(create_payroll, now)
+
+        if last_date.second != now.second:
+            await functions.do_payroll(self.bot)
+
+    @tasks.loop(minutes=1)
     async def check_expired_premium(self):
-        print("Checking for expired premium")
         get_premium_guilds = \
             """SELECT * FROM guilds WHERE
             premium_end is not NULL"""
@@ -58,7 +195,6 @@ class Premium(commands.Cog):
 
         for sg in sql_prem_guilds:
             if sg['premium_end'] < now:
-                print("Found expired")
                 async with self.bot.db.lock:
                     async with conn.transaction():
                         await conn.execute(
@@ -71,6 +207,13 @@ class Premium(commands.Cog):
         @return list"""
 
         # If the client doesn't exist
+        return [{
+            'name': 'Lucas',
+            'payment': 5,
+            'declined': False,
+            'total': 0,
+            'discord_id': 321733774414970882
+        }]
         if self.client is None:
             print("Error : Patron API client not defined")
             return
@@ -212,10 +355,8 @@ class Premium(commands.Cog):
         )
         embed.description = (
             f"You have **{credits}** credits.\n"
-            "To gain more, you must [become "
-            f"a patron]({bot_config.DONATE}) or "
-            f"[donate](https://donatebot.io/checkout/725336160112738385)\n\n"
-            "To make things as simple as possible, we use a "
+            + ("Redeem them with `sb!redeem`\n" if credits > 0 else '')
+            + "\nTo make things as simple as possible, we use a "
             "credit system for premium. It works much like "
             "discord boosts -- every $ you send to us gives "
             "you 1 premium credit, and once you have "
@@ -224,15 +365,14 @@ class Premium(commands.Cog):
             "of premium for 1 server. You can gain credits "
             "by donating, or by becoming a patron (which will "
             "give you X credits/month, depending on your tier).\n\n"
-            "If you ever have any questions feel free to join "
-            f"the [support server]({bot_config.SUPPORT_SERVER})"
-        ) if not is_patron else (
-            "Thanks for being a patron! It would appear you "
-            f"are paying ${payment}/month, so you get "
-            f"{payment} credits every month.\n\n"
-            f"You currently have **{credits}** credits."
+            "If you ever have any questions, feel free to join "
+            f"the [support server]({bot_config.SUPPORT_SERVER})."
+        ) + (
+            "\n\nTo gain more credits, you can donate or "
+            f"[become a patron]({bot_config.DONATE})."
+            if not is_patron else ''
         )
-        if is_patron:
+        if not is_patron:
             embed.add_field(
                 name='Perks',
                 value=bot_config.PREMIUM_DISPLAY

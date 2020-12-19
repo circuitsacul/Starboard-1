@@ -83,6 +83,12 @@ class CustomConn:
         self.log(sql, time.time() - s)
         return result
 
+    async def fetchval(self, sql, *args, **kwargs):
+        s = time.time()
+        result = await self.realcon.fetchval(sql, *args, **kwargs)
+        self.log(sql, time.time() - s)
+        return result
+
 
 class BotCache(aobject):
     async def __init__(self, event, limit=20):
@@ -352,6 +358,11 @@ class Database:
                     ON DELETE CASCADE
             )"""
 
+        payrolls_table = \
+            """CREATE TABLE IF NOT EXISTS payrolls (
+                paydate timestamp NOT NULL
+            )"""
+
         members_table = \
             """CREATE TABLE IF NOT EXISTS members (
                 id SERIAL PRIMARY KEY,
@@ -521,6 +532,7 @@ class Database:
         await self._create_table(prefixes_table)
         await self._create_table(users_table)
         await self._create_table(votes_table)
+        await self._create_table(payrolls_table)
         await self._create_table(members_table)
         await self._create_table(starboards_table)
         await self._create_table(sbemoijs_table)
