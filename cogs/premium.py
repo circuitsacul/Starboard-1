@@ -2,6 +2,8 @@ import asyncio
 import discord
 import bot_config
 import functions
+import datetime
+import humanize
 from discord.ext import tasks, commands
 import os
 
@@ -24,12 +26,42 @@ class Premium(commands.Cog):
         self.client = API(self.access_token)
 
         self.update_patrons.start()
+        self.check_expired_premium.start()
 
     @tasks.loop(minutes=1)
     async def update_patrons(self):
         print("Updating patrons...")
         all_patrons = await self.get_all_patrons()
         print(f"Patrons: {all_patrons}")
+
+    @tasks.loop(hours=1)
+    async def check_expired_premium(self):
+        print("Checking for expired premium")
+        get_premium_guilds = \
+            """SELECT * FROM guilds WHERE
+            premium_end is not NULL"""
+        expire_prem = \
+            """UPDATE guilds
+            SET premium_end=NULL
+            WHERE id=$1"""
+
+        conn = self.bot.db.conn
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                sql_prem_guilds = await conn.fetch(
+                    get_premium_guilds
+                )
+
+        now = datetime.datetime.now()
+
+        for sg in sql_prem_guilds:
+            if sg['premium_end'] < now:
+                print("Found expired")
+                async with self.bot.db.lock:
+                    async with conn.transaction():
+                        await conn.execute(
+                            expire_prem, sg['id']
+                        )
 
     async def get_all_patrons(self):
         """Get the list of all patrons
@@ -137,7 +169,27 @@ class Premium(commands.Cog):
         endsat = await functions.get_prem_endsat(
             self.bot, ctx.guild.id
         )
-        await ctx.send(str(endsat))
+        now = datetime.datetime.now()
+        if endsat:
+            natural_endsin = humanize.naturaldelta(endsat-now)
+        else:
+            natural_endsin = None
+        natural_endsat = humanize.naturalday(endsat)
+        description = (
+            "It looks like this server doesn't have "
+            "premium yet. Somone with premium credits "
+            "must use the `redeem` command here to give "
+            "it premium!"
+        ) if endsat is None else (
+            f"This server has premium until {natural_endsat}, "
+            f"which is {natural_endsin} from now."
+        )
+        embed = discord.Embed(
+            title="Server Premium Status",
+            description=description,
+            color=bot_config.COLOR
+        )
+        await ctx.send(embed=embed)
 
     @commands.command(
         name='premium', aliases=['donate', 'patron'],

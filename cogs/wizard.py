@@ -101,7 +101,7 @@ class SetupWizard:
                     get_aschannels, self.ctx.guild.id
                 )
         current_num = len(sql_aschannels)
-        limit = await get_limit(self.bot, 'aschannels', self.ctx.guild)
+        limit = await get_limit(self.bot, 'aschannels', self.ctx.guild.id)
         if current_num >= limit:
             await self._error(
                 "You have reached your limit for AutoStar Channels. "
@@ -231,7 +231,7 @@ class SetupWizard:
                     get_starboards, self.ctx.guild.id
                 )
         current_num = len(sql_starboards)
-        limit = await get_limit(self.bot, 'starboards', self.ctx.guild)
+        limit = await get_limit(self.bot, 'starboards', self.ctx.guild.id)
         if current_num >= limit:
             await self._error(
                 "You have reached your limit for starboards. Please upgrade "
@@ -402,7 +402,7 @@ class SetupWizard:
         get_emojis = """SELECT * FROM asemojis WHERE aschannel_id=$1"""
 
         emoji_limit = await get_limit(
-            self.bot, 'asemojis', self.ctx.guild
+            self.bot, 'asemojis', self.ctx.guild.id
         )
 
         async with self.bot.db.lock:
@@ -463,7 +463,7 @@ class SetupWizard:
         get_emojis = """SELECT * FROM sbemojis WHERE starboard_id=$1"""
 
         emoji_limit = await get_limit(
-            self.bot, 'emojis', self.ctx.guild
+            self.bot, 'emojis', self.ctx.guild.id
         )
 
         async with self.bot.db.lock:

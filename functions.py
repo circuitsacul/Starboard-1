@@ -262,12 +262,12 @@ async def give_months(
 async def get_limit(
     bot,
     item: str,
-    guild: discord.Guild
+    guild_id: int
 ) -> Union[int, bool]:
     max_of_item = bot_config.DEFAULT_LEVEL[item]
 
     # check guild premium status
-    if await get_prem_endsat(bot, guild) is not None:
+    if await get_prem_endsat(bot, guild_id) is not None:
         max_of_item = bot_config.PREMIUM_PERKS[item]
 
     return max_of_item

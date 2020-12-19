@@ -128,7 +128,7 @@ async def add_aschannel(bot: commands.Bot, channel: discord.TextChannel):
     guild = channel.guild
     perms = channel.permissions_for(guild.me)
     limit = await functions.get_limit(
-        bot, 'aschannels', guild
+        bot, 'aschannels', guild.id
     )
     conn = bot.db.conn
 
@@ -307,7 +307,7 @@ async def add_starboard(bot: commands.Bot, channel: discord.TextChannel):
         )
 
     limit = await functions.get_limit(
-        bot, 'starboards', guild
+        bot, 'starboards', guild.id
     )
     conn = bot.db.conn
 
@@ -399,7 +399,7 @@ async def add_starboard_emoji(
     emoji_id = emoji.id if isinstance(
         emoji, discord.Emoji) else None
 
-    limit = await functions.get_limit(bot, 'emojis', guild)
+    limit = await functions.get_limit(bot, 'emojis', guild.id)
     conn = bot.db.conn
 
     async with bot.db.lock:
