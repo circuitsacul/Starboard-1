@@ -158,8 +158,8 @@ async def add_aschannel(bot: commands.Bot, channel: discord.TextChannel):
             if len(all_aschannels) >= limit:
                 raise errors.NoPremiumError(
                     "You have reached your limit for AutoStar Channels"
-                    " in this server.\nTo add more AutoStar channels, "
-                    "the server owner must become a patron."
+                    " in this server.\nSee the last page of `sb!tutorial` "
+                    "for more info."
                 )
 
             sql_aschannel = await conn.fetchrow(
@@ -208,6 +208,8 @@ async def remove_aschannel(bot: commands.Bot, channel_id: int, guild_id: int):
                 raise errors.DoesNotExist("That is not an AutoStar Channel!")
 
             await conn.execute(del_aschannel, channel_id)
+
+    await functions.refresh_guild_premium(bot, guild_id, send_alert=False)
 
 
 async def add_asemoji(
@@ -323,8 +325,7 @@ async def add_starboard(bot: commands.Bot, channel: discord.TextChannel):
             if len(all_starboards) + 1 > limit:
                 raise errors.NoPremiumError(
                     "You have reached your limit for starboards on this server"
-                    "\nTo add more starboards, the owner of this server must "
-                    "become a patron."
+                    "\nSee the last page of `sb!tutorial` for more info."
                 )
 
             sql_starboard = await conn.fetchrow(
@@ -375,6 +376,8 @@ async def remove_starboard(bot: commands.Bot, channel_id: int, guild_id: int):
                 del_starboard, channel_id
             )
 
+    await functions.refresh_guild_premium(bot, guild_id, send_alert=False)
+
 
 async def add_starboard_emoji(
     bot: commands.Bot, starboard_id: int, guild: discord.Guild,
@@ -418,8 +421,8 @@ async def add_starboard_emoji(
             if len(all_sbemojis) + 1 > limit:
                 raise errors.NoPremiumError(
                     "You have reached your limit for emojis "
-                    "on this starboard.\nTo add more emojis, "
-                    "the server owner must become a patron."
+                    "on this starboard.\nSee the last page of "
+                    "`sb!tutorial` for more info."
                 )
 
             sbemoji = await conn.fetchrow(

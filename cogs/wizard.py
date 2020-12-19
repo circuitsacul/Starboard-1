@@ -104,9 +104,8 @@ class SetupWizard:
         limit = await get_limit(self.bot, 'aschannels', self.ctx.guild.id)
         if current_num >= limit:
             await self._error(
-                "You have reached your limit for AutoStar Channels. "
-                "In order to add more, the owner of this server must "
-                "become a patron."
+                "You have reached your limit for AutoStar Channels.\n"
+                "See the last page of `sb!tutorial` for more info."
             )
             return
 
@@ -234,8 +233,8 @@ class SetupWizard:
         limit = await get_limit(self.bot, 'starboards', self.ctx.guild.id)
         if current_num >= limit:
             await self._error(
-                "You have reached your limit for starboards. Please upgrade "
-                "by becoming a patron."
+                "You have reached your limit for starboards.\n"
+                "See the last page of `sb!tutorial` for more info."
             )
             return
 
@@ -414,8 +413,7 @@ class SetupWizard:
         if current_num >= emoji_limit:
             await self._error(
                 "You have reached yoru limit for emojis on this autostar "
-                "channel. To add more, the owner of this server must "
-                "become a patron."
+                "channel.\nSee the last page of `sb!tutorial` for more info."
             )
             return
 

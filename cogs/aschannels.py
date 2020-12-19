@@ -197,7 +197,8 @@ class AutoStarChannels(commands.Cog):
                 f"**emojis:** {emoji_str}\n"
                 f"**minChars:** {sasc['min_chars']}\n"
                 f"**requireImage:** {sasc['require_image']}\n"
-                f"**deleteInvalid:** {sasc['delete_invalid']}"
+                f"**deleteInvalid:** {sasc['delete_invalid']}\n"
+                f"**locked:** {sasc['locked']}"
             )
 
             embed = discord.Embed(
