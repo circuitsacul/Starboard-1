@@ -5,7 +5,7 @@ import settings
 import random
 import asyncpg
 import cooldowns
-from events import leveling
+from cogs import levels
 from discord import utils
 from discord.ext import commands
 from discord.ext import flags
@@ -585,7 +585,7 @@ async def handle_reaction(
             handle_level = True
 
         if handle_level:
-            await leveling.handle_reaction(
+            await levels.handle_reaction(
                 db, user_id, message.author, guild, _emoji, is_add
             )
 
