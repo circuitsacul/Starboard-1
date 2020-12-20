@@ -226,6 +226,8 @@ async def showpage(message, embed):
 
 class Info(commands.Cog):
     """Basic info about Starboard"""
+    def __init__(self, bot):
+        self.bot = bot
 
     @commands.command(
         name='links', aliases=['invite', 'support'],
