@@ -2,11 +2,15 @@ import discord
 import bot_config
 import functions
 import cooldowns
+from database.database import Database
 from math import sqrt
 from paginators import disputils
 from discord import utils
 from discord.ext import commands
-from typing import Union
+from typing import (
+    Union,
+    List
+)
 
 
 give_cooldown = cooldowns.CooldownMapping.from_cooldown(
@@ -17,16 +21,27 @@ recv_cooldown = cooldowns.CooldownMapping.from_cooldown(
 )
 
 
-async def next_level_xp(current_level):
+async def next_level_xp(
+    current_level: int
+) -> int:
     current_level += 1
     return int(current_level**2)
 
 
-async def current_level(xp):
+async def current_level(
+    xp: int
+) -> int:
     return int(sqrt(xp))
 
 
-async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
+async def handle_reaction(
+    db: Database,
+    reacter_id: int,
+    receiver: Union[discord.Member, discord.User],
+    guild: discord.Guild,
+    _emoji: discord.PartialEmoji,
+    is_add: bool
+) -> None:
     guild_id = guild.id
     receiver_id = receiver.id
     if reacter_id == receiver_id:
@@ -124,7 +139,10 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
     #        pass
 
 
-async def get_leaderboard(bot, guild):
+async def get_leaderboard(
+    bot: commands.Bot,
+    guild: discord.Guild
+) -> List[dict]:
     get_members = \
         """SELECT * FROM members WHERE xp != 0 AND guild_id=$1
         ORDER BY xp DESC"""

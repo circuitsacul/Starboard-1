@@ -221,7 +221,10 @@ numer_emojis = [
 stop_emoji = "⏹️"
 
 
-async def showpage(message, embed):
+async def showpage(
+    message: discord.Message,
+    embed: discord.Embed
+) -> None:
     await message.edit(embed=embed)
 
 
@@ -231,7 +234,10 @@ class Base(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_message(self, message):
+    async def on_message(
+        self,
+        message: discord.Message
+    ) -> None:
         if message.author.bot:
             return
 
@@ -259,7 +265,9 @@ class Base(commands.Cog):
             await self.bot.process_commands(message)
 
     @commands.Cog.listener()
-    async def on_ready(self):
+    async def on_ready(
+        self
+    ) -> None:
         await self.bot.change_presence(
             activity=discord.Game("Mention me for help")
         )
@@ -273,7 +281,10 @@ class Base(commands.Cog):
         description='View helpful links',
         brief='View helpful links'
     )
-    async def show_links(self, ctx):
+    async def show_links(
+        self,
+        ctx: commands.Context
+    ) -> None:
         embed = discord.Embed(title="Helpful Links", color=bot_config.COLOR)
         description = \
             f"**[Support Server]({bot_config.SUPPORT_SERVER})**"\
@@ -291,7 +302,10 @@ class Base(commands.Cog):
         description='Vote for Starboard',
         brief='Vote for Starboard'
     )
-    async def show_vote_info(self, ctx):
+    async def show_vote_info(
+        self,
+        ctx: commands.Context
+    ) -> None:
         embed = discord.Embed(
             title="Vote for Starboard!",
             color=bot_config.COLOR
@@ -309,7 +323,10 @@ class Base(commands.Cog):
         description='View the bot/owners privacy policy',
         brief="View privacy policy"
     )
-    async def show_privacy_policy(self, ctx):
+    async def show_privacy_policy(
+        self,
+        ctx: commands.Context
+    ) -> None:
         embed = discord.Embed(title='Privacy Policy', color=bot_config.COLOR)
         embed.description = bot_config.PRIVACY_POLICY
         await ctx.send(embed=embed)
@@ -319,7 +336,10 @@ class Base(commands.Cog):
         description='Give quick description of what a \
             starboard is and what it is for'
     )
-    async def about_starboard(self, ctx):
+    async def about_starboard(
+        self,
+        ctx: commands.Context
+    ) -> None:
         msg = "Starboard is a Discord starboard bot. "\
             "Starboards are kind of like democratic pins. "\
             "A user can \"vote\" to have a message displayed on "\
@@ -337,8 +357,11 @@ class Base(commands.Cog):
         brief='Get bot ping'
     )
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def get_bot_ping(self, ctx):
-        def ms(seconds):
+    async def get_bot_ping(
+        self,
+        ctx: commands.Context
+    ) -> None:
+        def ms(seconds: int) -> int:
             return int((seconds*1000))
 
         latency = ms(self.bot.latency)
@@ -366,7 +389,10 @@ class Base(commands.Cog):
         name='stats', aliases=['botstats'],
         description='Bot stats', brief='Bot stats'
     )
-    async def stats_for_bot(self, ctx):
+    async def stats_for_bot(
+        self,
+        ctx: commands.Context
+    ) -> None:
         total = sum([g.member_count for g in self.bot.guilds])
         embed = discord.Embed(
             title='Bot Stats', colour=bot_config.COLOR,
@@ -382,7 +408,10 @@ class Base(commands.Cog):
         description="Get help with the bot",
     )
     @commands.bot_has_permissions(send_messages=True)
-    async def help(self, ctx):
+    async def help(
+        self,
+        ctx: commands.Context
+    ) -> None:
         p = ctx.prefix
         await ctx.send(
             "For a tutorial on using the bot, run "
@@ -398,7 +427,10 @@ class Base(commands.Cog):
         brief='Get help with the bot'
     )
     @commands.bot_has_permissions(embed_links=True, send_messages=True)
-    async def run_tutorial(self, ctx):
+    async def run_tutorial(
+        self,
+        ctx: commands.Context
+    ) -> None:
         embeds = [
             discord.Embed(
                 title=t,
@@ -452,5 +484,7 @@ class Base(commands.Cog):
             pass
 
 
-def setup(bot):
+def setup(
+    bot: commands.Bot
+) -> None:
     bot.add_cog(Base(bot))
