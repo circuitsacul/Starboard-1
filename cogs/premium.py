@@ -104,7 +104,7 @@ class Premium(commands.Cog):
                     "every month from now on."
                 )
                 try:
-                    await functions.alert_patron(
+                    await functions.alert_user(
                         self.bot, patron['discord_id'], text
                     )
                 except Exception as e:
@@ -125,7 +125,7 @@ class Premium(commands.Cog):
                         removed.append(int(u['id']))
         for uid in removed:
             try:
-                await functions.alert_patron(
+                await functions.alert_user(
                     self.bot, uid,
                     "It looks like you removed your pledge. "
                     "We're sorry to see you go, but we "
