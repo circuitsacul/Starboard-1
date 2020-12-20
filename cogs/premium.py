@@ -476,18 +476,6 @@ class Premium(commands.Cog):
         redeem credits from your account."""
         conn = self.bot.db.conn
 
-        c = disputils.Confirmation(self.bot, bot_config.COLOR)
-        await c.confirm(
-            "Are you sure? This will automatically "
-            "take credits out of your account when "
-            "this server runs out of premium!",
-            ctx.message.author, ctx.channel
-        )
-
-        if not c.confirmed:
-            await c.quit("Cancelled")
-            return
-
         async with self.bot.db.lock:
             async with conn.transaction():
                 already_on = await conn.fetchrow(
@@ -496,12 +484,37 @@ class Premium(commands.Cog):
                     AND autoredeem=True""",
                     ctx.guild.id
                 ) is not None
-        if already_on:
-            await ctx.send(
-                "You or someone else has already "
-                "enabled autoredeem on this server."
-            )
+                already_ar = await conn.fetchrow(
+                    """SELECT * FROM members
+                    WHERE guild_id=$1
+                    AND user_id=$2
+                    AND autoredeem=True""",
+                    ctx.guild.id,
+                    ctx.message.author.id
+                ) is not None
+
+        if already_ar:
+            await ctx.send("You already have autoredeem enabled here.")
             return
+
+        c = disputils.Confirmation(self.bot, bot_config.COLOR)
+        await c.confirm(
+            "Are you sure? This will automatically "
+            "take credits out of your account when "
+            "this server runs out of premium!"
+            + (
+                "\n\nAlso, someone else has already "
+                "enabled autoredeem for this server. "
+                "You can still enable it for yourself, though."
+                if already_ar else ''
+            ),
+            ctx.message.author, ctx.channel
+        )
+
+        if not c.confirmed:
+            await c.quit("Cancelled")
+            return
+
         async with self.bot.db.lock:
             async with conn.transaction():
                 await conn.execute(

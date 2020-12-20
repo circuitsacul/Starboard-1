@@ -191,7 +191,19 @@ pages = {
         "**sb!premium**\nView premium info, including your "
         "current pledge and credits.\n\n"
         "**sb!guildpremium**\nView the current servers "
-        "premium status."
+        "premium status.\n\n"
+        "**sb!autoredeem**\nIf run in DMs, it will show you "
+        "all the servers you have enabled autoredeem for. "
+        "Running it in a server will just show the setting for "
+        "that server.\n\n"
+        "**sb!autoredeem on**\nEnables autoredeem in the server "
+        "you send this command. When this is enabled, if the "
+        "server is about to run out of premium it will "
+        "automtically take credits from your account instead "
+        "of disabling premium on the server.\n\n"
+        "**sb!autoredeem off [guild id]**\nDisables autoredeem "
+        "in the guild you send the command, or for the guild "
+        "you sepcify."
     )
 }
 
