@@ -1,10 +1,8 @@
 import discord
 import functions
 import bot_config
-import checks
 from discord.ext.commands import BucketType
 from events import retotal
-from events import leveling
 from discord.ext import commands
 from events import starboard_events
 from disputils import BotEmbedPaginator
