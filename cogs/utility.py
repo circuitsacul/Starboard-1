@@ -3,7 +3,6 @@ import functions
 import bot_config
 import checks
 from discord.ext.commands import BucketType
-from events import retotal
 from discord.ext import commands
 from disputils import BotEmbedPaginator
 from cogs.starboard import handle_starboards
@@ -15,8 +14,8 @@ async def scan_recount(bot, channel, messages: int, start_date=None):
         start_date = guild.me.created_at
 
     async for m in channel.history(limit=messages):
-        if await retotal.needs_recount(bot, m):
-            await retotal.recount_reactions(bot, m)
+        if await functions.needs_recount(bot, m):
+            await functions.recount_reactions(bot, m)
 
 
 async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
@@ -382,6 +381,8 @@ class Utility(commands.Cog):
             """SELECT * FROM messages WHERE is_orig=False
             AND orig_message_id=$1"""
 
+        sql_sb_messages = []
+
         async with self.db.lock:
             conn = await self.bot.db.connect()
             async with conn.transaction():
@@ -524,7 +525,7 @@ class Utility(commands.Cog):
         )
 
         async with ctx.typing():
-            await retotal.recount_reactions(self.bot, message)
+            await functions.recount_reactions(self.bot, message)
             await handle_starboards(
                 self.bot.db, self.bot, message.id,
                 message.channel, message, ctx.guild
