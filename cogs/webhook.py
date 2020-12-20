@@ -2,6 +2,9 @@ from aiohttp import web
 import hmac
 import hashlib
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 HOOK_AUTH = os.getenv("TOP_HOOK_AUTH")
 PATREON_AUTH = os.getenv("PATREON_AUTH")

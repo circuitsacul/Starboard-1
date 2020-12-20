@@ -1,8 +1,11 @@
 from aiohttp_requests import requests
 from typing import Optional
+from dotenv import load_dotenv
 import json
 import asyncio
 import os
+
+load_dotenv()
 
 APIKEY = os.getenv('APIKEY')
 

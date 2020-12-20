@@ -1,8 +1,11 @@
 from aiohttp_requests import requests
 from discord.ext import commands
+from dotenv import load_dotenv
 import json
 import asyncio
 import os
+
+load_dotenv()
 
 BOD_TOKEN = os.getenv("BOD_TOKEN")
 DBL_TOKEN = os.getenv("DBL_TOKEN")

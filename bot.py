@@ -5,12 +5,12 @@ import os
 import dotenv
 import functions
 import pretty_help
-import bot_config
 from discord.ext import commands
 from asyncio import Lock
 
 dotenv.load_dotenv()
 
+import bot_config
 from database.database import Database
 from api import post_guild_count
 
