@@ -9,9 +9,11 @@ import functions
 import datetime
 import errors
 
-
-async def is_starboard_emoji(db, guild_id, emoji):
-    emoji = str(emoji)
+async def is_starboard_emoji(db, guild_id, emoji, multiple=False):
+    if not multiple:
+        emoji = str(emoji)
+    else:
+        emoji = [str(emo) for emo in emoji]
     get_starboards = \
         """SELECT * FROM starboards WHERE guild_id=$1"""
     get_sbeemojis = \
@@ -25,7 +27,10 @@ async def is_starboard_emoji(db, guild_id, emoji):
                 get_sbeemojis, [starboard['id'] for starboard in starboards]
             )
             all_emojis = [e['name'] for e in sql_all_emojis]
-    return str(emoji) in all_emojis
+    if not multiple:
+        return str(emoji) in all_emojis
+    else:
+        return [emo in all_emojis for emo in emoji]
 
 
 async def get_members(user_ids: Iterable[int], guild: discord.Guild):
@@ -218,7 +223,6 @@ async def check_or_create_existence(
                 )
                 if not mexists and create_new:
                     await db.q.create_member.fetch(user.id, guild_id)
-
     else:
         mexists = None
 

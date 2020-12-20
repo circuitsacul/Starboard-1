@@ -1,5 +1,5 @@
 import functions
-import asyncio
+from itertools import compress
 
 
 # Check and recount stars on a message when necessary
@@ -11,13 +11,15 @@ async def needs_recount(bot, message):
         return False
 
     total = 0
-    for r in message.reactions:
-        if r.custom_emoji:
-            name = str(r.emoji.id)
-        else:
-            name = str(r.emoji)
-        if await functions.is_starboard_emoji(bot.db, message.guild.id, name):
-            total += r.count
+    reactions = [
+        str(r.emoji.id) if r.custom_emoji else str(r.emoji)
+        for r in message.reactions
+    ]
+    reaction_mask = await functions.is_starboard_emoji(
+        bot.db, message.guild.id, reactions, multiple=True
+    )
+    for r in compress(message.reactions, reaction_mask):
+        total += r.count
 
     if total == 0:  # Don't recount if the message doesn't have reactions
         return False
@@ -58,15 +60,12 @@ async def recount_reactions(bot, message):
         else:
             name = str(reaction.emoji)
 
-        if not await functions.is_starboard_emoji(bot.db, message.guild.id, name):
+        if not await functions.is_starboard_emoji(
+            bot.db, message.guild.id, name
+        ):
             continue
 
-        x = 0
         async for user in reaction.users():
-            x += 1
-            if x >= 100:
-                await asyncio.sleep(5)
-                x = 0
             if user is None:
                 continue
             elif user.bot:
