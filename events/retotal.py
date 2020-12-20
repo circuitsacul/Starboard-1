@@ -1,5 +1,5 @@
 import functions
-from events import starboard_events
+from cogs import starboard
 from itertools import compress
 
 
@@ -117,7 +117,7 @@ async def recount_reactions(bot, message):
                     message.id, r['name']
                 )
 
-    await starboard_events.handle_starboards(
+    await starboard.handle_starboards(
         bot.db, bot, message.id, message.channel, message,
         message.guild
     )

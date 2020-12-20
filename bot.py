@@ -16,7 +16,6 @@ from asyncio import Lock
 dotenv.load_dotenv()
 
 import bot_config
-from events import starboard_events
 
 from database.database import Database
 from api import post_guild_count
@@ -139,54 +138,6 @@ async def on_guild_remove(guild):
     )
 
     await log_channel.send(embed=embed)
-
-
-@bot.event
-async def on_raw_reaction_add(payload):
-    guild_id = payload.guild_id
-    if guild_id is None:
-        return
-    channel_id = payload.channel_id
-    message_id = payload.message_id
-    user_id = payload.user_id
-    emoji = payload.emoji
-
-    emoji_name = str(emoji.id) if emoji.id is not None\
-        else emoji.name
-
-    if not await functions.is_starboard_emoji(
-        bot.db, guild_id, emoji_name
-    ):
-        return
-
-    await starboard_events.handle_reaction(
-        db, bot, guild_id, channel_id,
-        user_id, message_id, emoji, True
-    )
-
-
-@bot.event
-async def on_raw_reaction_remove(payload):
-    guild_id = payload.guild_id
-    if guild_id is None:
-        return
-    channel_id = payload.channel_id
-    message_id = payload.message_id
-    user_id = payload.user_id
-    emoji = payload.emoji
-
-    emoji_name = emoji.id if emoji.id is not None\
-        else emoji.name
-
-    if not await functions.is_starboard_emoji(
-        bot.db, guild_id, emoji_name
-    ):
-        return
-
-    await starboard_events.handle_reaction(
-        db, bot, guild_id, channel_id,
-        user_id, message_id, emoji, False
-    )
 
 
 @bot.event

@@ -5,10 +5,8 @@ import checks
 from discord.ext.commands import BucketType
 from events import retotal
 from discord.ext import commands
-from events import starboard_events
 from disputils import BotEmbedPaginator
-from events import retotal
-from events.starboard_events import handle_starboards
+from cogs.starboard import handle_starboards
 
 
 async def scan_recount(bot, channel, messages: int, start_date=None):
@@ -54,7 +52,7 @@ async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
         message = None
 
     if status is True:
-        await starboard_events.handle_starboards(
+        await handle_starboards(
             db, bot, message_id, channel, message,
             ctx.guild
         )
@@ -122,7 +120,7 @@ async def handle_forcing(
         "Message unforced."
     )
 
-    await starboard_events.handle_starboards(
+    await handle_starboards(
         bot.db, bot, message.id, message.channel, message,
         ctx.guild
     )
@@ -243,7 +241,7 @@ class Utility(commands.Cog):
         except Exception:
             message_obj = None
 
-        await starboard_events.handle_starboards(
+        await handle_starboards(
             self.bot.db, self.bot, message_id, channel,
             message_obj, ctx.guild
         )
@@ -289,7 +287,7 @@ class Utility(commands.Cog):
         except Exception:
             message_obj = None
 
-        await starboard_events.handle_starboards(
+        await handle_starboards(
             self.bot.db, self.bot, mid, channel,
             message_obj, ctx.guild
         )

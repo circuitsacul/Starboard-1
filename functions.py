@@ -9,6 +9,7 @@ import functions
 import datetime
 import errors
 
+
 async def is_starboard_emoji(db, guild_id, emoji, multiple=False):
     if not multiple:
         emoji = str(emoji)
@@ -31,6 +32,181 @@ async def is_starboard_emoji(db, guild_id, emoji, multiple=False):
         return str(emoji) in all_emojis
     else:
         return [emo in all_emojis for emo in emoji]
+
+
+async def get_embed_from_message(message):
+    nsfw = message.channel.is_nsfw()
+    embed = discord.Embed(
+        title="NSFW" if nsfw else discord.Embed.Empty, colour=bot_config.COLOR
+    )
+    embed.set_author(
+        name=str(message.author), icon_url=message.author.avatar_url
+    )
+    embed_text = ''
+    msg_attachments = message.attachments
+    urls = []
+
+    for attachment in msg_attachments:
+        urls.append({
+            'name': attachment.filename, 'display_url': attachment.url,
+            'url': attachment.url, 'type': 'upload'
+        })
+
+    e = discord.embeds._EmptyEmbed
+
+    for msg_embed in message.embeds:
+        if msg_embed.type == 'rich':
+            fields = [
+                (
+                    f"\n**{x.name if type(x.name) != e else ''}**\n",
+                    f"{x.value if type(x.value) != e else ''}\n"
+                )
+                for x in msg_embed.fields
+            ]
+            embed_text += f"__**{msg_embed.title}**__\n"\
+                if type(msg_embed.title) != e else ''
+            embed_text += f"{msg_embed.description}\n"\
+                if type(msg_embed.description) != e else ''
+
+            for name, value in fields:
+                embed_text += name + value
+            if msg_embed.footer.text is not embed.Empty:
+                embed_text += '\n' + str(msg_embed.footer.text) + '\n'
+            if msg_embed.image.url is not embed.Empty:
+                urls.append({
+                    'name': 'Embed Image',
+                    'url': msg_embed.image.url,
+                    'display_url': msg_embed.image.url
+                })
+            if msg_embed.thumbnail.url is not embed.Empty:
+                urls.append({
+                    'name': 'Embed Thumbnail',
+                    'url': msg_embed.thumbnail.url,
+                    'display_url': msg_embed.thumbnail.url
+                })
+        elif msg_embed.type == 'image':
+            if msg_embed.url != discord.Embed.Empty:
+                urls.append({
+                    'name': 'Image', 'display_url': msg_embed.thumbnail.url,
+                    'url': msg_embed.url, 'type': 'image'
+                })
+        elif msg_embed.type == 'gifv':
+            gifid = tenor.get_gif_id(msg_embed.url)
+            if gifid is None:
+                display_url = msg_embed.thumbnail.url
+            else:
+                display_url = await tenor.get_gif_url(gifid)
+            if msg_embed.url != discord.Embed.Empty:
+                urls.append({
+                    'name': 'GIF', 'display_url': display_url,
+                    'url': msg_embed.url, 'type': 'gif'
+                })
+        elif msg_embed.type == 'video':
+            if msg_embed.url != discord.Embed.Empty:
+                urls.append({
+                    'name': 'Video', 'display_url': msg_embed.thumbnail.url,
+                    'url': msg_embed.url, 'type': 'video'
+                })
+
+    value_string = f"{message.system_content}\n{embed_text}"
+    context_string = f"\n[**Jump to Message**]({message.jump_url})"
+    if len(value_string) > 2048:
+        clip_msg = "... *message clipped*"
+        to_clip = len(value_string+clip_msg)-2048
+        full_string = value_string[0:-1*to_clip] + clip_msg
+    else:
+        full_string = value_string
+    embed.description = full_string
+
+    embed.add_field(name="Original", value=context_string)
+
+    if len(urls) > 0:
+        url_string = ''
+        current = 0
+        for item in urls:
+            url_string += f"[**{item['name']}**]({item['url']})\n"
+            if current == 0:
+                embed.set_image(url=item['display_url'])
+                current += 1
+            elif current == 1:
+                embed.set_thumbnail(url=item['display_url'])
+                current += 1
+        embed.add_field(name='Attachments', value=url_string, inline=False)
+
+    embed.set_footer(text=f"ID: {message.id}")
+    embed.timestamp = message.created_at
+
+    return embed
+
+
+async def calculate_points(conn, sql_message, sql_starboard, bot, guild):
+    get_reactions = \
+        """SELECT * FROM reactions WHERE message_id=$1"""
+    get_user = \
+        """SELECT * FROM users WHERE id=$1"""
+    get_sbemojis = \
+        """SELECT * FROM sbemojis WHERE starboard_id=$1"""
+    update_message = \
+        """UPDATE messages
+        SET points=$1
+        WHERE orig_message_id=$2
+        AND channel_id=$3"""
+
+    message_id = int(sql_message['id'])
+    self_star = sql_starboard['self_star']
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            emojis = await conn.fetch(get_sbemojis, sql_starboard['id'])
+            all_reactions = await conn.fetch(get_reactions, message_id)
+
+    used_users = set()
+
+    total_points = 0
+    for emoji in emojis:
+        emoji_id = int(emoji['d_id']) if emoji['d_id'] is not None else None
+        emoji_name = None if emoji_id is not None else emoji['name']
+        reactions = [
+            r for r in all_reactions if r['name']
+            in [str(emoji_id), emoji_name]
+        ]
+        for sql_reaction in reactions:
+            user_id = sql_reaction['user_id']
+            if user_id in used_users:
+                continue
+            used_users.add(user_id)
+            if user_id == sql_message['user_id'] and self_star is False:
+                continue
+
+            async with bot.db.lock:
+                async with conn.transaction():
+                    sql_user = await conn.fetchrow(get_user, user_id)
+
+            if sql_user['is_bot'] is True:
+                continue
+
+            member_list = await functions.get_members(
+                [int(sql_user['id'])], guild
+            )
+            try:
+                member = member_list[0]
+                if member and await functions.is_user_blacklisted(
+                    bot, member, int(sql_starboard['id'])
+                ):
+                    continue
+            except IndexError:
+                pass
+
+            total_points += 1
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            await conn.execute(
+                update_message, total_points,
+                message_id, int(sql_starboard['id'])
+            )
+
+    return total_points, emojis
 
 
 async def get_members(user_ids: Iterable[int], guild: discord.Guild):

@@ -3,11 +3,19 @@ import functions
 import bot_config
 import settings
 import random
-from events import starboard_events
+import asyncpg
+import cooldowns
+from events import leveling
+from discord import utils
 from discord.ext import commands
 from discord.ext import flags
 from typing import Union
 from settings import change_starboard_settings
+
+
+edit_message_cooldown = cooldowns.CooldownMapping.from_cooldown(
+    3, 5
+)
 
 
 async def pretty_emoji_string(emojis, guild):
@@ -29,6 +37,52 @@ class Starboard(commands.Cog):
     def __init__(self, bot, db):
         self.bot = bot
         self.db = db
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+        guild_id = payload.guild_id
+        if guild_id is None:
+            return
+        channel_id = payload.channel_id
+        message_id = payload.message_id
+        user_id = payload.user_id
+        emoji = payload.emoji
+
+        emoji_name = str(emoji.id) if emoji.id is not None\
+            else emoji.name
+
+        if not await functions.is_starboard_emoji(
+            self.bot.db, guild_id, emoji_name
+        ):
+            return
+
+        await handle_reaction(
+            self.bot.db, self.bot, guild_id, channel_id,
+            user_id, message_id, emoji, True
+        )
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_remove(self, payload):
+        guild_id = payload.guild_id
+        if guild_id is None:
+            return
+        channel_id = payload.channel_id
+        message_id = payload.message_id
+        user_id = payload.user_id
+        emoji = payload.emoji
+
+        emoji_name = emoji.id if emoji.id is not None\
+            else emoji.name
+
+        if not await functions.is_starboard_emoji(
+            self.bot.db, guild_id, emoji_name
+        ):
+            return
+
+        await handle_reaction(
+            self.bot.db, self.bot, guild_id, channel_id,
+            user_id, message_id, emoji, False
+        )
 
     @flags.add_flag('--by', type=discord.User, default=None)
     @flags.add_flag('--stars', type=int, default=None)
@@ -105,7 +159,7 @@ class Starboard(commands.Cog):
         channel = self.bot.get_channel(orig_cid)
         m = await channel.fetch_message(orig_mid)
 
-        e = await starboard_events.get_embed_from_message(m)
+        e = await functions.get_embed_from_message(m)
 
         await ctx.send(
             f"**{sql_rand_message['points']} | {channel.mention}**",
@@ -417,6 +471,377 @@ class Starboard(commands.Cog):
             await ctx.send(
                 f"Set botsOnStarboard to {value} for {starboard.mention}"
             )
+
+
+# Functions:
+async def handle_reaction(
+    db, bot, guild_id, _channel_id, user_id, _message_id, _emoji, is_add
+):
+    emoji_name = _emoji.name if _emoji.id is None else str(_emoji.id)
+
+    check_reaction = \
+        """SELECT * FROM reactions
+        WHERE message_id=$1
+        AND user_id=$2
+        AND name=$3"""
+    remove_reaction = \
+        """DELETE FROM reactions
+        WHERE message_id=$1
+        AND user_id=$2
+        AND name=$3"""
+    get_message = \
+        """SELECT * FROM messages WHERE id=$1"""
+    get_user = \
+        """SELECT * FROM users WHERE id=$1"""
+    get_member = \
+        """SELECT * FROM members WHERE user_id=$1 and guild_id=$2"""
+
+    async with db.lock:
+        conn = await db.connect()
+        async with conn.transaction():
+            message_id, orig_channel_id = await functions.orig_message_id(
+                db, conn, _message_id
+            )
+            sql_user = await conn.fetchrow(get_user, user_id)
+            sql_member = await conn.fetchrow(get_member, user_id, guild_id)
+
+    channel_id = orig_channel_id if orig_channel_id is not None \
+        else _channel_id
+
+    guild = bot.get_guild(guild_id)
+    channel = utils.get(guild.channels, id=int(channel_id))
+    # user = utils.get(guild.members, id=user_id)
+
+    user = None
+    if sql_user is None or sql_member is None:
+        _users = await functions.get_members([user_id], guild)
+        if len(_users) == 0:
+            user = None
+        else:
+            user = _users[0]
+
+        await functions.check_or_create_existence(
+            bot, guild_id=guild_id,
+            user=user, do_member=True
+        )
+
+        if user is not None and user.bot:
+            return
+    elif sql_user is not None:
+        if sql_user['is_bot']:
+            return
+
+    try:
+        message = await functions.fetch(bot, int(message_id), channel)
+    except (discord.errors.NotFound, discord.errors.Forbidden, AttributeError):
+        message = None
+
+    if message:
+        await functions.check_or_create_existence(
+            bot, guild_id=guild_id,
+            user=message.author, do_member=True
+        )
+    await functions.check_or_create_existence(
+        bot,
+        guild_id=guild_id
+    )
+
+    async with db.lock:
+        conn = await db.connect()
+        async with conn.transaction():
+            rows = await conn.fetch(get_message, message_id)
+            if message:
+                if len(rows) == 0:
+                    await db.q.create_message.fetch(
+                        message_id, guild_id,
+                        message.author.id, None,
+                        channel_id, True,
+                        message.channel.is_nsfw()
+                    )
+            try:
+                rows = await conn.fetch(
+                    check_reaction, message_id, user_id, emoji_name
+                )
+                exists = len(rows) > 0
+                if not exists and is_add:
+                    await db.q.create_reaction.fetch(
+                        guild_id, user_id,
+                        message_id, emoji_name
+                    )
+                if exists and not is_add:
+                    await conn.execute(
+                        remove_reaction, message_id, user_id, emoji_name
+                    )
+            except asyncpg.exceptions.ForeignKeyViolationError:
+                pass
+
+    if message is not None:
+        handle_level = False
+        if user is None:
+            if sql_user is not None:
+                if not sql_user['is_bot']:
+                    handle_level = True
+        elif not user.bot:
+            handle_level = True
+
+        if handle_level:
+            await leveling.handle_reaction(
+                db, user_id, message.author, guild, _emoji, is_add
+            )
+
+    await handle_starboards(db, bot, message_id, channel, message, guild)
+
+
+async def handle_starboards(db, bot, message_id, channel, message, guild):
+    get_message = \
+        """SELECT * FROM messages WHERE id=$1"""
+    get_starboards = \
+        """SELECT * FROM starboards
+        WHERE guild_id=$1
+        AND locked=False"""
+
+    async with db.lock:
+        conn = await db.connect()
+        async with conn.transaction():
+            sql_message = await conn.fetchrow(get_message, message_id)
+            if sql_message is not None:
+                sql_starboards = await conn.fetch(
+                    get_starboards, sql_message['guild_id']
+                )
+
+    b = edit_message_cooldown.get_bucket(message_id)
+    retry_after = b.update_rate_limit()
+    on_cooldown = False
+    if retry_after:
+        on_cooldown = True
+
+    if sql_message is not None:
+        for sql_starboard in sql_starboards:
+            await handle_starboard(
+                db, bot, sql_message, message, sql_starboard,
+                guild, on_cooldown=on_cooldown
+            )
+
+
+async def handle_starboard(
+    db, bot, sql_message, message, sql_starboard, guild,
+    on_cooldown=False
+):
+    get_starboard_message = \
+        """SELECT * FROM messages WHERE orig_message_id=$1 AND channel_id=$2"""
+    delete_starboard_message = \
+        """DELETE FROM messages WHERE orig_message_id=$1 and channel_id=$2"""
+    get_author = \
+        """SELECT * FROM users WHERE id=$1"""
+    get_sbemojis = \
+        """SELECT * FROM sbemojis WHERE starboard_id=$1"""
+
+    starboard_id = sql_starboard['id']
+    starboard = bot.get_channel(int(starboard_id))
+
+    if starboard is None:
+        return
+
+    async with db.lock:
+        conn = await db.connect()
+        async with conn.transaction():
+            sql_author = await conn.fetchrow(
+                get_author, sql_message['user_id']
+            )
+            rows = await conn.fetch(
+                get_starboard_message, sql_message['id'], sql_starboard['id']
+            )
+
+    delete = False
+    if len(rows) == 0:
+        starboard_message = None
+    else:
+        sql_starboard_message = rows[0]
+        starboard_message_id = sql_starboard_message['id']
+        if starboard is not None:
+            try:
+                starboard_message = await functions.fetch(
+                    bot, int(starboard_message_id), starboard
+                )
+            except discord.errors.NotFound:
+                starboard_message = None
+                async with db.lock:
+                    conn = await db.connect()
+                    async with conn.transaction():
+                        await conn.execute(
+                            delete_starboard_message, sql_message['id'],
+                            sql_starboard['id']
+                        )
+        else:
+            starboard_message = None
+            delete = True
+
+    async with db.lock:
+        conn = await db.connect()
+        async with conn.transaction():
+            if delete:
+                await conn.execute(
+                    delete_starboard_message, sql_message['id'],
+                    sql_starboard['id']
+                )
+
+    recount = True
+    if len(rows) != 0 and sql_starboard_message['points'] is not None:
+        if sql_message['is_frozen']:
+            recount = False
+        if on_cooldown:
+            recount = False
+
+    if recount:
+        points, emojis = await functions.calculate_points(
+            conn, sql_message, sql_starboard, bot,
+            guild
+        )
+    else:
+        points = sql_starboard_message['points']
+        async with bot.db.lock:
+            async with conn.transaction():
+                emojis = await conn.fetch(get_sbemojis, sql_starboard['id'])
+
+    deleted = message is None
+    blacklisted = False if deleted else \
+        await functions.is_message_blacklisted(
+            bot, message, int(sql_starboard['id'])
+        )
+    on_starboard = starboard_message is not None
+
+    link_deletes = sql_starboard['link_deletes']
+    link_edits = sql_starboard['link_edits']
+    bots_on_sb = sql_starboard['bots_on_sb']
+    is_bot = sql_author['is_bot']
+    forced = sql_message['is_forced']
+    frozen = sql_message['is_frozen']
+    trashed = sql_message['is_trashed']
+
+    add = False
+    remove = False
+    if deleted and link_deletes:
+        remove = True
+    elif points <= sql_starboard['rtl']:
+        remove = True
+    elif points >= sql_starboard['required']:
+        add = True
+
+    if on_starboard is True:
+        add = False
+    elif on_starboard is False:
+        remove = False
+
+    if is_bot and not bots_on_sb:
+        add = False
+        if on_starboard:
+            remove = True
+
+    if blacklisted:
+        add = False
+
+    if forced is True:
+        remove = False
+        if not on_starboard:
+            add = True
+
+    await update_message(
+        db, message, sql_message['channel_id'], starboard_message,
+        starboard, points, forced, frozen, trashed, add, remove, link_edits,
+        emojis, on_cooldown=on_cooldown
+    )
+
+
+async def update_message(
+    db, orig_message, orig_channel_id, sb_message, starboard, points,
+    forced, frozen, trashed, add, remove, link_edits, emojis,
+    on_cooldown=False
+):
+    update = orig_message is not None
+
+    check_message = \
+        """SELECT * FROM messages WHERE orig_message_id=$1 AND channel_id=$2"""
+
+    if trashed:
+        if sb_message is not None:
+            embed = discord.Embed(title='Trashed Message')
+            embed.description = "This message was trashed by a moderator."
+            if not on_cooldown:
+                try:
+                    await sb_message.edit(embed=embed)
+                except discord.errors.NotFound:
+                    pass
+    elif remove:
+        try:
+            await sb_message.delete()
+        except discord.errors.NotFound:
+            pass
+    else:
+        plain_text = (
+            f"**{points} | <#{orig_channel_id}>{' | 🔒' if forced else ''}"
+            f"{' | ❄️' if frozen else ''}**"
+        )
+
+        embed = await functions.get_embed_from_message(
+            orig_message
+        ) if orig_message is not None else None
+
+        if add and embed is not None:
+            async with db.lock:
+                conn = db.conn
+                async with conn.transaction():
+                    _message = await conn.fetchrow(
+                        check_message, orig_message.id,
+                        starboard.id
+                    )
+            if _message is not None:
+                return
+            try:
+                sb_message = await starboard.send(plain_text, embed=embed)
+            except discord.errors.Forbidden:
+                pass
+            else:
+                async with db.lock:
+                    conn = await db.connect()
+                    async with conn.transaction():
+                        _message = await conn.fetchrow(
+                            check_message, orig_message.id,
+                            starboard.id
+                        )
+                        if _message is None:
+                            await db.q.create_message.fetch(
+                                sb_message.id, sb_message.guild.id,
+                                orig_message.author.id, orig_message.id,
+                                starboard.id, False,
+                                orig_message.channel.is_nsfw()
+                            )
+                if _message is not None:
+                    print("### DUPLICATE DELETED ###")
+                    await sb_message.delete()
+
+        elif update and sb_message and link_edits:
+            if not on_cooldown:
+                await sb_message.edit(
+                    content=plain_text, embed=embed
+                )
+        elif sb_message:
+            await sb_message.edit(
+                content=plain_text
+            )
+    if sb_message is not None and not remove and add:
+        for _emoji in emojis:
+            if _emoji['d_id'] is not None:
+                emoji = utils.get(
+                    starboard.guild.emojis, id=int(_emoji['d_id'])
+                )
+                if emoji is None:
+                    continue
+            else:
+                emoji = _emoji['name']
+            try:
+                await sb_message.add_reaction(emoji)
+            except Exception:
+                pass
 
 
 def setup(bot):
