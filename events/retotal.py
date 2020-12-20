@@ -1,4 +1,5 @@
 import functions
+from events import starboard_events
 from itertools import compress
 
 
@@ -42,6 +43,9 @@ async def recount_reactions(bot, message):
     check_reaction = \
         """SELECT * FROM reactions WHERE
         message_id=$1 AND name=$2 AND user_id=$3"""
+    check_message = \
+        """SELECT * FROM messages
+        WHERE id=$1"""
 
     # hard to explain why, but I also remove the message
     # from the cache when recounting the stars on it
@@ -75,6 +79,23 @@ async def recount_reactions(bot, message):
             })
 
     conn = bot.db.conn
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            sql_m = await conn.fetchrow(
+                check_message, message.id
+            )
+            if sql_m and sql_m['is_orig'] is False:
+                print("No")
+                return
+            elif sql_m is None:
+                await bot.db.q.create_message.fetch(
+                    message.id, message.guild.id,
+                    message.author.id, None,
+                    message.channel.id, True,
+                    message.channel.is_nsfw()
+                )
+
     for r in to_add:
         await functions.check_or_create_existence(
             bot,
@@ -95,3 +116,8 @@ async def recount_reactions(bot, message):
                     message.guild.id, r['user'].id,
                     message.id, r['name']
                 )
+
+    await starboard_events.handle_starboards(
+        bot.db, bot, message.id, message.channel, message,
+        message.guild
+    )
