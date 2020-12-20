@@ -1,7 +1,6 @@
 import discord
 import bot_config
 from discord.ext import commands
-from discord import utils
 
 
 pages = {
@@ -221,40 +220,120 @@ numer_emojis = [
 stop_emoji = "⏹️"
 
 
-def get_usage(
-    ctx, command: commands.Command
-):
-    clean_prefix = utils.escape_markdown(ctx.prefix)
-    usage = (
-        f"{clean_prefix}{command.qualified_name} {command.signature}"
-    )
-    return usage
-
-
-def get_command_embed(
-    ctx, command: commands.Command
-):
-    usage = get_usage(ctx, command)
-    embed = discord.Embed(
-        title='Command Help',
-        description=command.description + '\n\n' + (command.help or ''),
-        color=bot_config.COLOR
-    )
-    embed.add_field(
-        name='Usage',
-        value=f"```\n{usage}\n```"
-    )
-    return embed
-
-
 async def showpage(message, embed):
     await message.edit(embed=embed)
 
 
-class Help(commands.Cog):
-    """Help commands"""
-    def __init__(self, bot):
-        self.bot = bot
+class Info(commands.Cog):
+    """Basic info about Starboard"""
+
+    @commands.command(
+        name='links', aliases=['invite', 'support'],
+        description='View helpful links',
+        brief='View helpful links'
+    )
+    async def show_links(self, ctx):
+        embed = discord.Embed(title="Helpful Links", color=bot_config.COLOR)
+        description = \
+            f"**[Support Server]({bot_config.SUPPORT_SERVER})**"\
+            f"\n**[Invite Me]({bot_config.INVITE})**"\
+            f"\n**[Submit Bug Report or Suggestion]({bot_config.ISSUES_PAGE})"\
+            "**"\
+            f"\n**[Source Code]({bot_config.SOURCE_CODE})**"\
+            f"\n**[Donate/Become a Patron]({bot_config.DONATE})**"\
+            f"\n**[Vote for Starboard]({bot_config.VOTE})**"
+        embed.description = description
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        name='vote',
+        description='Vote for Starboard',
+        brief='Vote for Starboard'
+    )
+    async def show_vote_info(self, ctx):
+        embed = discord.Embed(
+            title="Vote for Starboard!",
+            color=bot_config.COLOR
+        )
+        description = \
+            "If you vote for this bot, you will receive the "\
+            "**@Voter** role in the **[Official Starboard Support Server]"\
+            f"({bot_config.SUPPORT_SERVER}).**"\
+            f"\n\n**[Click Here to Vote For Starboard!]({bot_config.VOTE})**"
+        embed.description = description
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        name='privacy', aliases=['policy'],
+        description='View the bot/owners privacy policy',
+        brief="View privacy policy"
+    )
+    async def show_privacy_policy(self, ctx):
+        embed = discord.Embed(title='Privacy Policy', color=bot_config.COLOR)
+        embed.description = bot_config.PRIVACY_POLICY
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        name='about', brief='About Starboards',
+        description='Give quick description of what a \
+            starboard is and what it is for'
+    )
+    async def about_starboard(self, ctx):
+        msg = "Starboard is a Discord starboard bot. "\
+            "Starboards are kind of like democratic pins. "\
+            "A user can \"vote\" to have a message displayed on "\
+            "a channel by reacting with an emoji, usually a star. "\
+            "A Starboard is a great way to archive funny messages."
+        embed = discord.Embed(
+            title='About Starboard and Starboards',
+            description=msg, color=bot_config.COLOR
+        )
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        name='ping', aliases=['latency'],
+        description='Get various bot ping statistics.',
+        brief='Get bot ping'
+    )
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def get_bot_ping(self, ctx):
+        def ms(seconds):
+            return int((seconds*1000))
+
+        latency = ms(self.bot.latency)
+
+        embed = discord.Embed(
+            title='Pong!',
+            description=f"Average Latency: {latency} ms\n",
+            color=bot_config.COLOR
+        )
+
+        other_shards = ''
+        for sid, l in self.bot.latencies:
+            if ctx.guild and sid == ctx.guild.shard_id:
+                other_shards += f"**Shard {sid}**: {ms(l)} ms\n"
+            else:
+                other_shards += f"Shard {sid}: {ms(l)} ms\n"
+
+        embed.add_field(
+            name='Shards', value=other_shards
+        )
+
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        name='stats', aliases=['botstats'],
+        description='Bot stats', brief='Bot stats'
+    )
+    async def stats_for_bot(self, ctx):
+        total = sum([g.member_count for g in self.bot.guilds])
+        embed = discord.Embed(
+            title='Bot Stats', colour=bot_config.COLOR,
+            description=f"**Guilds:** {len(self.bot.guilds)}"
+            f"\n**Users:** {total}"
+            f"\n**Ping:** {int(self.bot.latency*1000)} ms"
+        )
+        await ctx.send(embed=embed)
 
     @commands.command(
         name='help', aliases=['h', '?'],
@@ -262,23 +341,15 @@ class Help(commands.Cog):
         description="Get help with the bot",
     )
     @commands.bot_has_permissions(send_messages=True)
-    async def help(self, ctx, *, command: str = None):
+    async def help(self, ctx):
         p = ctx.prefix
-        if not command:
-            await ctx.send(
-                "For a tutorial on using the bot, run "
-                f"`{p}tutorial`. You can view a complete "
-                f"command list with `{p}commands`, and "
-                "you can get help with a specific "
-                f"command by running `{p}commands <commane>`"
-            )
-        else:
-            cmd = self.bot.get_command(command)
-            if not cmd:
-                await ctx.send("I couldn't find that command")
-                return
-            e = get_command_embed(ctx, cmd)
-            await ctx.send(embed=e)
+        await ctx.send(
+            "For a tutorial on using the bot, run "
+            f"`{p}tutorial`. You can view a complete "
+            f"command list with `{p}commands`, and "
+            "you can get help with a specific "
+            f"command by running `{p}commands <commane>`"
+        )
 
     @commands.command(
         name='tutorial',
@@ -322,7 +393,8 @@ class Help(commands.Cog):
                 'raw_reaction_add', check=check
             )
             try:
-                await message.remove_reaction(payload.emoji.name, payload.member)
+                await message.remove_reaction(
+                    payload.emoji.name, payload.member)
             except Exception:
                 pass
             try:
@@ -340,4 +412,4 @@ class Help(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Help(bot))
+    bot.add_cog(Info(bot))
