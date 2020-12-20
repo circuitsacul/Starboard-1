@@ -10,12 +10,12 @@ import functions
 import traceback
 import pretty_help
 import errors as cerrors
+import bot_config
 from discord.ext import commands
 from asyncio import Lock
 
 dotenv.load_dotenv()
 
-import bot_config
 
 from database.database import Database
 from api import post_guild_count
