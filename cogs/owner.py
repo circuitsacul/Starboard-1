@@ -182,12 +182,12 @@ class Owner(commands.Cog):
         get_results = \
             """SELECT * FROM sqlruntimes"""
 
-        def sorter(l):
+        def sorter(li):
             if sort == 'avg':
-                return float(l[2])/l[1]
+                return float(li[2])/li[1]
             elif sort == 'total':
-                return float(l[2])
-            return l[1]
+                return float(li[2])
+            return li[1]
 
         conn = self.bot.db.conn
         async with self.bot.db.lock:
