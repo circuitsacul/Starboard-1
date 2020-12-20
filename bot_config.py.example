@@ -32,44 +32,28 @@ GUILD_JOIN_COLOR = 0xffe16c # hex
 
 # Donation Config
 DEFAULT_LEVEL = {
-    'starboards': float('inf'), # Set to default number of starboards. Right now it's infinite
-    'emojis': float('inf'), # Same as above
-    'asemojis': float('inf'), # AS = AutoStar
-    'aschannels': float('inf')
+    'starboards': 1,
+    'emojis': 1,
+    'aschannels': 1,
+    'asemojis': 1
 }
 
-PATRON_LEVELS = {
-    "donatebot product id": {
-        'display': {
-            'title': 'Product Title',
-            'description': """Description and perks for this level"""
-        },
-        'gives_role': None, #option id of role to give to user if they are in your support server,
-        'num': 1, # The level... Essentially means that level 2 will have all the features level 1 has. Can all be set to 0 if needed
-        'perks': {
-            'starboards': 4, # How many starboards do users get if they have this level
-            'emojis': 4, # How many emojis per starboard do users get if they have this level,
-            'aschannels': 1,
-            'asemojis': 1
-        }
-    },
-    "bJZn0tdzNl": {
-        'display': {
-            'title': 'Gold Patron',
-            'description': """For all servers you own:\
-                \n**- Up to 6 starboards**\
-                \n**- Up to 6 emojis per starboard**"""
-        },
-        'gives_role': None,
-        'num': 2,
-        'perks': {
-            'starboards': 6,
-            'emojis': 6,
-            'aschannels': 2,
-            'asemojis': 2
-        }
-    }
+PREMIUM_PERKS = {
+    'starboards': 5,
+    'emojis': 5,
+    'aschannels': 5,
+    'asemojis': 5
 }
+
+PREMIUM_DISPLAY = (
+    "The perks of a server being premium are: \n"
+    "**- Up to 5 starboards**\n"
+    "**- Up to 5 emojis per starboard**\n"
+    "**- Up to 5 AutoStar Channels**\n"
+    "**- Up to 5 emojis per AutoStar Channel**"
+)
+
+PREMIUM_COST = 3
 
 # Markdown, str
 PRIVACY_POLICY = \

@@ -3,6 +3,7 @@ import discord
 import checks
 import time
 import bot_config
+import functions
 from subprocess import PIPE, run
 from paginators import disputils
 from asyncpg.exceptions._base import InterfaceError
@@ -290,6 +291,30 @@ class Owner(commands.Cog):
             await ctx.send(f"Failed: {e}")
         else:
             await ctx.send(message)
+
+    @commands.command(name='givemonths')
+    @commands.is_owner()
+    async def set_endsat(
+        self, ctx,
+        guild_id: int,
+        months: int
+    ) -> None:
+        await functions.give_months(
+            self.bot, guild_id, months
+        )
+        await ctx.send("Done")
+
+    @commands.command(name='givecredits')
+    @commands.is_owner()
+    async def give_credits(
+        self, ctx,
+        user_id: int,
+        credits: int
+    ) -> None:
+        await functions.givecredits(
+            self.bot, user_id, credits
+        )
+        await ctx.send("Done")
 
 
 def setup(bot):
