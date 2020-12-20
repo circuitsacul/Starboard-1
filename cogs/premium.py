@@ -506,7 +506,7 @@ class Premium(commands.Cog):
                 "\n\nAlso, someone else has already "
                 "enabled autoredeem for this server. "
                 "You can still enable it for yourself, though."
-                if already_ar else ''
+                if already_on else ''
             ),
             ctx.message.author, ctx.channel
         )
