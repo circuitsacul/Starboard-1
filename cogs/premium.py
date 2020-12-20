@@ -151,7 +151,7 @@ class Premium(commands.Cog):
                 )
                 await conn.execute(create_payroll, now)
 
-        if last_date.second != now.second:
+        if last_date.month != now.month:
             await functions.do_payroll(self.bot)
 
     @tasks.loop(minutes=1)
@@ -197,13 +197,6 @@ class Premium(commands.Cog):
         @return list"""
 
         # If the client doesn't exist
-        return [{
-            'name': 'Lucas',
-            'payment': 5,
-            'declined': False,
-            'total': 0,
-            'discord_id': 321733774414970882
-        }]
         if self.client is None:
             print("Error : Patron API client not defined")
             return
