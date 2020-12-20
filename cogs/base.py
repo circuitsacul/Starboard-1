@@ -1,5 +1,6 @@
 import discord
 import bot_config
+import functions
 from discord.ext import commands
 
 
@@ -220,21 +221,70 @@ numer_emojis = [
 stop_emoji = "⏹️"
 
 
-async def showpage(message, embed):
+async def showpage(
+    message: discord.Message,
+    embed: discord.Embed
+) -> None:
     await message.edit(embed=embed)
 
 
-class Info(commands.Cog):
+class Base(commands.Cog):
     """Basic info about Starboard"""
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.Cog.listener()
+    async def on_message(
+        self,
+        message: discord.Message
+    ) -> None:
+        if message.author.bot:
+            return
+
+        elif message.content.replace('!', '') == self.bot.user.mention:
+            if message.guild is not None:
+                await functions.check_or_create_existence(
+                    self.bot, message.guild.id, message.author,
+                    do_member=True
+                )
+
+            if message.guild is not None:
+                p = await functions.get_one_prefix(self.bot, message.guild.id)
+            else:
+                p = bot_config.DEFAULT_PREFIX
+            try:
+                await message.channel.send(
+                    f"To get started, run `{p}setup`.\n"
+                    f"To see all my commands, run `{p}help`\n"
+                    "If you need help, you can join the support "
+                    f"server {bot_config.SUPPORT_SERVER}"
+                )
+            except Exception:
+                pass
+        else:
+            await self.bot.process_commands(message)
+
+    @commands.Cog.listener()
+    async def on_ready(
+        self
+    ) -> None:
+        await self.bot.change_presence(
+            activity=discord.Game("Mention me for help")
+        )
+        print(
+            f"Logged in as {self.bot.user.name} "
+            f"in {len(self.bot.guilds)} guilds!"
+        )
 
     @commands.command(
         name='links', aliases=['invite', 'support'],
         description='View helpful links',
         brief='View helpful links'
     )
-    async def show_links(self, ctx):
+    async def show_links(
+        self,
+        ctx: commands.Context
+    ) -> None:
         embed = discord.Embed(title="Helpful Links", color=bot_config.COLOR)
         description = \
             f"**[Support Server]({bot_config.SUPPORT_SERVER})**"\
@@ -252,7 +302,10 @@ class Info(commands.Cog):
         description='Vote for Starboard',
         brief='Vote for Starboard'
     )
-    async def show_vote_info(self, ctx):
+    async def show_vote_info(
+        self,
+        ctx: commands.Context
+    ) -> None:
         embed = discord.Embed(
             title="Vote for Starboard!",
             color=bot_config.COLOR
@@ -270,7 +323,10 @@ class Info(commands.Cog):
         description='View the bot/owners privacy policy',
         brief="View privacy policy"
     )
-    async def show_privacy_policy(self, ctx):
+    async def show_privacy_policy(
+        self,
+        ctx: commands.Context
+    ) -> None:
         embed = discord.Embed(title='Privacy Policy', color=bot_config.COLOR)
         embed.description = bot_config.PRIVACY_POLICY
         await ctx.send(embed=embed)
@@ -280,7 +336,10 @@ class Info(commands.Cog):
         description='Give quick description of what a \
             starboard is and what it is for'
     )
-    async def about_starboard(self, ctx):
+    async def about_starboard(
+        self,
+        ctx: commands.Context
+    ) -> None:
         msg = "Starboard is a Discord starboard bot. "\
             "Starboards are kind of like democratic pins. "\
             "A user can \"vote\" to have a message displayed on "\
@@ -298,8 +357,11 @@ class Info(commands.Cog):
         brief='Get bot ping'
     )
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def get_bot_ping(self, ctx):
-        def ms(seconds):
+    async def get_bot_ping(
+        self,
+        ctx: commands.Context
+    ) -> None:
+        def ms(seconds: int) -> int:
             return int((seconds*1000))
 
         latency = ms(self.bot.latency)
@@ -327,7 +389,10 @@ class Info(commands.Cog):
         name='stats', aliases=['botstats'],
         description='Bot stats', brief='Bot stats'
     )
-    async def stats_for_bot(self, ctx):
+    async def stats_for_bot(
+        self,
+        ctx: commands.Context
+    ) -> None:
         total = sum([g.member_count for g in self.bot.guilds])
         embed = discord.Embed(
             title='Bot Stats', colour=bot_config.COLOR,
@@ -343,7 +408,10 @@ class Info(commands.Cog):
         description="Get help with the bot",
     )
     @commands.bot_has_permissions(send_messages=True)
-    async def help(self, ctx):
+    async def help(
+        self,
+        ctx: commands.Context
+    ) -> None:
         p = ctx.prefix
         await ctx.send(
             "For a tutorial on using the bot, run "
@@ -359,7 +427,10 @@ class Info(commands.Cog):
         brief='Get help with the bot'
     )
     @commands.bot_has_permissions(embed_links=True, send_messages=True)
-    async def run_tutorial(self, ctx):
+    async def run_tutorial(
+        self,
+        ctx: commands.Context
+    ) -> None:
         embeds = [
             discord.Embed(
                 title=t,
@@ -413,5 +484,7 @@ class Info(commands.Cog):
             pass
 
 
-def setup(bot):
-    bot.add_cog(Info(bot))
+def setup(
+    bot: commands.Bot
+) -> None:
+    bot.add_cog(Base(bot))

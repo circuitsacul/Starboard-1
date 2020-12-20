@@ -7,7 +7,6 @@ import dbl
 from dotenv import load_dotenv
 
 load_dotenv()
-from pprint import pprint
 
 
 STATCORD_TOKEN = os.getenv("STATCORD_TOKEN")

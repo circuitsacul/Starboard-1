@@ -10,11 +10,15 @@ load_dotenv()
 APIKEY = os.getenv('APIKEY')
 
 
-def _simplify(url):
+def _simplify(
+    url: str
+) -> str:
     return url.replace('http://', '').replace('https://', '')
 
 
-def get_gif_id(url: str):
+def get_gif_id(
+    url: str
+) -> str:
     base_url = 'tenor.com/view/'
     url = _simplify(url.casefold())
     if not url.startswith(base_url):
@@ -24,7 +28,9 @@ def get_gif_id(url: str):
     return gif_id
 
 
-async def get_gif_url(gifid: str):
+async def get_gif_url(
+    gifid: str
+) -> Optional[str]:
     r = await requests.get(
         f"https://api.tenor.com/v1/gifs?ids={gifid}&key={APIKEY}"
     )
