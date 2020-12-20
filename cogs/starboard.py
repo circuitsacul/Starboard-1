@@ -107,7 +107,10 @@ class Starboard(commands.Cog):
 
         e = await starboard_events.get_embed_from_message(m)
 
-        await ctx.send(embed=e)
+        await ctx.send(
+            f"**{sql_rand_message['points']} | {channel.mention}**",
+            embed=e
+        )
 
     @commands.group(
         name='starboards', aliases=['boards', 's', 'sb'],
