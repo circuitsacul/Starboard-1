@@ -600,6 +600,8 @@ async def handle_starboards(db, bot, message_id, channel, message, guild):
         WHERE guild_id=$1
         AND locked=False"""
 
+    sql_starboards = []
+
     async with db.lock:
         conn = await db.connect()
         async with conn.transaction():
@@ -648,15 +650,14 @@ async def handle_starboard(
             sql_author = await conn.fetchrow(
                 get_author, sql_message['user_id']
             )
-            rows = await conn.fetch(
+            sql_starboard_message = await conn.fetchrow(
                 get_starboard_message, sql_message['id'], sql_starboard['id']
             )
 
     delete = False
-    if len(rows) == 0:
+    if sql_starboard_message is None:
         starboard_message = None
     else:
-        sql_starboard_message = rows[0]
         starboard_message_id = sql_starboard_message['id']
         if starboard is not None:
             try:
@@ -686,7 +687,8 @@ async def handle_starboard(
                 )
 
     recount = True
-    if len(rows) != 0 and sql_starboard_message['points'] is not None:
+    if sql_starboard_message is not None and\
+            sql_starboard_message['points'] is not None:
         if sql_message['is_frozen']:
             recount = False
         if on_cooldown:
