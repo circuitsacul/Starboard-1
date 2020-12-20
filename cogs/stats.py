@@ -4,6 +4,9 @@ from bot_config import OWNER_ID
 import statcord
 import os
 import dbl
+from dotenv import load_dotenv
+
+load_dotenv()
 from pprint import pprint
 
 

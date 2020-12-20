@@ -2,6 +2,9 @@ from aiohttp import web
 import hmac
 import hashlib
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 import bot_config
 
 HOOK_AUTH = os.getenv("TOP_HOOK_AUTH")

@@ -1,9 +1,11 @@
 import asyncpg as apg
 import os
 import time
+from dotenv import load_dotenv
 from asyncio import Lock
 from discord import utils
 
+load_dotenv()
 db_pwd = os.getenv('DB_PWD')
 
 
