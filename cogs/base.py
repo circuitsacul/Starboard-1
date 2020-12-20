@@ -1,5 +1,6 @@
 import discord
 import bot_config
+import functions
 from discord.ext import commands
 
 
@@ -224,10 +225,48 @@ async def showpage(message, embed):
     await message.edit(embed=embed)
 
 
-class Info(commands.Cog):
+class Base(commands.Cog):
     """Basic info about Starboard"""
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if message.author.bot:
+            return
+
+        elif message.content.replace('!', '') == self.bot.user.mention:
+            if message.guild is not None:
+                await functions.check_or_create_existence(
+                    self.bot, message.guild.id, message.author,
+                    do_member=True
+                )
+
+            if message.guild is not None:
+                p = await functions.get_one_prefix(self.bot, message.guild.id)
+            else:
+                p = bot_config.DEFAULT_PREFIX
+            try:
+                await message.channel.send(
+                    f"To get started, run `{p}setup`.\n"
+                    f"To see all my commands, run `{p}help`\n"
+                    "If you need help, you can join the support "
+                    f"server {bot_config.SUPPORT_SERVER}"
+                )
+            except Exception:
+                pass
+        else:
+            await self.bot.process_commands(message)
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await self.bot.change_presence(
+            activity=discord.Game("Mention me for help")
+        )
+        print(
+            f"Logged in as {self.bot.user.name} "
+            f"in {len(self.bot.guilds)} guilds!"
+        )
 
     @commands.command(
         name='links', aliases=['invite', 'support'],
@@ -414,4 +453,4 @@ class Info(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Info(bot))
+    bot.add_cog(Base(bot))
