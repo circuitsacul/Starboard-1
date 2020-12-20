@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
+import bot_config
 
 HOOK_AUTH = os.getenv("TOP_HOOK_AUTH")
 PATREON_AUTH = os.getenv("PATREON_AUTH")
@@ -42,8 +43,8 @@ class HttpWebHook():
         return sig == digester.hexdigest()
 
     def _set_routes(self):
-        # @self.routes.post('/webhook')
-        # async def donation_event(request):
+        #@self.routes.post('/webhook')
+        #async def donation_event(request):
         #    try:
         #        data = await request.json()
         #        if request.headers['authorization'] != DONATEBOT_TOKEN:
@@ -89,7 +90,7 @@ class HttpWebHook():
 
         self.app.add_routes(self.routes)
 
-    # async def handle_donation_event(self, data):
+    #async def handle_donation_event(self, data):
     #    product_id = None if 'product_id' not in data else data['product_id']
     #    role_id = None if 'role_id' not in data else data['role_id']
     #    async with self.db.lock:
