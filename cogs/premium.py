@@ -19,28 +19,6 @@ from patreon.version_compatibility.utc_timezone import utc_timezone
 from six.moves.urllib.parse import urlparse, parse_qs, urlencode
 
 
-async def alert_patron(
-    bot, user_id: int, text: str
-) -> None:
-    user = await bot.fetch_user(user_id)
-    if user is None:
-        raise Exception(f"Couldn't Find Patron {user_id}")
-    try:
-        await user.send(text)
-    except Exception as e:
-        raise Exception(
-            f"Couldn't send messages to patron {user_id}"
-            f"\n\n{e}"
-        )
-
-
-async def alert_owner(
-    bot, text: str
-) -> None:
-    owner = await bot.fetch_user(bot_config.OWNER_ID)
-    await owner.send(text)
-
-
 class Premium(commands.Cog):
     """Premium related commands"""
     def __init__(self, bot):
@@ -75,10 +53,12 @@ class Premium(commands.Cog):
         conn = self.bot.db.conn
         for patron in all_patrons:
             if patron['discord_id'] is None:
-                await alert_owner(self.bot, f"{patron} has no discord id")
+                await functions.alert_owner(
+                    self.bot, f"{patron} has no discord id")
                 continue
             if patron['declined'] is True:
-                await alert_owner(self.bot, f"{patron} was declined")
+                await functions.alert_owner(
+                    self.bot, f"{patron} was declined")
                 continue
             user = await self.bot.fetch_user(int(patron['discord_id']))
             await functions.check_or_create_existence(
@@ -124,11 +104,11 @@ class Premium(commands.Cog):
                     "every month from now on."
                 )
                 try:
-                    await alert_patron(
+                    await functions.alert_patron(
                         self.bot, patron['discord_id'], text
                     )
                 except Exception as e:
-                    await alert_owner(e)
+                    await functions.alert_owner(e)
 
         # Check any removed patrons
         removed = []
@@ -145,7 +125,7 @@ class Premium(commands.Cog):
                         removed.append(int(u['id']))
         for uid in removed:
             try:
-                await alert_patron(
+                await functions.alert_patron(
                     self.bot, uid,
                     "It looks like you removed your pledge. "
                     "We're sorry to see you go, but we "
@@ -153,7 +133,7 @@ class Premium(commands.Cog):
                     "you've given us in the past!"
                 )
             except Exception as e:
-                await alert_owner(e)
+                await functions.alert_owner(e)
 
     @tasks.loop(minutes=10)
     async def do_payroll(self):
@@ -196,6 +176,12 @@ class Premium(commands.Cog):
         for sg in sql_prem_guilds:
             if sg['premium_end'] < now:
                 # Premium for this guild has expired
+                did_redeem = await functions.autoredeem(
+                    self.bot, int(sg['id'])
+                )
+                if did_redeem is True:
+                    continue
+
                 async with self.bot.db.lock:
                     async with conn.transaction():
                         await conn.execute(
@@ -430,6 +416,150 @@ class Premium(commands.Cog):
                 )
         else:
             await p.quit("Cancelled.")
+
+    @commands.group(
+        name='autoredeem', aliases=['ar'],
+        brief="View+Manage autoredeem for servers",
+        invoke_without_command=True
+    )
+    async def autoredeem(
+        self, ctx
+    ) -> None:
+        """View and manage autoredeem settings. Running
+        this command with no arguments will show the
+        setting for the current server you are in. If you
+        run it in DMs, it will list all servers that
+        autoredeem is on for.
+        """
+        conn = self.bot.db.conn
+
+        if ctx.guild is None:  # used in DMs
+            async with self.bot.db.lock:
+                async with conn.transaction():
+                    ar_members = await conn.fetch(
+                        """SELECT * FROM members
+                        WHERE user_id=$1
+                        AND autoredeem=True""",
+                        ctx.message.author.id
+                    )
+            if len(ar_members) > 0:
+                description = "AutoRedeem is on for these servers:"
+                for m in ar_members:
+                    guild = self.bot.get_guild(int(m['guild_id']))
+                    description += f"\n{guild.name} `{guild.id}`"
+                embed = discord.Embed(
+                    title='AutoRedeem',
+                    description=description,
+                    color=bot_config.COLOR
+                )
+                await ctx.send(embed=embed)
+            else:
+                await ctx.send(
+                    "You have not enabled AutoRedeem on any servers."
+                )
+        else:
+            async with self.bot.db.lock:
+                async with conn.transaction():
+                    is_on = await conn.fetchval(
+                        """SELECT autoredeem FROM members
+                        WHERE user_id=$1 AND guild_id=$2""",
+                        ctx.message.author.id, ctx.guild.id
+                    )
+            await ctx.send(
+                "You have not enabled autoredeem on this server." if not is_on
+                else "You have enabled autoredeem on this server."
+            )
+
+    @autoredeem.command(
+        name='enable', aliases=['on'],
+        brief='Enables autoredeem on a server'
+    )
+    @commands.guild_only()
+    async def enable_autoredeem(
+        self, ctx
+    ) -> None:
+        """Enables AutoRedeem on the current server, so the next
+        time it is out of premium it will automatically
+        redeem credits from your account."""
+        conn = self.bot.db.conn
+
+        c = disputils.Confirmation(self.bot, bot_config.COLOR)
+        await c.confirm(
+            "Are you sure? This will automatically "
+            "take credits out of your account when "
+            "this server runs out of premium!",
+            ctx.message.author, ctx.channel
+        )
+
+        if not c.confirmed:
+            await c.quit("Cancelled")
+            return
+
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                already_on = await conn.fetchrow(
+                    """SELECT * FROM members
+                    WHERE guild_id=$1
+                    AND autoredeem=True""",
+                    ctx.guild.id
+                ) is not None
+        if already_on:
+            await ctx.send(
+                "You or someone else has already "
+                "enabled autoredeem on this server."
+            )
+            return
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                await conn.execute(
+                    """UPDATE members
+                    SET autoredeem=True
+                    WHERE user_id=$1
+                    AND guild_id=$2""",
+                    ctx.message.author.id,
+                    ctx.guild.id
+                )
+        await c.quit("AutoRedeem has been enabled!")
+
+    @autoredeem.command(
+        name='disable', aliases=['off'],
+        brief="Disables autoredeem for a server"
+    )
+    async def disable_autoredeem(
+        self, ctx, guild_id: int = None
+    ) -> None:
+        """Disables autoredeem for a specific server.
+
+        [guild_id]: The id of the server you want to
+        disable AutoRedeem for. An optional argument.
+        Required if you run it in DMs, otherwise it defaults
+        to the server you run it in.
+        """
+
+        if ctx.guild is None and guild_id is None:
+            await ctx.send(
+                "Please either specify a server id, or "
+                "run this command in the server you want "
+                "to disable AutoRedeem on."
+            )
+            return
+
+        guild = self.bot.get_guild(778289112381784115)
+
+        conn = self.bot.db.conn
+
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                await conn.execute(
+                    """UPDATE members
+                    SET autoredeem=False
+                    WHERE user_id=$1
+                    AND guild_id=$2""",
+                    ctx.message.author.id,
+                    guild_id or ctx.guild.id
+                )
+
+        await ctx.send(f"AutoRedeem has been disabled on {guild.name}")
 
 
 # I stole this from the patreon lib and converted to async

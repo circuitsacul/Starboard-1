@@ -257,7 +257,82 @@ async def set_asc_lock(bot, id: int, locked: bool) -> None:
             )
 
 
+async def alert_user(
+    bot, user_id: int, text: str
+) -> None:
+    user = await bot.fetch_user(user_id)
+    if user is None:
+        raise Exception(f"Couldn't Find User to alert {user_id}")
+    try:
+        await user.send(text)
+    except Exception as e:
+        raise Exception(
+            f"Couldn't send alert to user {user_id}"
+            f"\n\n{e}"
+        )
+
+
+async def alert_owner(
+    bot, text: str
+) -> None:
+    owner = await bot.fetch_user(bot_config.OWNER_ID)
+    await owner.send(text)
+
+
 # PREMIUM FUNCTIONS
+async def autoredeem(
+    bot,
+    guild_id: int
+) -> bool:
+    """Iterates over the list of users who have
+    enabled autoredeem for this server, and if
+    one of them does redeem some of their credits
+    and alert the user."""
+    await bot.wait_until_ready()
+    conn = bot.db.conn
+
+    guild = bot.get_guild(guild_id)
+    if guild is None:
+        return False
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            ar_members = await conn.fetch(
+                """SELECT * FROM members
+                WHERE guild_id=$1
+                AND autoredeem=True""",
+                guild_id
+            )
+    redeemed = False
+    for m in ar_members:
+        ms = await get_members([int(m['user_id'])], guild)
+        if len(ms) == 0:
+            continue
+        current_credits = await get_credits(
+            bot, int(m['user_id'])
+        )
+        if current_credits < bot_config.PREMIUM_COST:
+            continue
+        try:
+            await alert_user(
+                bot, int(m['user_id']),
+                f"You have autoredeem enabled in {guild.name}, "
+                f"so {bot_config.PREMIUM_COST} credits were taken "
+                "from your account since they ran out of premium."
+            )
+        except Exception:
+            continue
+        try:
+            await redeem(
+                bot, int(m['user_id']),
+                guild_id, 1
+            )
+            redeemed = True
+        except errors.NotEnoughCredits:
+            pass
+    return redeemed
+
+
 async def refresh_guild_premium(
     bot,
     guild_id: int,
