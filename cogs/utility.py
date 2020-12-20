@@ -2,12 +2,23 @@ import discord
 import functions
 import bot_config
 import checks
-from events import leveling
+from discord.ext.commands import BucketType
+from events import retotal
 from discord.ext import commands
 from events import starboard_events
 from disputils import BotEmbedPaginator
 from events import retotal
 from events.starboard_events import handle_starboards
+
+
+async def scan_recount(bot, channel, messages: int, start_date=None):
+    guild = channel.guild
+    if start_date is None:
+        start_date = guild.me.created_at
+
+    async for m in channel.history(limit=messages):
+        if await retotal.needs_recount(bot, m):
+            await retotal.recount_reactions(bot, m)
 
 
 async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
@@ -122,6 +133,28 @@ class Utility(commands.Cog):
     def __init__(self, bot, db):
         self.bot = bot
         self.db = db
+
+    @commands.command(
+        name='scan', aliases=['recountChannel'],
+        description='Recount X messages in a channel before '
+        'a certain date, or before I joined this server',
+        brief='Retotal reactions on X messages in channel'
+    )
+    @commands.has_permissions(manage_guild=True)
+    @commands.max_concurrency(1, BucketType.channel)
+    @commands.guild_only()
+    @checks.premium_guild()
+    async def recount_channel(self, ctx, messages: int):
+        if messages > 1000:
+            await ctx.send("Can only recount up to 1000 messages")
+            return
+
+        async with ctx.typing():
+            await scan_recount(
+                self.bot, ctx.channel, messages
+            )
+
+        await ctx.send("Finished")
 
     @commands.command(
         name='frozen', aliases=['f'],
@@ -375,7 +408,6 @@ class Utility(commands.Cog):
         frozen = sql_message['is_frozen']
         forced = sql_message['is_forced']
         trashed = sql_message['is_trashed']
-        #author = self.bot.get_user(sql_message['user_id'])
         author = (await functions.get_members(
             [int(sql_message['user_id'])], ctx.guild))[0]
 
@@ -540,7 +572,7 @@ class Utility(commands.Cog):
                 is_asc = await conn.fetchrow(
                     get_aschannel, current_channel.id
                 ) is not None
-        
+
         if is_sb:
             await functions.move_starboard_lock(
                 self.bot, current_channel, new_channel
