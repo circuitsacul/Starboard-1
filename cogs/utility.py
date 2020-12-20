@@ -143,11 +143,10 @@ class Utility(commands.Cog):
     )
     @commands.has_permissions(manage_guild=True)
     @commands.max_concurrency(1, BucketType.channel)
-    #@commands.cooldown(1, 60, type=BucketType.guild)
     @commands.guild_only()
     async def recount_channel(self, ctx, messages: int):
-        if messages > 25000:
-            await ctx.send("Can only recount up to 25000 messages")
+        if messages > 1000:
+            await ctx.send("Can only recount up to 1000 messages")
             return
 
         async with ctx.typing():
