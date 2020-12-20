@@ -6,16 +6,10 @@ import functions
 import datetime
 from discord import utils
 from discord.ext import commands
-from typing import (
-    Union,
-    List
-)
+from typing import Union
 
 
-async def converted_emojis(
-    emojis: List[dict],
-    guild: discord.Guild
-) -> List[discord.Emoji]:
+async def converted_emojis(emojis, guild):
     all_emojis = []
 
     for emoji in emojis:
@@ -44,10 +38,7 @@ class AutoStarChannels(commands.Cog):
         )
 
     @commands.Cog.listener()
-    async def on_message(
-        self,
-        message: discord.Message
-    ) -> None:
+    async def on_message(self, message):
         if message.author.bot:
             return
         if message.channel.id not in self.bot.db.as_cache:
@@ -130,11 +121,7 @@ class AutoStarChannels(commands.Cog):
         invoke_without_command=True
     )
     @commands.guild_only()
-    async def aschannels(
-        self,
-        ctx: commands.Context,
-        aschannel: discord.TextChannel = None
-    ) -> None:
+    async def aschannels(self, ctx, aschannel: discord.TextChannel = None):
         """List and manage AutoStar Channels
 
         [aschannel]: An optional argument. If specified,
@@ -228,11 +215,7 @@ class AutoStarChannels(commands.Cog):
     )
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
-    async def add_aschannel(
-        self,
-        ctx: commands.Context,
-        channel: discord.TextChannel
-    ) -> None:
+    async def add_aschannel(self, ctx, channel: discord.TextChannel):
         """Sets a channel as an AutoStar Channel
 
         <channel>: A required argument for which channel
@@ -250,10 +233,8 @@ class AutoStarChannels(commands.Cog):
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
     async def remove_aschannel(
-        self,
-        ctx: commands.Context,
-        channel: Union[discord.TextChannel, int]
-    ) -> None:
+        self, ctx, channel: Union[discord.TextChannel, int]
+    ):
         """Removes an AutoStar Channel
 
         <channel>: A required argument for which channel to remove
@@ -272,11 +253,9 @@ class AutoStarChannels(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def add_asemoji(
-        self,
-        ctx: commands.Context,
-        aschannel: discord.TextChannel,
+        self, ctx, aschannel: discord.TextChannel,
         emoji: Union[discord.Emoji, str]
-    ) -> None:
+    ):
         """Adds an emoji to the list of AutoStar emojis for
         a specific AutoStar channel. These are the emojis
         that the bot will automatically react to messages
@@ -308,11 +287,9 @@ class AutoStarChannels(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def remove_asemoji(
-        self,
-        ctx: commands.Context,
-        aschannel: discord.TextChannel,
+        self, ctx, aschannel: discord.TextChannel,
         emoji: Union[discord.Emoji, str]
-    ) -> None:
+    ):
         """Removes an emoji from an AutoStar Channel,
         so that the bot no longer reacts to messages
         with it.
@@ -336,11 +313,8 @@ class AutoStarChannels(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def set_require_image(
-        self,
-        ctx: commands.Context,
-        aschannel: discord.TextChannel,
-        value: bool
-    ) -> None:
+        self, ctx, aschannel: discord.TextChannel, value: bool
+    ):
         """Sets whether or not messages sent in that
         AutoStar Channel are required to have an image.
 
@@ -362,11 +336,8 @@ class AutoStarChannels(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def set_min_chars(
-        self,
-        ctx: commands.Context,
-        aschannel: discord.TextChannel,
-        value: int
-    ) -> None:
+        self, ctx, aschannel: discord.TextChannel, value: int
+    ):
         """Sets the minimum character limit for
         messages sent in this AutoStar Channel.
 
@@ -388,11 +359,8 @@ class AutoStarChannels(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def set_delete_invalid(
-        self,
-        ctx: commands.Context,
-        aschannel: discord.TextChannel,
-        value: bool
-    ) -> None:
+        self, ctx, aschannel: discord.TextChannel, value: bool
+    ):
         """Sets whether or not messages that don't meet
         the requirements you have set should be deleted,
         or just ignored.
@@ -414,7 +382,5 @@ class AutoStarChannels(commands.Cog):
         await ctx.send(f"Set deleteInvalid to {value} for {aschannel.mention}")
 
 
-def setup(
-    bot: commands.Bot
-) -> None:
+def setup(bot):
     bot.add_cog(AutoStarChannels(bot))
