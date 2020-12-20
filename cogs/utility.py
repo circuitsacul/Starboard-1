@@ -1,6 +1,7 @@
 import discord
 import functions
 import bot_config
+import checks
 from discord.ext.commands import BucketType
 from events import retotal
 from discord.ext import commands
@@ -142,6 +143,7 @@ class Utility(commands.Cog):
     @commands.has_permissions(manage_guild=True)
     @commands.max_concurrency(1, BucketType.channel)
     @commands.guild_only()
+    @checks.premium_guild()
     async def recount_channel(self, ctx, messages: int):
         if messages > 1000:
             await ctx.send("Can only recount up to 1000 messages")
