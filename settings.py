@@ -121,10 +121,14 @@ async def add_aschannel(bot: commands.Bot, channel: discord.TextChannel):
     get_aschannels = \
         """SELECT * FROM aschannels WHERE guild_id=$1"""
 
+    # just in case we messed something up earlier and it's already in there
+    if channel.id not in bot.db.as_cache:
+        bot.db.as_cache.add(channel.id)
+
     guild = channel.guild
     perms = channel.permissions_for(guild.me)
     limit = await functions.get_limit(
-        bot.db, 'aschannels', guild
+        bot, 'aschannels', guild.id
     )
     conn = bot.db.conn
 
@@ -141,12 +145,12 @@ async def add_aschannel(bot: commands.Bot, channel: discord.TextChannel):
             "I need the `ADD REACTIONS` permission in that channel."
         )
 
+    await functions.check_or_create_existence(
+        bot, guild_id=guild.id
+    )
+
     async with bot.db.lock:
         async with conn.transaction():
-            await functions.check_or_create_existence(
-                bot.db, conn, bot, guild_id=guild.id
-            )
-
             all_aschannels = await conn.fetch(
                 get_aschannels, guild.id
             )
@@ -154,8 +158,8 @@ async def add_aschannel(bot: commands.Bot, channel: discord.TextChannel):
             if len(all_aschannels) >= limit:
                 raise errors.NoPremiumError(
                     "You have reached your limit for AutoStar Channels"
-                    " in this server.\nTo add more AutoStar channels, "
-                    "the server owner must become a patron."
+                    " in this server.\nSee the last page of `sb!tutorial` "
+                    "for more info."
                 )
 
             sql_aschannel = await conn.fetchrow(
@@ -190,6 +194,9 @@ async def remove_aschannel(bot: commands.Bot, channel_id: int, guild_id: int):
         """DELETE FROM aschannels WHERE id=$1"""
 
     conn = bot.db.conn
+    # just in case we messed something up earlier and it's not in there
+    if channel_id in bot.db.as_cache:
+        bot.db.as_cache.remove(channel_id)
 
     async with bot.db.lock:
         async with conn.transaction():
@@ -201,6 +208,8 @@ async def remove_aschannel(bot: commands.Bot, channel_id: int, guild_id: int):
                 raise errors.DoesNotExist("That is not an AutoStar Channel!")
 
             await conn.execute(del_aschannel, channel_id)
+
+    await functions.refresh_guild_premium(bot, guild_id, send_alert=False)
 
 
 async def add_asemoji(
@@ -300,16 +309,15 @@ async def add_starboard(bot: commands.Bot, channel: discord.TextChannel):
         )
 
     limit = await functions.get_limit(
-        bot.db, 'starboards', guild
+        bot, 'starboards', guild.id
     )
     conn = bot.db.conn
 
+    await functions.check_or_create_existence(
+        bot, channel.guild.id
+    )
     async with bot.db.lock:
         async with conn.transaction():
-            await functions.check_or_create_existence(
-                bot.db, conn, bot, channel.guild.id
-            )
-
             all_starboards = await conn.fetch(
                 get_starboards, guild.id
             )
@@ -317,8 +325,7 @@ async def add_starboard(bot: commands.Bot, channel: discord.TextChannel):
             if len(all_starboards) + 1 > limit:
                 raise errors.NoPremiumError(
                     "You have reached your limit for starboards on this server"
-                    "\nTo add more starboards, the owner of this server must "
-                    "become a patron."
+                    "\nSee the last page of `sb!tutorial` for more info."
                 )
 
             sql_starboard = await conn.fetchrow(
@@ -369,6 +376,8 @@ async def remove_starboard(bot: commands.Bot, channel_id: int, guild_id: int):
                 del_starboard, channel_id
             )
 
+    await functions.refresh_guild_premium(bot, guild_id, send_alert=False)
+
 
 async def add_starboard_emoji(
     bot: commands.Bot, starboard_id: int, guild: discord.Guild,
@@ -393,7 +402,7 @@ async def add_starboard_emoji(
     emoji_id = emoji.id if isinstance(
         emoji, discord.Emoji) else None
 
-    limit = await functions.get_limit(bot.db, 'emojis', guild)
+    limit = await functions.get_limit(bot, 'emojis', guild.id)
     conn = bot.db.conn
 
     async with bot.db.lock:
@@ -412,8 +421,8 @@ async def add_starboard_emoji(
             if len(all_sbemojis) + 1 > limit:
                 raise errors.NoPremiumError(
                     "You have reached your limit for emojis "
-                    "on this starboard.\nTo add more emojis, "
-                    "the server owner must become a patron."
+                    "on this starboard.\nSee the last page of "
+                    "`sb!tutorial` for more info."
                 )
 
             sbemoji = await conn.fetchrow(
@@ -466,4 +475,130 @@ async def remove_starboard_emoji(
 
             await conn.execute(
                 del_sbemoji, emoji_name, starboard_id
+            )
+
+
+async def add_channel_blacklist(
+    bot: commands.Bot,
+    channel_id: int,
+    starboard_id: int,
+    guild_id: int,
+    is_whitelist: bool = False
+) -> None:
+    check_exists = \
+        """SELECT * FROM channelbl WHERE channel_id=$1 AND starboard_id=$2"""
+    check_starboard = \
+        """SELECT * FROM starboards WHERE id=$1 AND guild_id=$2"""
+
+    conn = bot.db.conn
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            sql_channelbl = await conn.fetchrow(
+                check_exists, channel_id, starboard_id
+            )
+            if sql_channelbl is not None:
+                raise errors.AlreadyExists(
+                    "That channel is already whitelisted/blacklisted"
+                )
+
+            sql_starboard = await conn.fetchrow(
+                check_starboard, starboard_id, guild_id
+            )
+            if sql_starboard is None:
+                raise errors.DoesNotExist(
+                    "That is not a starboard!"
+                )
+
+            await bot.db.q.create_channelbl.fetch(
+                starboard_id, channel_id, guild_id, is_whitelist
+            )
+
+
+async def remove_channel_blacklist(
+    bot: commands.Bot,
+    channel_id: int,
+    starboard_id: int
+) -> None:
+    check_exists = \
+        """SELECT * FROM channelbl WHERE channel_id=$1 AND starboard_id=$2"""
+    delete_channelbl = \
+        """DELETE FROM channelbl WHERE channel_id=$1 AND starboard_id=$2"""
+
+    conn = bot.db.conn
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            sql_channelbl = await conn.fetchrow(
+                check_exists, channel_id, starboard_id
+            )
+            if sql_channelbl is None:
+                raise errors.DoesNotExist(
+                    "That channel is not blacklisted/whitelisted"
+                )
+            await conn.execute(
+                delete_channelbl, channel_id, starboard_id
+            )
+
+
+async def add_role_blacklist(
+    bot: commands.Bot,
+    role_id: int,
+    starboard_id: int,
+    guild_id: int,
+    is_whitelist: bool = False
+) -> None:
+    check_exists = \
+        """SELECT * FROM rolebl WHERE role_id=$1 AND starboard_id=$2"""
+    check_starboard = \
+        """SELECT * FROM starboards WHERE id=$1 AND guild_id=$2"""
+
+    conn = bot.db.conn
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            sql_rolebl = await conn.fetchrow(
+                check_exists, role_id, starboard_id
+            )
+            if sql_rolebl is not None:
+                raise errors.AlreadyExists(
+                    "That role is already whitelisted/blacklisted"
+                )
+            sql_starboard = await conn.fetchrow(
+                check_starboard, starboard_id, guild_id
+            )
+            if sql_starboard is None:
+                raise errors.DoesNotExist(
+                    "That is not a starboard!"
+                )
+
+            await bot.db.q.create_rolebl.fetch(
+                starboard_id, role_id, guild_id, is_whitelist
+            )
+
+
+async def remove_role_blacklist(
+    bot: commands.Bot,
+    role_id: int,
+    starboard_id: int,
+) -> None:
+    check_exists = \
+        """SELECT * FROM rolebl WHERE role_id=$1 AND starboard_id=$2"""
+    delete_rolebl = \
+        """DELETE FROM rolebl WHERE role_id=$1 AND starboard_id=$2"""
+
+    conn = bot.db.conn
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            sql_rolebl = await conn.fetchrow(
+                check_exists, role_id, starboard_id
+            )
+            if sql_rolebl is None:
+                raise errors.DoesNotExist(
+                    "That role is not blacklisted/whitelisted"
+                )
+
+            await conn.execute(
+                delete_rolebl, role_id, starboard_id
             )

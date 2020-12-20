@@ -1,11 +1,15 @@
 from aiohttp import web
+import hmac
+import hashlib
 import os
 import bot_config
 
 HOOK_AUTH = os.getenv("TOP_HOOK_AUTH")
+PATREON_AUTH = os.getenv("PATREON_AUTH")
 
 
 class HttpWebHook():
+    """Listens for different web stuff"""
     def __init__(self, bot, db):
         self.bot = bot
         self.db = db
@@ -22,6 +26,18 @@ class HttpWebHook():
 
     async def close(self):
         await self.runner.cleanup()
+
+    def verify_patreon(
+        self,
+        sig: str,
+        data: str
+    ) -> bool:
+        digester = hmac.new(
+            bytes(PATREON_AUTH, 'utf-8'),
+            bytes(data, 'utf-8'),
+            hashlib.md5
+        )
+        return sig == digester.hexdigest()
 
     def _set_routes(self):
         #@self.routes.post('/webhook')
@@ -51,6 +67,19 @@ class HttpWebHook():
                 self.bot.dispatch('top_vote', user_id)
 
             return web.Response(body='Vote caught', status=200)
+
+        @self.routes.post('/patreon')
+        async def handle_patreon_event(request):
+            text = await request.text()
+            print(request.get('triggers'))
+            if not self.verify_patreon(
+                request.headers['X-Patreon-Signature'],
+                text
+            ):
+                return "Denied", 403
+            else:
+                self.bot.dispatch('patreon_event', text)
+                return "Caught", 200
 
         @self.routes.get('')
         async def ping(request):

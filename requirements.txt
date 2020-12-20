@@ -6,3 +6,5 @@ disputils
 aiohttp-requests
 statcord.py
 dblpy
+patreon
+humanize

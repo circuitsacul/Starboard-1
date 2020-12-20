@@ -63,7 +63,8 @@ async def add_vote(bot, user_id: int):
             )
 
 
-class TopVotes(commands.Cog):
+class Voting(commands.Cog):
+    """Voting related commands"""
     def __init__(self, bot):
         self.bot = bot
         self.get_expired_votes.start()
@@ -166,4 +167,4 @@ class TopVotes(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(TopVotes(bot))
+    bot.add_cog(Voting(bot))

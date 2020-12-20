@@ -74,16 +74,16 @@ async def recount_reactions(bot, message):
                 'user': user, 'name': name
             })
 
-    async with bot.db.lock:
-        conn = bot.db.conn
-        async with conn.transaction():
-            for r in to_add:
-                await functions.check_or_create_existence(
-                    bot.db, conn, bot,
-                    guild_id=message.guild.id,
-                    user=r['user'], do_member=True
-                )
+    conn = bot.db.conn
+    for r in to_add:
+        await functions.check_or_create_existence(
+            bot,
+            guild_id=message.guild.id,
+            user=r['user'], do_member=True
+        )
 
+        async with bot.db.lock:
+            async with conn.transaction():
                 sql_r = await conn.fetchrow(
                     check_reaction, message.id, r['name'],
                     r['user'].id

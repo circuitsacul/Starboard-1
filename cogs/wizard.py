@@ -101,12 +101,11 @@ class SetupWizard:
                     get_aschannels, self.ctx.guild.id
                 )
         current_num = len(sql_aschannels)
-        limit = await get_limit(self.bot.db, 'aschannels', self.ctx.guild)
+        limit = await get_limit(self.bot, 'aschannels', self.ctx.guild.id)
         if current_num >= limit:
             await self._error(
-                "You have reached your limit for AutoStar Channels. "
-                "In order to add more, the owner of this server must "
-                "become a patron."
+                "You have reached your limit for AutoStar Channels.\n"
+                "See the last page of `sb!tutorial` for more info."
             )
             return
 
@@ -231,11 +230,11 @@ class SetupWizard:
                     get_starboards, self.ctx.guild.id
                 )
         current_num = len(sql_starboards)
-        limit = await get_limit(self.bot.db, 'starboards', self.ctx.guild)
+        limit = await get_limit(self.bot, 'starboards', self.ctx.guild.id)
         if current_num >= limit:
             await self._error(
-                "You have reached your limit for starboards. Please upgrade "
-                "by becoming a patron."
+                "You have reached your limit for starboards.\n"
+                "See the last page of `sb!tutorial` for more info."
             )
             return
 
@@ -402,7 +401,7 @@ class SetupWizard:
         get_emojis = """SELECT * FROM asemojis WHERE aschannel_id=$1"""
 
         emoji_limit = await get_limit(
-            self.bot.db, 'asemojis', self.ctx.guild
+            self.bot, 'asemojis', self.ctx.guild.id
         )
 
         async with self.bot.db.lock:
@@ -414,8 +413,7 @@ class SetupWizard:
         if current_num >= emoji_limit:
             await self._error(
                 "You have reached yoru limit for emojis on this autostar "
-                "channel. To add more, the owner of this server must "
-                "become a patron."
+                "channel.\nSee the last page of `sb!tutorial` for more info."
             )
             return
 
@@ -463,7 +461,7 @@ class SetupWizard:
         get_emojis = """SELECT * FROM sbemojis WHERE starboard_id=$1"""
 
         emoji_limit = await get_limit(
-            self.bot.db, 'emojis', self.ctx.guild
+            self.bot, 'emojis', self.ctx.guild.id
         )
 
         async with self.bot.db.lock:

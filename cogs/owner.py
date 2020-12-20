@@ -3,6 +3,8 @@ import discord
 import checks
 import time
 import bot_config
+import functions
+from subprocess import PIPE, run
 from paginators import disputils
 from asyncpg.exceptions._base import InterfaceError
 from discord.ext import tasks
@@ -14,7 +16,17 @@ from discord.ext import commands
 def ms(t):
     return round(t*1000, 5)
 
+
+def out(command):
+    result = run(
+        command, stdout=PIPE, stderr=PIPE,
+        universal_newlines=True, shell=True
+    )
+    return result.stdout
+
+
 class Owner(commands.Cog):
+    """Owner only commands"""
     def __init__(self, bot, db):
         self.db = db
         self.bot = bot
@@ -99,8 +111,7 @@ class Owner(commands.Cog):
     @checks.is_owner()
     async def clear_global_cache(self, ctx):
         cache = self.bot.db.cache
-        async with cache.lock:
-            cache._messages = {}
+        cache._messages = {}
         await ctx.send("Cleared message cache for all servers.")
 
     @commands.command(
@@ -225,6 +236,84 @@ class Owner(commands.Cog):
         async with self.bot.db.lock:
             await self.bot.db.conn.dump()
 
+        await ctx.send("Done")
+
+    @commands.command(name='clean')
+    @commands.is_owner()
+    async def clean_database(self, ctx):
+        """Cleans several different things from the database"""
+
+        conn = self.bot.db.conn
+
+        # Remove starboard messages of starboards that were deleted
+        get_starboards = \
+            """SELECT * FROM starboards"""
+        clean_sb_messages = \
+            """DELETE FROM messages
+            WHERE channel_id!=ALL($1::numeric[])
+            AND is_orig=False"""
+
+        await ctx.send("Removing messages...")
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                starboards = await conn.fetch(
+                    get_starboards
+                )
+                sids = [s['id'] for s in starboards]
+                await conn.execute(clean_sb_messages, sids)
+
+        await ctx.send("Finished cleaning")
+
+    @commands.command(name='run')
+    @commands.is_owner()
+    async def run_command(self, ctx, *, command: str):
+        async with ctx.typing():
+            output = out(command)
+        if len(output) > 2000:
+            output = output[0:2000] + '...'
+        await ctx.send(f"```\n{output}\n```")
+
+    @commands.command(name='reload')
+    @commands.is_owner()
+    async def reoloadext(self, ctx, ext: str = None):
+        message = (
+            f"Reloaded {ext}" if ext else
+            "Reloaded all extensions"
+        )
+        try:
+            async with ctx.typing():
+                if ext:
+                    self.bot.reload_extension(ext)
+                else:
+                    for extname in self.bot.extensions:
+                        self.bot.reload_extension(extname)
+        except Exception as e:
+            await ctx.send(f"Failed: {e}")
+        else:
+            await ctx.send(message)
+
+    @commands.command(name='givemonths')
+    @commands.is_owner()
+    async def set_endsat(
+        self, ctx,
+        guild_id: int,
+        months: int
+    ) -> None:
+        await functions.give_months(
+            self.bot, guild_id, months
+        )
+        await ctx.send("Done")
+
+    @commands.command(name='givecredits')
+    @commands.is_owner()
+    async def give_credits(
+        self, ctx,
+        user_id: int,
+        credits: int
+    ) -> None:
+        await functions.givecredits(
+            self.bot, user_id, credits
+        )
         await ctx.send("Done")
 
 

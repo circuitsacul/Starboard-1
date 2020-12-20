@@ -13,6 +13,7 @@ TOP_AUTH = os.getenv("TOP_HOOK_AUTH")
 
 
 class StatcordPost(commands.Cog):
+    """Handles interactions with statcord"""
     def __init__(self, bot):
         self.bot = bot
         self.key = STATCORD_TOKEN

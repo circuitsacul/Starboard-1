@@ -1,11 +1,12 @@
 import discord
 import functions
 import bot_config
-import checks
 import settings
+import random
+from events import starboard_events
 from discord.ext import commands
+from discord.ext import flags
 from typing import Union
-from .wizard import SetupWizard
 from settings import change_starboard_settings
 
 
@@ -24,9 +25,89 @@ async def pretty_emoji_string(emojis, guild):
 
 
 class Starboard(commands.Cog):
+    """Starboard related commands"""
     def __init__(self, bot, db):
         self.bot = bot
         self.db = db
+
+    @flags.add_flag('--by', type=discord.User, default=None)
+    @flags.add_flag('--stars', type=int, default=None)
+    @flags.add_flag('--in', type=discord.TextChannel, default=None)
+    @flags.command(
+        name='random', aliases=['explore'],
+        brief="Get a random message from the starboard"
+    )
+    @commands.cooldown(3, 5, type=commands.BucketType.user)
+    @commands.guild_only()
+    async def random_message(
+        self, ctx, **flags
+    ):
+        """Gets a random message from the starboard.
+
+        [--by] is an optional argument specifying the author
+        of the message.
+
+        [--stars] is an optional argument specifying the minimum
+        number of stars a message must have
+
+        [--in] is an optional argument specifying the starboard
+        to search for messages in
+        """
+
+        stars = flags['stars']
+        starboard = flags['in']
+        user = flags['by']
+
+        sid = None
+        uid = None
+
+        if starboard:
+            sid = starboard.id
+        if user:
+            uid = user.id
+
+        query = (
+            """SELECT * FROM messages
+            WHERE orig_message_id IN (
+                SELECT id FROM messages
+                WHERE is_trashed=False
+                AND is_forced=False
+                AND is_nsfw=False
+                AND ($2::numeric is null or user_id=$2)
+            )
+            AND guild_id=$1
+            AND is_orig=False
+            AND ($3::int is null or points >= $3)
+            AND ($4::numeric is null or channel_id=$4)
+            """
+        )
+        conn = self.bot.db.conn
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                m = await conn.fetch(
+                    query, ctx.guild.id, uid, stars, sid
+                )
+
+        if len(m) == 0:
+            await ctx.send(
+                "I couldn't find any messages that meet "
+                "those requirements."
+            )
+            return
+        sql_rand_message = random.choice(m)
+
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                orig_mid, orig_cid = await functions.orig_message_id(
+                    self.bot.db, conn, int(sql_rand_message['id'])
+                )
+
+        channel = self.bot.get_channel(orig_cid)
+        m = await channel.fetch_message(orig_mid)
+
+        e = await starboard_events.get_embed_from_message(m)
+
+        await ctx.send(embed=e)
 
     @commands.group(
         name='starboards', aliases=['boards', 's', 'sb'],
@@ -43,13 +124,13 @@ class Starboard(commands.Cog):
         p = await functions.get_one_prefix(self.bot, ctx.guild.id)
 
         if starboard is None:
+            _ = await functions.check_or_create_existence(
+                self.bot, guild_id=ctx.guild.id,
+                user=ctx.message.author, do_member=True
+            )
             async with self.db.lock:
                 conn = await self.db.connect()
                 async with conn.transaction():
-                    _ = await functions.check_or_create_existence(
-                        self.db, conn, self.bot, guild_id=ctx.guild.id,
-                        user=ctx.message.author, do_member=True
-                    )
                     rows = await conn.fetch(get_starboards, ctx.guild.id)
 
                     if len(rows) == 0:
@@ -84,13 +165,13 @@ class Starboard(commands.Cog):
             else:
                 await ctx.send(embed=embed)
         else:
+            await functions.check_or_create_existence(
+                self.bot, guild_id=ctx.guild.id,
+                user=ctx.message.author, do_member=True
+            )
             async with self.db.lock:
                 conn = await self.db.connect()
                 async with conn.transaction():
-                    await functions.check_or_create_existence(
-                        self.db, conn, self.bot, guild_id=ctx.guild.id,
-                        user=ctx.message.author, do_member=True
-                    )
                     sql_starboard = await conn.fetchrow(
                         get_starboard, starboard.id
                     )

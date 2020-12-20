@@ -56,7 +56,8 @@ async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
 
     if status is True:
         await starboard_events.handle_starboards(
-            db, bot, message_id, channel, message
+            db, bot, message_id, channel, message,
+            ctx.guild
         )
     return status
 
@@ -99,15 +100,15 @@ async def handle_forcing(
 
     message = await functions.fetch(bot, int(message_id), channel)
 
+    await functions.check_or_create_existence(
+        bot,
+        guild_id=ctx.guild.id, user=message.author,
+        do_member=True
+    )
+
     async with bot.db.lock:
         conn = await bot.db.connect()
         async with conn.transaction():
-            await functions.check_or_create_existence(
-                bot.db, conn, bot,
-                guild_id=ctx.guild.id, user=message.author,
-                do_member=True
-            )
-
             sql_message = await conn.fetchrow(check_message, message_id)
             if sql_message is None:
                 await bot.db.q.create_message.fetch(
@@ -123,11 +124,13 @@ async def handle_forcing(
     )
 
     await starboard_events.handle_starboards(
-        bot.db, bot, message.id, message.channel, message
+        bot.db, bot, message.id, message.channel, message,
+        ctx.guild
     )
 
 
 class Utility(commands.Cog):
+    """Useful utility commands for your server"""
     def __init__(self, bot, db):
         self.bot = bot
         self.db = db
@@ -178,7 +181,7 @@ class Utility(commands.Cog):
             for i, msg in enumerate(frozen_messages):
                 from_msg = f"**[{msg['id']}]"\
                     "(https://discordapp.com/channels/"\
-                    "{msg['guild_id']}/{msg['channel_id']}/{msg['id']}/)**\n"
+                    f"{msg['guild_id']}/{msg['channel_id']}/{msg['id']}/)**\n"
                 all_strings.append(from_msg)
 
             size = 10
@@ -233,6 +236,19 @@ class Utility(commands.Cog):
                 await conn.execute(freeze_message, message_id)
                 message = f"Message **{message_id}** is now frozen"
 
+        mid = int(sql_message['id'])
+        cid = int(sql_message['channel_id'])
+        channel = self.bot.get_channel(cid)
+        try:
+            message_obj = await functions.fetch(self.bot, mid, channel)
+        except Exception:
+            message_obj = None
+
+        await starboard_events.handle_starboards(
+            self.bot.db, self.bot, message_id, channel,
+            message_obj, ctx.guild
+        )
+
         await ctx.send(message)
 
     @commands.command(
@@ -265,6 +281,19 @@ class Utility(commands.Cog):
                 else:
                     await conn.execute(freeze_message, message_id)
                     message = f"Message **{message_id}** is now unfrozen"
+
+        mid = int(sql_message['id'])
+        cid = int(sql_message['channel_id'])
+        channel = self.bot.get_channel(cid)
+        try:
+            message_obj = await functions.fetch(self.bot, mid, channel)
+        except Exception:
+            message_obj = None
+
+        await starboard_events.handle_starboards(
+            self.bot.db, self.bot, mid, channel,
+            message_obj, ctx.guild
+        )
 
         await ctx.send(message)
 
@@ -340,8 +369,7 @@ class Utility(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     async def clear_guild_cache(self, ctx):
         cache = self.bot.db.cache
-        async with cache.lock:
-            cache._messages[ctx.guild.id] = []
+        cache._messages[ctx.guild.id] = []
         await ctx.send("Message cache cleared")
 
     @commands.command(
@@ -464,16 +492,16 @@ class Utility(commands.Cog):
         check_message = \
             """SELECT * FROM messages WHERE id=$1"""
 
+        await functions.check_or_create_existence(
+            self.bot,
+            guild_id=ctx.guild.id,
+            user=message.author,
+            do_member=True
+        )
+
         conn = self.bot.db.conn
         async with self.bot.db.lock:
             async with conn.transaction():
-                await functions.check_or_create_existence(
-                    self.bot.db, conn, self.bot,
-                    guild_id=ctx.guild.id,
-                    user=message.author,
-                    do_member=True
-                )
-
                 sql_message = await conn.fetchrow(
                     check_message, message.id
                 )
@@ -503,10 +531,65 @@ class Utility(commands.Cog):
             await retotal.recount_reactions(self.bot, message)
             await handle_starboards(
                 self.bot.db, self.bot, message.id,
-                message.channel, message
+                message.channel, message, ctx.guild
             )
 
         await ctx.send("Finished!")
+
+    @commands.command(
+        name='movelock',
+        brief="Moves a premium lock from one channel to another"
+    )
+    @commands.has_permissions(manage_channels=True)
+    @commands.cooldown(30, 120, type=commands.BucketType.guild)
+    @commands.guild_only()
+    async def move_prem_lock(
+        self, ctx,
+        current_channel: discord.TextChannel,
+        new_channel: discord.TextChannel
+    ) -> None:
+        """Moves a premium lock from one channel to a different
+        channel, for either starboards or AutoStar channels.
+
+        [current_channel]: The channel that is currently locked
+        (can be a starboard or autostar channel)
+
+        [new_channel]: The channel that you want to move the
+        lock to. Cannot already be locked (starboard or autostar
+        channel)"""
+        get_starboard = \
+            """SELECT * FROM starboards
+            WHERE id=$1"""
+        get_aschannel = \
+            """SELECT * FROM aschannels
+            WHERE id=$1"""
+
+        conn = self.bot.db.conn
+
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                is_sb = await conn.fetchrow(
+                    get_starboard, current_channel.id
+                ) is not None
+                is_asc = await conn.fetchrow(
+                    get_aschannel, current_channel.id
+                ) is not None
+        
+        if is_sb:
+            await functions.move_starboard_lock(
+                self.bot, current_channel, new_channel
+            )
+        elif is_asc:
+            await functions.move_aschannel_lock(
+                self.bot, current_channel, new_channel
+            )
+        else:
+            await ctx.send(
+                f"{current_channel.mention} isn't a starboard "
+                "or autostar channel."
+            )
+            return
+        await ctx.send("Done")
 
 
 def setup(bot):
