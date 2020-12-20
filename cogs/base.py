@@ -393,7 +393,12 @@ class Base(commands.Cog):
         self,
         ctx: commands.Context
     ) -> None:
-        total = sum([g.member_count for g in self.bot.guilds])
+        total = 0
+        for g in self.bot.guilds:
+            try:
+                total += g.member_count
+            except AttributeError:
+                pass
         embed = discord.Embed(
             title='Bot Stats', colour=bot_config.COLOR,
             description=f"**Guilds:** {len(self.bot.guilds)}"
