@@ -1,5 +1,4 @@
 from aiohttp_requests import requests
-from discord.ext import commands
 import json
 import asyncio
 import os
@@ -12,10 +11,7 @@ DEL_TOKEN = os.getenv("DEL_TOKEN")
 LABS_TOKEN = os.getenv("LABS_TOKEN")
 
 
-async def post_bod(
-    guilds: int,
-    bot_user_id: int
-) -> str:
+async def post_bod(guilds: int, bot_user_id: int):
     headers = {"Authorization": BOD_TOKEN, "Content-Type": "application/json"}
     data = json.dumps({"guildCount": guilds})
     url = f"https://bots.ondiscord.xyz/bot-api/bots/{bot_user_id}/guilds"
@@ -24,11 +20,7 @@ async def post_bod(
     return await r.text()
 
 
-async def post_dbl(
-    guilds: int,
-    users: int,
-    bot_user_id: int
-) -> str:
+async def post_dbl(guilds: int, users: int, bot_user_id: int):
     headers = {"Authorization": DBL_TOKEN, "Content-Type": "application/json"}
     data = json.dumps({
         "users": users,
@@ -40,10 +32,7 @@ async def post_dbl(
     return await r.text()
 
 
-async def post_boats(
-    guilds: int,
-    bot_user_id: int
-) -> str:
+async def post_boats(guilds: int, bot_user_id: int):
     headers = {
         "Authorization": BOATS_TOKEN,
         "Content-Type": "application/json"
@@ -57,10 +46,7 @@ async def post_boats(
     return await r.text()
 
 
-async def post_dbgg(
-    guilds: int,
-    bot_user_id: int
-) -> str:
+async def post_dbgg(guilds: int, bot_user_id: int):
     headers = {"Authorization": DBGG_TOKEN, "Content-Type": "application/json"}
     data = json.dumps({
         "guildCount": guilds
@@ -71,10 +57,7 @@ async def post_dbgg(
     return await r.text()
 
 
-async def post_del(
-    guilds: int,
-    bot_user_id: int
-) -> str:
+async def post_del(guilds: int, bot_user_id: int):
     headers = {"Authorization": DEL_TOKEN, "Content-Type": "application/json"}
     data = json.dumps({
         "guildCount": guilds
@@ -85,10 +68,7 @@ async def post_del(
     return await r.text()
 
 
-async def post_labs(
-    guilds: int,
-    bot_user_id: int
-) -> str:
+async def post_labs(guilds: int, bot_user_id: int):
     headers = {"Content-Type": "application/json"}
     data = json.dumps({
         "token": LABS_TOKEN,
@@ -100,11 +80,7 @@ async def post_labs(
     return await r.text()
 
 
-async def post_all(
-    guilds: int,
-    users: int,
-    bot_user_id: int
-) -> str:
+async def post_all(guilds: int, users: int, bot_user_id: int):
     bod = await post_bod(guilds, bot_user_id)
     dbl = await post_dbl(guilds, users, bot_user_id)
     boats = await post_boats(guilds, bot_user_id)
@@ -121,9 +97,7 @@ async def post_all(
     }
 
 
-async def loop_post(
-    bot: commands.Bot
-) -> None:
+async def loop_post(bot):
     await bot.wait_until_ready()
     while True:
         await post_all(
