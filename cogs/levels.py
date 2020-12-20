@@ -2,6 +2,7 @@ import discord
 import bot_config
 import functions
 import cooldowns
+from math import sqrt
 from paginators import disputils
 from discord import utils
 from discord.ext import commands
@@ -47,8 +48,8 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
 
     get_member = \
         """SELECT * FROM members WHERE user_id=$1 AND guild_id=$2"""
-    get_user = \
-        """SELECT * FROM users WHERE id=$1"""
+    # get_user = \
+    #    """SELECT * FROM users WHERE id=$1"""
     set_points = \
         """UPDATE members
         SET {}=$1
@@ -61,7 +62,7 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
 
     points = 1 if is_add is True else -1
 
-    leveled_up = False
+    # leveled_up = False
 
     async with db.lock:
         conn = await db.connect()
@@ -82,8 +83,8 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
                 set_points.format('received'), received, receiver_id, guild_id
             )
 
-            sql_receiver_user = await conn.fetchrow(get_user, receiver_id)
-            send_lvl_msgs = sql_receiver_user['lvl_up_msgs']
+            # sql_receiver_user = await conn.fetchrow(get_user, receiver_id)
+            # send_lvl_msgs = sql_receiver_user['lvl_up_msgs']
 
             current_lvl = sql_receiver['lvl']
             current_xp = sql_receiver['xp']
@@ -92,7 +93,7 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
             new_xp = current_xp + points
             new_xp = 0 if new_xp < 0 else new_xp
             new_lvl = current_lvl + 1 if new_xp >= needed_xp else current_lvl
-            leveled_up = new_lvl > current_lvl if cooldown_over else False
+            # leveled_up = new_lvl > current_lvl if cooldown_over else False
 
             if cooldown_over:
                 await conn.execute(
@@ -100,7 +101,7 @@ async def handle_reaction(db, reacter_id, receiver, guild, _emoji, is_add):
                     sql_receiver['user_id'], guild_id
                 )
 
-    #if leveled_up and send_lvl_msgs:
+    # if leveled_up and send_lvl_msgs:
     #    embed = discord.Embed(
     #        title="Level Up!",
     #        description=f"You've reached **{new_xp} XP** "

@@ -4,7 +4,6 @@ from bot_config import OWNER_ID
 import statcord
 import os
 import dbl
-from pprint import pprint
 
 
 STATCORD_TOKEN = os.getenv("STATCORD_TOKEN")

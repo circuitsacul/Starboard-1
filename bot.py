@@ -3,7 +3,6 @@ import sys
 import asyncio
 import os
 import dotenv
-from bot_config import SUPPORT_SERVER
 import functions
 import pretty_help
 import bot_config
