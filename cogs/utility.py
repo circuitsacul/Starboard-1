@@ -408,7 +408,6 @@ class Utility(commands.Cog):
         frozen = sql_message['is_frozen']
         forced = sql_message['is_forced']
         trashed = sql_message['is_trashed']
-        #author = self.bot.get_user(sql_message['user_id'])
         author = (await functions.get_members(
             [int(sql_message['user_id'])], ctx.guild))[0]
 
@@ -573,7 +572,7 @@ class Utility(commands.Cog):
                 is_asc = await conn.fetchrow(
                     get_aschannel, current_channel.id
                 ) is not None
-        
+
         if is_sb:
             await functions.move_starboard_lock(
                 self.bot, current_channel, new_channel
