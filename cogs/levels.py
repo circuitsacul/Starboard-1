@@ -9,7 +9,8 @@ from discord import utils
 from discord.ext import commands
 from typing import (
     Union,
-    List
+    List,
+    Optional
 )
 
 
@@ -175,7 +176,11 @@ async def get_leaderboard(
     return ordered
 
 
-async def get_rank(bot, user_id: int, guild):
+async def get_rank(
+    bot: commands.Bot,
+    user_id: int,
+    guild: discord.Guild
+) -> Optional[int]:
     lb = await get_leaderboard(bot, guild)
     rank = None
     for i, dict in enumerate(lb):
@@ -187,7 +192,11 @@ async def get_rank(bot, user_id: int, guild):
 
 class Levels(commands.Cog):
     """View your rank and your servers leaderboard"""
-    def __init__(self, bot, db):
+    def __init__(
+        self,
+        bot: commands.Bot,
+        db: Database
+    ) -> None:
         self.bot = bot
         self.db = db
 
@@ -199,8 +208,11 @@ class Levels(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
     async def set_member_xp(
-        self, ctx, _user: Union[discord.Member, int], xp: int
-    ):
+        self,
+        ctx: commands.Context,
+        _user: Union[discord.Member, int],
+        xp: int
+    ) -> None:
         if isinstance(_user, discord.Member):
             _user = _user.id
         user = await functions.get_members([_user], ctx.guild)
@@ -254,8 +266,11 @@ class Levels(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
     async def give_member_xp(
-        self, ctx, _user: Union[discord.Member, int], xp: int
-    ):
+        self,
+        ctx: commands.Context,
+        _user: Union[discord.Member, int],
+        xp: int
+    ) -> None:
         if isinstance(_user, discord.Member):
             _user = _user.id
         user = await functions.get_members([_user], ctx.guild)
@@ -310,7 +325,11 @@ class Levels(commands.Cog):
         description='View rank card'
     )
     @commands.guild_only()
-    async def show_rank_card(self, ctx, user: Union[discord.Member, None]):
+    async def show_rank_card(
+        self,
+        ctx: commands.Context,
+        user: Union[discord.Member, None]
+    ) -> None:
         user = user if user else ctx.message.author
         get_member = \
             """SELECT * FROM members WHERE user_id=$1 and guild_id=$2"""
@@ -356,7 +375,10 @@ class Levels(commands.Cog):
         brief='View leaderboard'
     )
     @commands.guild_only()
-    async def show_leaderboard(self, ctx):
+    async def show_leaderboard(
+        self,
+        ctx: commands.Context
+    ) -> None:
         ordered = await get_leaderboard(self.bot, ctx.guild)
 
         stringed = [
@@ -397,7 +419,11 @@ class Levels(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
-    async def reset_levels(self, ctx, user: discord.Member):
+    async def reset_levels(
+        self,
+        ctx: commands.Context,
+        user: discord.Member
+    ) -> None:
         set_points = \
             """UPDATE members
             SET xp=0,
@@ -412,5 +438,7 @@ class Levels(commands.Cog):
         await ctx.send(f"Reset {user.name}'s levels and xp.")
 
 
-def setup(bot):
+def setup(
+    bot: commands.Bot
+) -> None:
     bot.add_cog(Levels(bot, bot.db))
