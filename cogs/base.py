@@ -230,7 +230,10 @@ async def showpage(
 
 class Base(commands.Cog):
     """Basic info about Starboard"""
-    def __init__(self, bot):
+    def __init__(
+        self,
+        bot: commands.Bot
+    ) -> None:
         self.bot = bot
 
     @commands.Cog.listener()
