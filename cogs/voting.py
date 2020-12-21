@@ -8,17 +8,21 @@ import discord
 from discord.ext import commands, tasks
 
 
-def now():
+def now() -> datetime.datetime:
     ct = datetime.datetime.now()
     return ct.timestamp()
 
 
-def expires():
+def expires() -> datetime.datetime:
     e = datetime.datetime.now() + datetime.timedelta(days=1)
     return e.timestamp()
 
 
-async def handle_vote_role(bot, user_id: int, add: bool):
+async def handle_vote_role(
+    bot: commands.Bot,
+    user_id: int,
+    add: bool
+) -> None:
     support_guild = bot.get_guild(bot_config.SUPPORT_SERVER_ID)
     if support_guild is None:
         return
@@ -42,7 +46,10 @@ async def handle_vote_role(bot, user_id: int, add: bool):
         pass
 
 
-async def add_vote(bot, user_id: int):
+async def add_vote(
+    bot: commands.Bot,
+    user_id: int
+) -> None:
     e = expires()
     conn = bot.db.conn
 
@@ -65,12 +72,18 @@ async def add_vote(bot, user_id: int):
 
 class Voting(commands.Cog):
     """Voting related commands"""
-    def __init__(self, bot):
+    def __init__(
+        self,
+        bot: commands.Bot
+    ) -> None:
         self.bot = bot
         self.get_expired_votes.start()
 
     @commands.Cog.listener()
-    async def on_top_vote(self, user_id: int):
+    async def on_top_vote(
+        self,
+        user_id: int
+    ) -> None:
         """
         "top_vote" is dispatched in webhook.py
         """
@@ -100,7 +113,7 @@ class Voting(commands.Cog):
         await vote_channel.send(embed=embed)
 
     @tasks.loop(minutes=10)
-    async def get_expired_votes(self):
+    async def get_expired_votes(self) -> None:
         get_votes = \
             """SELECT * FROM votes WHERE expires<$1 AND expired=False"""
         get_user_votes = \
@@ -141,7 +154,8 @@ class Voting(commands.Cog):
     )
     @commands.cooldown(1, 2)
     async def view_user_votes(
-        self, ctx,
+        self,
+        ctx: commands.Context,
         user: discord.User = None
     ) -> None:
         get_votes = \
@@ -166,5 +180,7 @@ class Voting(commands.Cog):
         await ctx.send(embed=embed)
 
 
-def setup(bot):
+def setup(
+    bot: commands.Bot
+) -> None:
     bot.add_cog(Voting(bot))
