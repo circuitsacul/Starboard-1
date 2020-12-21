@@ -6,6 +6,7 @@ from discord.ext.commands import BucketType
 from discord.ext import commands, flags
 from disputils import BotEmbedPaginator
 from cogs.starboard import handle_starboards
+from database.database import Database
 
 
 async def scan_recount(
@@ -19,7 +20,13 @@ async def scan_recount(
             await functions.recount_reactions(bot, m)
 
 
-async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
+async def handle_trashing(
+    db: Database,
+    bot: commands.Bot,
+    ctx: commands.Context,
+    _message_id: int,
+    trash: bool
+) -> None:
     check_message = \
         """SELECT * FROM messages WHERE id=$1"""
     trash_message = \
@@ -128,7 +135,11 @@ async def handle_forcing(
 
 class Utility(commands.Cog):
     """Useful utility commands for your server"""
-    def __init__(self, bot, db):
+    def __init__(
+        self,
+        bot: commands.Bot,
+        db: Database
+    ) -> None:
         self.bot = bot
         self.db = db
 
@@ -143,7 +154,12 @@ class Utility(commands.Cog):
     @commands.max_concurrency(1, BucketType.channel)
     @commands.guild_only()
     @checks.premium_guild()
-    async def recount_channel(self, ctx, messages: int, **flags):
+    async def recount_channel(
+        self,
+        ctx: commands.Context,
+        messages: int,
+        **flags: dict
+    ) -> None:
         if messages > 1000:
             await ctx.send("Can only recount up to 1000 messages")
             return
@@ -180,7 +196,10 @@ class Utility(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def list_frozen_messages(self, ctx):
+    async def list_frozen_messages(
+        self,
+        ctx: commands.Context
+    ) -> None:
         get_frozen = \
             """SELECT * FROM messages
             WHERE is_frozen = True AND guild_id=$1"""
@@ -227,7 +246,11 @@ class Utility(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def freeze_message(self, ctx, message: int):
+    async def freeze_message(
+        self,
+        ctx: commands.Context,
+        message: int
+    ) -> None:
         get_message = \
             """SELECT * FROM messages WHERE id=$1 AND guild_id=$2"""
         freeze_message = \
@@ -274,7 +297,11 @@ class Utility(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def unfreeze_message(self, ctx, message: int):
+    async def unfreeze_message(
+        self,
+        ctx: commands.Context,
+        message: int
+    ) -> None:
         get_message = \
             """SELECT * FROM messages WHERE id=$1 AND guild_id=$2"""
         freeze_message = \
@@ -321,8 +348,11 @@ class Utility(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
     async def force_message(
-        self, ctx, _message_id, _channel: discord.TextChannel = None
-    ):
+        self,
+        ctx: commands.Context,
+        _message_id: int,
+        _channel: discord.TextChannel = None
+    ) -> None:
         await handle_forcing(
             self.bot, ctx, _channel,
             _message_id, True
@@ -336,7 +366,8 @@ class Utility(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def unforce_message(
-        self, ctx,
+        self,
+        ctx: commands.Context,
         _message_id: int,
         _channel: discord.TextChannel = None
     ) -> None:
@@ -353,7 +384,11 @@ class Utility(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def trash_message(self, ctx, _messsage_id: int):
+    async def trash_message(
+        self,
+        ctx: commands.Context,
+        _messsage_id: int
+    ) -> None:
         status = await handle_trashing(
             self.db, self.bot, ctx, _messsage_id, True
         )
@@ -367,7 +402,11 @@ class Utility(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def untrash_message(self, ctx, _message_id):
+    async def untrash_message(
+        self,
+        ctx: commands.Context,
+        _message_id: int
+    ) -> None:
         status = await handle_trashing(
             self.db, self.bot, ctx, _message_id, False
         )
@@ -383,7 +422,10 @@ class Utility(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def clear_guild_cache(self, ctx):
+    async def clear_guild_cache(
+        self,
+        ctx: commands.Context
+    ) -> None:
         cache = self.bot.db.cache
         cache._messages[ctx.guild.id] = []
         await ctx.send("Message cache cleared")
@@ -394,7 +436,11 @@ class Utility(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def get_message_statistics(self, ctx, message_id: int):
+    async def get_message_statistics(
+        self,
+        ctx: commands.Context,
+        message_id: int
+    ) -> None:
         get_message = \
             """SELECT * FROM messages WHERE id=$1 AND guild_id=$2"""
         get_starboard_message = \
@@ -492,10 +538,11 @@ class Utility(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def recount_msg_reactions(
-        self, ctx,
+        self,
+        ctx: commands.Context,
         message_id: int,
         channel: discord.TextChannel = None
-    ):
+    ) -> None:
         if channel is None:
             channel = ctx.channel
         try:
@@ -561,7 +608,8 @@ class Utility(commands.Cog):
     @commands.cooldown(30, 120, type=commands.BucketType.guild)
     @commands.guild_only()
     async def move_prem_lock(
-        self, ctx,
+        self,
+        ctx: commands.Context,
         current_channel: discord.TextChannel,
         new_channel: discord.TextChannel
     ) -> None:
@@ -609,5 +657,7 @@ class Utility(commands.Cog):
         await ctx.send("Done")
 
 
-def setup(bot):
+def setup(
+    bot: commands.Bot
+) -> None:
     bot.add_cog(Utility(bot, bot.db))
