@@ -1,16 +1,22 @@
-from errors import DoesNotExist
 import functions
 import errors
 import discord
+from database.database import Database  # for type hinting
 from discord.ext import commands
+from errors import DoesNotExist
 from typing import Union
 
 
 async def change_starboard_settings(
-    db, starboard_id, self_star=None, link_edits=None,
-    link_deletes=None, bots_on_sb=None,
-    required=None, rtl=None
-):
+    db: Database,
+    starboard_id: int,
+    self_star: bool = None,
+    link_edits: bool = None,
+    link_deletes: bool = None,
+    bots_on_sb: bool = None,
+    required: int = None,
+    rtl: int = None
+) -> None:
     get_starboard = \
         """SELECT * FROM starboards WHERE id=$1"""
     update_starboard = \
@@ -74,9 +80,12 @@ async def change_starboard_settings(
 
 
 async def change_aschannel_settings(
-    db, aschannel_id, min_chars=None, require_image=None,
-    delete_invalid=None
-):
+    db: Database,
+    aschannel_id: int,
+    min_chars: int = None,
+    require_image: bool = None,
+    delete_invalid: bool = None
+) -> None:
     get_aschannel = \
         """SELECT * FROM aschannels WHERE id=$1"""
     update_aschannel = \
@@ -113,7 +122,10 @@ async def change_aschannel_settings(
             )
 
 
-async def add_aschannel(bot: commands.Bot, channel: discord.TextChannel):
+async def add_aschannel(
+    bot: commands.Bot,
+    channel: discord.TextChannel
+) -> None:
     check_aschannel = \
         """SELECT * FROM aschannels WHERE id=$1"""
     check_starboard = \
@@ -187,7 +199,11 @@ async def add_aschannel(bot: commands.Bot, channel: discord.TextChannel):
             )
 
 
-async def remove_aschannel(bot: commands.Bot, channel_id: int, guild_id: int):
+async def remove_aschannel(
+    bot: commands.Bot,
+    channel_id: int,
+    guild_id: int
+) -> None:
     check_aschannel = \
         """SELECT * FROM aschannels WHERE id=$1 AND guild_id=$2"""
     del_aschannel = \
@@ -213,8 +229,10 @@ async def remove_aschannel(bot: commands.Bot, channel_id: int, guild_id: int):
 
 
 async def add_asemoji(
-    bot: commands.Bot, aschannel: discord.TextChannel, name: str
-):
+    bot: commands.Bot,
+    aschannel: discord.TextChannel,
+    name: str
+) -> None:
     check_aschannel = \
         """SELECT * FROM aschannels WHERE id=$1"""
     check_asemoji = \
@@ -244,8 +262,10 @@ async def add_asemoji(
 
 
 async def remove_asemoji(
-    bot: commands.Bot, aschannel: discord.TextChannel, name: str
-):
+    bot: commands.Bot,
+    aschannel: discord.TextChannel,
+    name: str
+) -> None:
     check_aschannel = \
         """SELECT * FROM aschannels WHERE id=$1"""
     check_asemoji = \
@@ -276,7 +296,10 @@ async def remove_asemoji(
             )
 
 
-async def add_starboard(bot: commands.Bot, channel: discord.TextChannel):
+async def add_starboard(
+    bot: commands.Bot,
+    channel: discord.TextChannel
+) -> None:
     check_starboard = \
         """SELECT * FROM starboards WHERE id=$1"""
     check_aschannel = \
@@ -353,7 +376,11 @@ async def add_starboard(bot: commands.Bot, channel: discord.TextChannel):
     await add_starboard_emoji(bot, channel.id, channel.guild, '⭐')
 
 
-async def remove_starboard(bot: commands.Bot, channel_id: int, guild_id: int):
+async def remove_starboard(
+    bot: commands.Bot,
+    channel_id: int,
+    guild_id: int
+) -> None:
     check_starboard = \
         """SELECT * FROM starboards WHERE id=$1 AND guild_id=$2"""
     del_starboard = \
@@ -380,9 +407,11 @@ async def remove_starboard(bot: commands.Bot, channel_id: int, guild_id: int):
 
 
 async def add_starboard_emoji(
-    bot: commands.Bot, starboard_id: int, guild: discord.Guild,
+    bot: commands.Bot,
+    starboard_id: int,
+    guild: discord.Guild,
     emoji: Union[discord.Emoji, str]
-):
+) -> None:
     check_sbemoji = \
         """SELECT * FROM sbemojis WHERE name=$1 AND starboard_id=$2"""
     get_all_sbemojis = \
@@ -440,9 +469,11 @@ async def add_starboard_emoji(
 
 
 async def remove_starboard_emoji(
-    bot: commands.Bot, starboard_id: int, guild: discord.Guild,
+    bot: commands.Bot,
+    starboard_id: int,
+    guild: discord.Guild,
     emoji: Union[discord.Emoji, str]
-):
+) -> None:
     check_sbemoji = \
         """SELECT * FROM sbemojis WHERE name=$1 AND starboard_id=$2"""
     check_starboard = \
