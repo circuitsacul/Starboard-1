@@ -1,11 +1,13 @@
 # Receiving the vote webhook is done in webhook.py
 # This is for handling that event, handling the
 # vote role, and for posting when someone votes
-import bot_config
 import datetime
-import functions
+
 import discord
 from discord.ext import commands, tasks
+
+import bot_config
+import functions
 
 
 def now() -> datetime.datetime:

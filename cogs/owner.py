@@ -1,17 +1,17 @@
 import ast
-import discord
-import checks
 import time
-import bot_config
-import functions
-from database.database import Database
 from subprocess import PIPE, run
-from paginators import disputils
-from asyncpg.exceptions._base import InterfaceError
-from discord.ext import tasks
 
+import discord
+from asyncpg.exceptions._base import InterfaceError
+from discord.ext import commands, tasks
+
+import bot_config
+import checks
+import functions
 from api.post_guild_count import post_all
-from discord.ext import commands
+from database.database import Database
+from paginators import disputils
 
 
 def ms(t: float) -> float:

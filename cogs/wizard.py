@@ -1,17 +1,18 @@
-import discord
-import functions
 import asyncio
-import bot_config
-import emoji as emojilib
-import settings
-from paginators import disputils
-from discord.ext import commands
 from asyncio import sleep
+from typing import Optional, Tuple, Union
+
+import discord
+import emoji as emojilib
 from discord import utils
+from discord.ext import commands
+
+import bot_config
+import functions
+import settings
+from functions import get_limit, pretty_emoji_string
+from paginators import disputils
 from settings import change_starboard_settings
-from functions import pretty_emoji_string
-from functions import get_limit
-from typing import Union, Tuple, Optional
 
 
 def mybool(string: str) -> bool:

@@ -1,10 +1,11 @@
 import discord
-import functions
+from discord.ext import commands, flags
+from discord.ext.commands import BucketType
+from disputils import BotEmbedPaginator
+
 import bot_config
 import checks
-from discord.ext.commands import BucketType
-from discord.ext import commands, flags
-from disputils import BotEmbedPaginator
+import functions
 from cogs.starboard import handle_starboards
 from database.database import Database
 

@@ -1,10 +1,12 @@
 # Put here for ease of use with statcord
-from discord.ext import commands
-from bot_config import OWNER_ID
-import statcord
 import os
+
 import dbl
+import statcord
+from discord.ext import commands
 from dotenv import load_dotenv
+
+from bot_config import OWNER_ID
 
 load_dotenv()
 

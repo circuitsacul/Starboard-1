@@ -1,18 +1,18 @@
-import discord
-import functions
-import bot_config
-import settings
 import random
-import asyncpg
-import cooldowns
-from cogs import levels
-from discord import utils
-from discord.ext import commands
-from discord.ext import flags
-from typing import Union, List, Optional
-from settings import change_starboard_settings
-from database.database import Database
+from typing import List, Optional, Union
 
+import asyncpg
+import discord
+from discord import utils
+from discord.ext import commands, flags
+
+import bot_config
+import cooldowns
+import functions
+import settings
+from cogs import levels
+from database.database import Database
+from settings import change_starboard_settings
 
 edit_message_cooldown = cooldowns.CooldownMapping.from_cooldown(
     3, 5

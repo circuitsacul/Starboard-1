@@ -1,11 +1,13 @@
-import bot_config
-import discord
-import functions
-import traceback
 import sys
-import errors as cerrors
-from discord.ext.commands import errors
+import traceback
+
+import discord
 from discord.ext import commands
+from discord.ext.commands import errors
+
+import bot_config
+import errors as cerrors
+import functions
 
 
 class Logging(commands.Cog):

@@ -1,18 +1,15 @@
-import discord
-import bot_config
-import functions
-import cooldowns
-from database.database import Database
 from math import sqrt
-from paginators import disputils
+from typing import List, Optional, Union
+
+import discord
 from discord import utils
 from discord.ext import commands
-from typing import (
-    Union,
-    List,
-    Optional
-)
 
+import bot_config
+import cooldowns
+import functions
+from database.database import Database
+from paginators import disputils
 
 give_cooldown = cooldowns.CooldownMapping.from_cooldown(
     3, 60

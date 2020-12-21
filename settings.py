@@ -1,10 +1,12 @@
-import functions
-import errors
-import discord
-from database.database import Database  # for type hinting
-from discord.ext import commands
-from errors import DoesNotExist
 from typing import Union
+
+import discord
+from discord.ext import commands
+
+import errors
+import functions
+from database.database import Database  # for type hinting
+from errors import DoesNotExist
 
 
 async def change_starboard_settings(

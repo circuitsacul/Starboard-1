@@ -1,8 +1,8 @@
 import discord
-import bot_config
-import functions
 from discord.ext import commands
 
+import bot_config
+import functions
 
 pages = {
     'About Starboard': (

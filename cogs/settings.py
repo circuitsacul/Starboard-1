@@ -1,12 +1,15 @@
+from typing import List, Union
+
 import discord
-import functions
+from discord.ext import commands
+
 import bot_config
+import functions
 import settings
 from database.database import Database
-from discord.ext import commands
-from .wizard import SetupWizard
-from typing import List, Union
 from paginators import disputils
+
+from .wizard import SetupWizard
 
 
 async def get_blacklist_config_embeds(

@@ -1,6 +1,7 @@
+from typing import Optional
+
 import discord
 from discord import utils
-from typing import Optional
 
 
 def _get_id(

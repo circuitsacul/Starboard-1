@@ -1,6 +1,8 @@
 import random
-import bot_config
+
 from discord.ext import commands
+
+import bot_config
 
 
 def do_now() -> bool:

@@ -1,15 +1,14 @@
 # aschannels stand for auto-star channels
-import discord
-import bot_config
-import settings
-import functions
 import datetime
+from typing import List, Union
+
+import discord
 from discord import utils
 from discord.ext import commands
-from typing import (
-    Union,
-    List
-)
+
+import bot_config
+import functions
+import settings
 
 
 async def converted_emojis(
