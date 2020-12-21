@@ -1,6 +1,7 @@
 import asyncpg as apg
 import os
 import time
+from discord.ext import commands
 from dotenv import load_dotenv
 from asyncio import Lock
 from discord import utils
@@ -19,7 +20,7 @@ class aobject(object):
         await instance.__init__(*args, **kwargs)
         return instance
 
-    async def __init__(self):
+    async def __init__(self) -> None:
         pass
 
 
@@ -27,7 +28,7 @@ class CustomConn:
     def __init__(
         self,
         realcon: apg.Connection
-    ):
+    ) -> None:
         self.realcon = realcon
         self.sql_dict = {}
 
@@ -62,7 +63,9 @@ class CustomConn:
 
         self.sql_dict = {}
 
-    def transaction(self, *args, **kwargs):
+    def transaction(
+        self, *args, **kwargs
+    ):
         return self.realcon.transaction(*args, **kwargs)
 
     def log(
@@ -75,22 +78,37 @@ class CustomConn:
         self.sql_dict[sql]['c'] += 1
         self.sql_dict[sql]['e'] += time
 
-    async def prepare(self, *args, **kwargs):
+    async def prepare(
+        self,
+        *args, **kwargs
+    ) -> None:
         return await self.realcon.prepare(*args, **kwargs)
 
-    async def execute(self, sql, *args, **kwargs):
+    async def execute(
+        self,
+        sql: str,
+        *args, **kwargs
+    ):
         s = time.time()
         result = await self.realcon.execute(sql, *args, **kwargs)
         self.log(sql, time.time() - s)
         return result
 
-    async def fetch(self, sql, *args, **kwargs):
+    async def fetch(
+        self,
+        sql: str,
+        *args, **kwargs
+    ):
         s = time.time()
         result = await self.realcon.fetch(sql, *args, **kwargs)
         self.log(sql, time.time() - s)
         return result
 
-    async def fetchrow(self, sql, *args, **kwargs):
+    async def fetchrow(
+        self,
+        sql: str,
+        *args, **kwargs
+    ):
         s = time.time()
         result = await self.realcon.fetchrow(sql, *args, **kwargs)
         self.log(sql, time.time() - s)
@@ -104,21 +122,37 @@ class CustomConn:
 
 
 class BotCache(aobject):
-    async def __init__(self, event, limit=20):
+    async def __init__(
+        self,
+        event,
+        limit: int = 20
+    ) -> None:
         self._messages = {}
         self.limit = limit
         await self.set_listeners(event)
 
-    async def push(self, item, guild: int):
+    async def push(
+        self,
+        item: any,
+        guild: int
+    ) -> None:
         self._messages.setdefault(guild, [])
         self._messages[guild].append(item)
         if len(self._messages[guild]) > self.limit:
             self._messages[guild].pop(0)
 
-    async def get(self, guild: int, **kwargs):
+    async def get(
+        self,
+        guild: int,
+        **kwargs
+    ) -> any:
         return utils.get(self._messages.get(guild, []), **kwargs)
 
-    async def remove(self, msg_id: int, guild: int):
+    async def remove(
+        self,
+        msg_id: int,
+        guild: int
+    ) -> bool:
         status = False
         remove_index = None
         for x, msg in enumerate(self._messages.get(guild, [])):
@@ -129,7 +163,10 @@ class BotCache(aobject):
             status = True
         return status
 
-    async def set_listeners(self, event):
+    async def set_listeners(
+        self,
+        event
+    ) -> None:
         @event
         async def on_raw_message_delete(payload):
             if payload.guild_id is None:
@@ -154,7 +191,10 @@ class BotCache(aobject):
 
 
 class CommonSql(aobject):
-    async def __init__(self, conn):
+    async def __init__(
+        self,
+        conn: apg.Connection
+    ) -> None:
         self.create_guild = \
             await conn.prepare(
                 """INSERT INTO guilds (id) VALUES($1)"""
@@ -233,7 +273,7 @@ class CommonSql(aobject):
 
 
 class Database:
-    def __init__(self):
+    def __init__(self) -> None:
         self.lock = Lock()
         self.cooldowns = {
             'giving_stars': {}  # {user_id: cooldown_end_datetime}
@@ -242,19 +282,22 @@ class Database:
         self.cache = None
         self.as_cache = None
 
-    async def open(self, bot):
+    async def open(
+        self,
+        bot: commands.Bot
+    ) -> None:
         # self.q = await CommonSql()
         await self._create_tables()
         await self._apply_migrations()
         self.q = await CommonSql(await self.connect())
         self.cache = await BotCache(bot.event)
 
-    async def connect(self):
+    async def connect(self) -> CustomConn:
         if self.conn is None:
             self.conn = await self.make_connection()
         return self.conn
 
-    async def make_connection(self):
+    async def make_connection(self) -> CustomConn:
         conn = None
         try:
             conn = await apg.connect(
@@ -272,25 +315,25 @@ class Database:
         customconn = CustomConn(conn)
         return customconn
 
-    def _dict_factory(self, cursor, row):
+    def _dict_factory(self, cursor, row) -> dict:
         d = {}
         for idx, col in enumerate(cursor.description):
             d[col[0]] = row[idx]
         return d
 
-    async def _create_table(self, sql):
+    async def _create_table(self, sql: str) -> None:
         conn = await self.connect()
         await conn.realcon.execute(sql)
 
-    async def _create_index(self, sql):
+    async def _create_index(self, sql: str) -> None:
         conn = await self.connect()
         await conn.realcon.execute(sql)
 
-    async def _apply_migration(self, sql):
+    async def _apply_migration(self, sql: str) -> None:
         conn = await self.connect()
         await conn.realcon.execute(sql)
 
-    async def _apply_migrations(self):
+    async def _apply_migrations(self) -> None:
         messages__addcolumn__points = \
             """ALTER TABLE messages
             ADD COLUMN IF NOT EXISTS points int DEFAULT NULL
@@ -337,7 +380,7 @@ class Database:
         await self._apply_migration(members__addcolumn__autoredeem)
         self.lock.release()
 
-    async def _create_tables(self):
+    async def _create_tables(self) -> None:
         guilds_table = \
             """CREATE TABLE IF NOT EXISTS guilds (
                 id numeric PRIMARY KEY,
