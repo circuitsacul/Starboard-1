@@ -71,7 +71,9 @@ web_server = HttpWebHook(bot, db)
 
 
 # Load Cache
-async def load_aschannels(bot):
+async def load_aschannels(
+    bot: commands.Bot
+) -> None:
     check_aschannel = \
         """SELECT * FROM aschannels"""
 
@@ -87,7 +89,7 @@ async def load_aschannels(bot):
         bot.db.as_cache = set()
 
 
-async def main():
+async def main() -> None:
     await db.open(bot)
 
     await load_aschannels(bot)
