@@ -10,7 +10,11 @@ db_pwd = os.getenv('DB_PWD')
 
 
 class aobject(object):
-    async def __new__(cls, *args, **kwargs):
+    async def __new__(
+        cls: any,
+        *args,
+        **kwargs
+    ) -> any:
         instance = super().__new__(cls)
         await instance.__init__(*args, **kwargs)
         return instance
@@ -20,11 +24,14 @@ class aobject(object):
 
 
 class CustomConn:
-    def __init__(self, realcon):
+    def __init__(
+        self,
+        realcon: apg.Connection
+    ):
         self.realcon = realcon
         self.sql_dict = {}
 
-    async def dump(self):  # requires external lock
+    async def dump(self) -> None:  # requires external lock
         add_row = \
             """INSERT INTO sqlruntimes (sql, count, time)
             values ($1, $2, $3)"""
@@ -58,7 +65,11 @@ class CustomConn:
     def transaction(self, *args, **kwargs):
         return self.realcon.transaction(*args, **kwargs)
 
-    def log(self, sql, time):
+    def log(
+        self,
+        sql: str,
+        time: float
+    ) -> None:
         sql = sql.lower()
         self.sql_dict.setdefault(sql, {'c': 0, 'e': 0})
         self.sql_dict[sql]['c'] += 1
