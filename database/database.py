@@ -367,6 +367,10 @@ class Database:
             """ALTER TABLE members
             ADD COLUMN IF NOT EXISTS autoredeem
             bool NOT NULL DEFAULT False"""
+        guilds__addcolumn__is_qa_on = \
+            """ALTER TABLE guilds
+            ADD COLUMN IF NOT EXISTS is_qa_on
+            bool NOT NULL DEFAULT True"""
 
         await self.lock.acquire()
         await self._apply_migration(messages__addcolumn__points)
@@ -379,6 +383,7 @@ class Database:
         await self._apply_migration(guilds__addcolumn__premium_end)
         await self._apply_migration(aschannels__addcolumn__locked)
         await self._apply_migration(members__addcolumn__autoredeem)
+        await self._apply_migration(guilds__addcolumn__is_qa_on)
         self.lock.release()
 
     async def _create_tables(self) -> None:
@@ -386,6 +391,7 @@ class Database:
             """CREATE TABLE IF NOT EXISTS guilds (
                 id numeric PRIMARY KEY,
                 prefixes VARCHAR(8) ARRAY DEFAULT "{'sb!'}",
+                is_qa_on bool NOT NULL DEFAULT True,
 
                 premium_end timestamp DEFAULT NULL,
 
