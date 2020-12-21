@@ -1,10 +1,12 @@
 from discord import utils
 from discord.ext import commands
-from typing import Tuple, Union, Iterable
+from typing import Tuple, Union, Iterable, List
 from paginators import disputils
 from api import tenor
 from cogs import starboard
 from itertools import compress
+from database.database import Database  # for typehinting
+import asyncpg
 import emoji
 import bot_config
 import discord
@@ -13,7 +15,10 @@ import datetime
 import errors
 
 
-async def needs_recount(bot, message):
+async def needs_recount(
+    bot: commands.Bot,
+    message: discord.Message
+) -> bool:
     get_reactions = \
         """SELECT * FROM reactions WHERE message_id=$1"""
 
@@ -48,7 +53,10 @@ async def needs_recount(bot, message):
     return False
 
 
-async def recount_reactions(bot, message):
+async def recount_reactions(
+    bot: commands.Bot,
+    message: discord.Message
+) -> None:
     check_reaction = \
         """SELECT * FROM reactions WHERE
         message_id=$1 AND name=$2 AND user_id=$3"""
@@ -132,7 +140,15 @@ async def recount_reactions(bot, message):
     )
 
 
-async def is_starboard_emoji(db, guild_id, emoji, multiple=False):
+async def is_starboard_emoji(
+    db: Database,
+    guild_id: int,
+    emoji: Union[
+        List[Union[int, str]],
+        Union[int, str]
+    ],
+    multiple=False
+) -> Union[List[bool], bool]:
     if not multiple:
         emoji = str(emoji)
     else:
@@ -156,7 +172,9 @@ async def is_starboard_emoji(db, guild_id, emoji, multiple=False):
         return [emo in all_emojis for emo in emoji]
 
 
-async def get_embed_from_message(message):
+async def get_embed_from_message(
+    message: discord.Message
+) -> discord.Embed:
     nsfw = message.channel.is_nsfw()
     embed = discord.Embed(
         title="NSFW" if nsfw else discord.Embed.Empty, colour=bot_config.COLOR
@@ -261,7 +279,13 @@ async def get_embed_from_message(message):
     return embed
 
 
-async def calculate_points(conn, sql_message, sql_starboard, bot, guild):
+async def calculate_points(
+    conn: asyncpg.Connection,
+    sql_message: dict,
+    sql_starboard: dict,
+    bot: commands.Bot,
+    guild: discord.Guild
+) -> Tuple[int, List[dict]]:
     get_reactions = \
         """SELECT * FROM reactions WHERE message_id=$1"""
     get_user = \
@@ -332,7 +356,10 @@ async def calculate_points(conn, sql_message, sql_starboard, bot, guild):
     return total_points, emojis
 
 
-async def get_members(user_ids: Iterable[int], guild: discord.Guild):
+async def get_members(
+    user_ids: Iterable[int],
+    guild: discord.Guild
+) -> List[discord.Member]:
     unfound_ids = []
     users = []
     for _uid in user_ids:
@@ -347,7 +374,11 @@ async def get_members(user_ids: Iterable[int], guild: discord.Guild):
     return users
 
 
-async def fetch(bot, msg_id: int, channel: Union[discord.TextChannel, int]):
+async def fetch(
+    bot: commands.Bot,
+    msg_id: int,
+    channel: Union[discord.TextChannel, int]
+) -> discord.Message:
     if isinstance(channel, int):
         channel = bot.get_channel(int(channel))
     if channel is None:
@@ -364,7 +395,10 @@ async def fetch(bot, msg_id: int, channel: Union[discord.TextChannel, int]):
     return msg
 
 
-async def _prefix_callable(bot, message):
+async def _prefix_callable(
+    bot: commands.Bot,
+    message: discord.Message
+) -> List[str]:
     if not message.guild:
         return commands.when_mentioned_or(
             bot_config.DEFAULT_PREFIX
@@ -373,12 +407,18 @@ async def _prefix_callable(bot, message):
     return commands.when_mentioned_or(*prefixes)(bot, message)
 
 
-async def get_one_prefix(bot, guild_id: int):
+async def get_one_prefix(
+    bot: commands.Bot,
+    guild_id: int
+) -> str:
     prefixes = await list_prefixes(bot, guild_id)
     return prefixes[0] if len(prefixes) > 0 else '@' + bot.user.name + ' '
 
 
-async def list_prefixes(bot, guild_id: int):
+async def list_prefixes(
+    bot: commands.Bot,
+    guild_id: int
+) -> List[str]:
     get_guild = \
         """SELECT * FROM guilds WHERE id=$1"""
 
@@ -395,7 +435,11 @@ async def list_prefixes(bot, guild_id: int):
     return prefix_list
 
 
-async def add_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
+async def add_prefix(
+    bot: commands.Bot,
+    guild_id: int,
+    prefix: str
+) -> Tuple[bool, str]:
     current_prefixes = await list_prefixes(bot, guild_id)
     if prefix in current_prefixes:
         return False, "That prefix already exists"
@@ -419,7 +463,11 @@ async def add_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
     return True, ''
 
 
-async def remove_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
+async def remove_prefix(
+    bot: commands.Bot,
+    guild_id: int,
+    prefix: str
+) -> Tuple[bool, str]:
     current_prefixes = await list_prefixes(bot, guild_id)
     if prefix not in current_prefixes:
         return False, "That prefix does not exist"
@@ -439,11 +487,17 @@ async def remove_prefix(bot, guild_id: int, prefix: str) -> Tuple[bool, str]:
     return True, ''
 
 
-def is_emoji(string) -> bool:
+def is_emoji(
+    string: str
+) -> bool:
     return string in emoji.UNICODE_EMOJI
 
 
-async def check_single_exists(conn, sql, params):
+async def check_single_exists(
+    conn: asyncpg.Connection,
+    sql: str,
+    params: List[any]
+):
     rows = await conn.fetch(sql, *params)
     if len(rows) > 0:
         return True
@@ -451,10 +505,14 @@ async def check_single_exists(conn, sql, params):
 
 
 async def check_or_create_existence(
-    bot, guild_id=None, user=None,
-    starboard_id=None, do_member=False, create_new=True,
-    user_is_id=False,
-):
+    bot: commands.Bot,
+    guild_id: int = None,
+    user: Union[discord.User, discord.Member, int] = None,
+    starboard_id: int = None,
+    do_member: bool = False,
+    create_new: bool = True,
+    user_is_id: bool = False,
+) -> dict:
     check_guild = \
         """SELECT * FROM guilds WHERE id=$1"""
     check_user = \
@@ -528,7 +586,14 @@ async def check_or_create_existence(
     return dict(ge=gexists, ue=uexists, se=s_exists, me=mexists)
 
 
-async def handle_role(bot, db, user_id, guild_id, role_id, add):
+async def handle_role(
+    bot: commands.Bot,
+    db: Database,
+    user_id: int,
+    guild_id: int,
+    role_id: int,
+    add: bool
+) -> None:
     guild = bot.get_guild(guild_id)
     member = (await functions.get_members([int(user_id)], guild))[0]
     role = utils.get(guild.roles, id=role_id)
@@ -538,7 +603,11 @@ async def handle_role(bot, db, user_id, guild_id, role_id, add):
         await member.remove_roles(role)
 
 
-async def set_sb_lock(bot, id: int, locked: bool) -> None:
+async def set_sb_lock(
+    bot: commands.Bot,
+    id: int,
+    locked: bool
+) -> None:
     conn = bot.db.conn
     async with bot.db.lock:
         async with conn.transaction():
@@ -549,7 +618,11 @@ async def set_sb_lock(bot, id: int, locked: bool) -> None:
             )
 
 
-async def set_asc_lock(bot, id: int, locked: bool) -> None:
+async def set_asc_lock(
+    bot: commands.Bot,
+    id: int,
+    locked: bool
+) -> None:
     conn = bot.db.conn
     async with bot.db.lock:
         async with conn.transaction():
@@ -561,7 +634,9 @@ async def set_asc_lock(bot, id: int, locked: bool) -> None:
 
 
 async def alert_user(
-    bot, user_id: int, text: str
+    bot: commands.Bot,
+    user_id: int,
+    text: str
 ) -> None:
     user = await bot.fetch_user(user_id)
     if user is None:
@@ -576,7 +651,8 @@ async def alert_user(
 
 
 async def alert_owner(
-    bot, text: str
+    bot: commands.Bot,
+    text: str
 ) -> None:
     owner = await bot.fetch_user(bot_config.OWNER_ID)
     await owner.send(text)
@@ -584,7 +660,7 @@ async def alert_owner(
 
 # PREMIUM FUNCTIONS
 async def autoredeem(
-    bot,
+    bot: commands.Bot,
     guild_id: int
 ) -> bool:
     """Iterates over the list of users who have
@@ -637,7 +713,7 @@ async def autoredeem(
 
 
 async def refresh_guild_premium(
-    bot,
+    bot: commands.Bot,
     guild_id: int,
     send_alert: bool = True
 ) -> None:
@@ -671,7 +747,7 @@ async def refresh_guild_premium(
 
 
 async def channel_alert(
-    bot,
+    bot: commands.Bot,
     guild_id: int,
     message: str,
     locked: Union[bool, None] = False,
@@ -717,7 +793,7 @@ async def channel_alert(
 
 
 async def remove_all_locks(
-    bot,
+    bot: commands.Bot,
     guild_id: int
 ) -> None:  # only to be used by refresh_guild_premium
     conn = bot.db.conn
@@ -739,7 +815,7 @@ async def remove_all_locks(
 
 
 async def move_starboard_lock(
-    bot,
+    bot: commands.Bot,
     current_channel: discord.TextChannel,
     new_channel: discord.TextChannel
 ) -> None:
@@ -779,7 +855,7 @@ async def move_starboard_lock(
 
 
 async def move_aschannel_lock(
-    bot,
+    bot: commands.Bot,
     current_channel: discord.TextChannel,
     new_channel: discord.TextChannel
 ) -> None:
@@ -819,7 +895,7 @@ async def move_aschannel_lock(
 
 
 async def disable_guild_premium(
-    bot,
+    bot: commands.Bot,
     guild_id: int
 ) -> None:
     conn = bot.db.conn
@@ -868,7 +944,9 @@ async def disable_guild_premium(
             await set_asc_lock(bot, int(a['id']), True)
 
 
-async def do_payroll(bot) -> None:
+async def do_payroll(
+    bot: commands.Bot
+) -> None:
     get_patrons = \
         """SELECT * FROM users WHERE payment != 0"""
 
@@ -891,7 +969,7 @@ async def do_payroll(bot) -> None:
 
 
 async def redeem(
-    bot,
+    bot: commands.Bot,
     user_id: int,
     guild_id: int,
     months: int
@@ -903,7 +981,7 @@ async def redeem(
 
 
 async def givecredits(
-    bot,
+    bot: commands.Bot,
     user_id: int,
     credits: int
 ) -> None:
@@ -912,7 +990,7 @@ async def givecredits(
 
 
 async def setcredits(
-    bot,
+    bot: commands.Bot,
     user_id: int,
     credits: int
 ) -> None:
@@ -935,7 +1013,7 @@ async def setcredits(
 
 
 async def get_credits(
-    bot,
+    bot: commands.Bot,
     user_id: int
 ) -> None:
     get_user = \
@@ -954,7 +1032,7 @@ async def get_credits(
 
 
 async def give_months(
-    bot,
+    bot: commands.Bot,
     guild_id: int,
     months: int
 ) -> None:
@@ -978,7 +1056,7 @@ async def give_months(
 
 
 async def get_limit(
-    bot,
+    bot: commands.Bot,
     item: str,
     guild_id: int
 ) -> Union[int, bool]:
@@ -992,7 +1070,7 @@ async def get_limit(
 
 
 async def is_patron(
-    bot,
+    bot: commands.Bot,
     user_id: int
 ) -> bool:
     get_user = \
@@ -1009,7 +1087,7 @@ async def is_patron(
 
 
 async def get_prem_endsat(
-    bot,
+    bot: commands.Bot,
     guild_id: int
 ) -> Union[datetime.datetime, None]:
     get_guild = \
@@ -1023,7 +1101,10 @@ async def get_prem_endsat(
     return sql_guild['premium_end']
 
 
-async def pretty_emoji_string(emojis, guild):
+async def pretty_emoji_string(
+    emojis: List[dict],
+    guild: discord.Guild
+) -> str:
     string = ""
     for demoji in emojis:
         emoji_name = demoji['name']
@@ -1043,7 +1124,14 @@ async def pretty_emoji_string(emojis, guild):
     return string
 
 
-async def confirm(bot, channel, text, user_id, embed=None, delete=True):
+async def confirm(
+    bot: commands.Bot,
+    channel: discord.TextChannel,
+    text: str,
+    user_id: int,
+    embed=None,
+    delete=True
+) -> bool:
     message = await channel.send(text, embed=embed)
     await message.add_reaction('✅')
     await message.add_reaction('❌')
@@ -1072,7 +1160,14 @@ async def confirm(bot, channel, text, user_id, embed=None, delete=True):
         return False
 
 
-async def multi_choice(bot, channel, user, title, description, _options):
+async def multi_choice(
+    bot: commands.Bot,
+    channel: discord.TextChannel,
+    user: Union[discord.User, discord.Member],
+    title: str,
+    description: str,
+    _options: dict
+) -> any:
     options = [option for option in _options]
     mc = disputils.MultipleChoice(bot, options, title, description)
     await mc.run([user], channel)
@@ -1080,7 +1175,13 @@ async def multi_choice(bot, channel, user, title, description, _options):
     return _options[mc.choice]
 
 
-async def user_input(bot, channel, user, prompt, timeout=30):
+async def user_input(
+    bot: commands.Bot,
+    channel: discord.TextChannel,
+    user: Union[discord.User, discord.Member],
+    prompt: str,
+    timeout: int = 30
+) -> str:
     await channel.send(prompt)
 
     def check(msg):
@@ -1094,7 +1195,11 @@ async def user_input(bot, channel, user, prompt, timeout=30):
     return inp
 
 
-async def orig_message_id(db, conn, message_id):
+async def orig_message_id(
+    db: Database,
+    conn: asyncpg.Connection,
+    message_id: int
+) -> Tuple[int, int]:
     get_message = \
         """SELECT * FROM messages WHERE id=$1"""
 
