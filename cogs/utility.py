@@ -3,17 +3,18 @@ import functions
 import bot_config
 import checks
 from discord.ext.commands import BucketType
-from discord.ext import commands
+from discord.ext import commands, flags
 from disputils import BotEmbedPaginator
 from cogs.starboard import handle_starboards
 
 
-async def scan_recount(bot, channel, messages: int, start_date=None):
-    guild = channel.guild
-    if start_date is None:
-        start_date = guild.me.created_at
-
-    async for m in channel.history(limit=messages):
+async def scan_recount(
+    bot: commands.Bot,
+    channel: discord.TextChannel,
+    messages: int,
+    start_date=None
+) -> None:
+    async for m in channel.history(limit=messages, before=start_date):
         if await functions.needs_recount(bot, m):
             await functions.recount_reactions(bot, m)
 
@@ -131,24 +132,43 @@ class Utility(commands.Cog):
         self.bot = bot
         self.db = db
 
-    @commands.command(
+    @flags.add_flag('--message', type=str, default="0")
+    @flags.command(
         name='scan', aliases=['recountChannel'],
         description='Recount X messages in a channel before '
-        'a certain date, or before I joined this server',
+        'a certain timestamp, or before I joined this server',
         brief='Retotal reactions on X messages in channel'
     )
     @commands.has_permissions(manage_guild=True)
     @commands.max_concurrency(1, BucketType.channel)
     @commands.guild_only()
     @checks.premium_guild()
-    async def recount_channel(self, ctx, messages: int):
+    async def recount_channel(self, ctx, messages: int, **flags):
         if messages > 1000:
             await ctx.send("Can only recount up to 1000 messages")
             return
 
+        message = flags['message']
+        try:
+            message = int(message)
+        except ValueError:
+            # it better be a link or we'll be mad
+            try:
+                message = int(message[-18:])
+            except ValueError:
+                await ctx.send("--message must be a message ID or a link!")
+                return
+
+        msg = None
+        if message is not None:
+            try:
+                msg = await ctx.channel.fetch_message(message)
+            except (discord.errors.NotFound, discord.errors.Forbidden):
+                msg = None
+
         async with ctx.typing():
             await scan_recount(
-                self.bot, ctx.channel, messages
+                self.bot, ctx.channel, messages, msg
             )
 
         await ctx.send("Finished")
