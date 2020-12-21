@@ -110,7 +110,8 @@ async def main() -> None:
         'cogs.voting',
         'cogs.rand_messages',
         'cogs.base',
-        'cogs.logging'
+        'cogs.logging',
+        'jishaku'
     ]
 
     for ext in extensions:
