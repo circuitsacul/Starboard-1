@@ -1,4 +1,6 @@
 from aiohttp import web
+from discord.ext import commands
+from database.database import Database
 import hmac
 import hashlib
 import os
@@ -12,7 +14,11 @@ PATREON_AUTH = os.getenv("PATREON_AUTH")
 
 class HttpWebHook():
     """Listens for different web stuff"""
-    def __init__(self, bot, db):
+    def __init__(
+        self,
+        bot: commands.Bot,
+        db: Database
+    ) -> None:
         self.bot = bot
         self.db = db
         self.routes = web.RouteTableDef()
@@ -21,12 +27,12 @@ class HttpWebHook():
 
         self.runner = web.AppRunner(self.app)
 
-    async def start(self):
+    async def start(self) -> None:
         await self.runner.setup()
         self.site = web.TCPSite(self.runner, '0.0.0.0', 8080)
         await self.site.start()
 
-    async def close(self):
+    async def close(self) -> None:
         await self.runner.cleanup()
 
     def verify_patreon(
@@ -41,7 +47,7 @@ class HttpWebHook():
         )
         return sig == digester.hexdigest()
 
-    def _set_routes(self):
+    def _set_routes(self) -> None:
         # @self.routes.post('/webhook')
         # async def donation_event(request):
         #    try:
