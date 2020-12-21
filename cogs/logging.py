@@ -11,11 +11,17 @@ from discord.ext import commands
 class Logging(commands.Cog):
     """Handle logging stuff"""
 
-    def __init__(self, bot):
+    def __init__(
+        self,
+        bot: commands.Bot
+    ) -> None:
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_guild_join(self, guild):
+    async def on_guild_join(
+        self,
+        guild: commands.Guild
+    ) -> None:
         support_server = self.bot.get_guild(
             bot_config.SUPPORT_SERVER_ID
         )
@@ -40,7 +46,10 @@ class Logging(commands.Cog):
         await log_channel.send(embed=embed)
 
     @commands.Cog.listener()
-    async def on_guild_remove(self, guild):
+    async def on_guild_remove(
+        self,
+        guild: discord.Guild
+    ) -> None:
         support_server = self.bot.get_guild(
             bot_config.SUPPORT_SERVER_ID
         )
@@ -63,7 +72,12 @@ class Logging(commands.Cog):
         await log_channel.send(embed=embed)
 
     @commands.Cog.listener()
-    async def on_error(self, event, *args, **kwargs):
+    async def on_error(
+        self,
+        event: any,
+        *args: list,
+        **kwargs: dict
+    ) -> None:
         owner = self.bot.get_user(bot_config.OWNER_ID)
         await owner.send(
             f"Error on event {event} with args {args} and \
@@ -71,7 +85,11 @@ class Logging(commands.Cog):
         )
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
+    async def on_command_error(
+        self,
+        ctx: commands.Context,
+        error: Exception
+    ) -> None:
         try:
             error = error.original
         except Exception:
@@ -159,5 +177,7 @@ class Logging(commands.Cog):
             )
 
 
-def setup(bot):
+def setup(
+    bot: commands.Bot
+) -> None:
     bot.add_cog(Logging(bot))
