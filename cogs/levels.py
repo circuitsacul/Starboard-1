@@ -411,7 +411,7 @@ class Levels(commands.Cog):
         await paginator.run()
 
     @commands.command(
-        name='reset', brief='Resets XP and Levels for a user',
+        name='resetuser', brief='Resets XP and Levels for a user',
         description='Resets XP and Levels for a user'
     )
     @commands.guild_only()
@@ -433,6 +433,39 @@ class Levels(commands.Cog):
                 await conn.execute(set_points, user.id, ctx.guild.id)
 
         await ctx.send(f"Reset {user.name}'s levels and xp.")
+
+    @commands.command(
+        name='resetlb',
+        brief="Resets the entire leaderboard"
+    )
+    @commands.has_guild_permissions(manage_guild=True)
+    @commands.guild_only()
+    async def reset_entire_leaderboard(
+        self,
+        ctx: commands.Context
+    ) -> None:
+        update_members = \
+            """UPDATE MEMBERS
+            SET xp=0,
+            lvl=0
+            WHERE guild_id=$1"""
+        c = disputils.Confirmation(
+            self.bot, color=bot_config.COLOR
+        )
+        await c.confirm(
+            "Are you sure? This is irreversable!",
+            ctx.message.author, ctx.channel
+        )
+        if c.confirmed:
+            await c.quit("Resetting the leaderboard, please wait...")
+            conn = self.bot.db.conn
+            async with ctx.typing():
+                async with self.bot.db.lock:
+                    async with conn.transaction():
+                        await conn.execute(update_members, ctx.guild.id)
+            await ctx.send("Finished!")
+        else:
+            await c.quit("Leaderboard reset cancelled.")
 
 
 def setup(
