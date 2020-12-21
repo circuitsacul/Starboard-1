@@ -1,7 +1,6 @@
 import ast
 import time
 from subprocess import PIPE, run
-from typing import List
 
 import discord
 from asyncpg.exceptions._base import InterfaceError
