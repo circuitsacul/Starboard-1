@@ -20,7 +20,7 @@ class Logging(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_join(
         self,
-        guild: commands.Guild
+        guild: discord.Guild
     ) -> None:
         support_server = self.bot.get_guild(
             bot_config.SUPPORT_SERVER_ID
