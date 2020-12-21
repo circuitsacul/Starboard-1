@@ -281,13 +281,13 @@ class Base(commands.Cog):
 
     @commands.command(
         name='links', aliases=['invite', 'support'],
-        description='View helpful links',
         brief='View helpful links'
     )
     async def show_links(
         self,
         ctx: commands.Context
     ) -> None:
+        """Lists helpful links"""
         embed = discord.Embed(title="Helpful Links", color=bot_config.COLOR)
         description = \
             f"**[Support Server]({bot_config.SUPPORT_SERVER})**"\
@@ -302,13 +302,15 @@ class Base(commands.Cog):
 
     @commands.command(
         name='vote',
-        description='Vote for Starboard',
         brief='Vote for Starboard'
     )
     async def show_vote_info(
         self,
         ctx: commands.Context
     ) -> None:
+        """Gives you a link that you can use to vote for starboard.
+        If you are in the Support Server when you vote, you will
+        receive the @Voter role for 1 day."""
         embed = discord.Embed(
             title="Vote for Starboard!",
             color=bot_config.COLOR
@@ -323,26 +325,25 @@ class Base(commands.Cog):
 
     @commands.command(
         name='privacy', aliases=['policy'],
-        description='View the bot/owners privacy policy',
         brief="View privacy policy"
     )
     async def show_privacy_policy(
         self,
         ctx: commands.Context
     ) -> None:
+        """Sends the bots privacy policy"""
         embed = discord.Embed(title='Privacy Policy', color=bot_config.COLOR)
         embed.description = bot_config.PRIVACY_POLICY
         await ctx.send(embed=embed)
 
     @commands.command(
         name='about', brief='About Starboards',
-        description='Give quick description of what a \
-            starboard is and what it is for'
     )
     async def about_starboard(
         self,
         ctx: commands.Context
     ) -> None:
+        """Explains what a starboard is"""
         msg = "Starboard is a Discord starboard bot. "\
             "Starboards are kind of like democratic pins. "\
             "A user can \"vote\" to have a message displayed on "\
@@ -364,6 +365,8 @@ class Base(commands.Cog):
         self,
         ctx: commands.Context
     ) -> None:
+        """Shows you the average latency as well as the latency
+        for each shard"""
         def ms(seconds: int) -> int:
             return int((seconds*1000))
 
@@ -396,6 +399,7 @@ class Base(commands.Cog):
         self,
         ctx: commands.Context
     ) -> None:
+        """Shows you some of Starboard's stats"""
         total = 0
         for g in self.bot.guilds:
             try:
@@ -420,6 +424,7 @@ class Base(commands.Cog):
         self,
         ctx: commands.Context
     ) -> None:
+        """Entry-point for Starboard"""
         p = ctx.prefix
         await ctx.send(
             "For a tutorial on using the bot, run "
@@ -439,6 +444,8 @@ class Base(commands.Cog):
         self,
         ctx: commands.Context
     ) -> None:
+        """Shows you a highly detailed tutorial on using nearly
+        every feature/command of the bot"""
         embeds = [
             discord.Embed(
                 title=t,
