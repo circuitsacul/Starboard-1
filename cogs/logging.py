@@ -61,10 +61,12 @@ class Logging(commands.Cog):
             id=bot_config.SERVER_LOG_ID
         )
 
+        members = guild.member_count
         total = sum([g.member_count for g in self.bot.guilds])
 
         embed = discord.Embed(
-            description=f"Left **{guild.name}**.",
+            description=f"Left **{guild.name}**.\n"
+            f"**{members}** Members",
             color=bot_config.GUILD_LEAVE_COLOR
         )
         embed.set_footer(
