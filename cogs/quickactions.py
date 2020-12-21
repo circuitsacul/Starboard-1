@@ -84,7 +84,6 @@ async def toggle_setting(
             mid, _cid = await functions.orig_message_id(
                 bot.db, conn, message_id
             )
-            print(mid)
             sql_message = await conn.fetchrow(
                 get_message, mid
             )
