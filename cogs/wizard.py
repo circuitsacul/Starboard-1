@@ -1,6 +1,6 @@
 import asyncio
 from asyncio import sleep
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, Any
 
 import discord
 import emoji as emojilib
@@ -793,7 +793,7 @@ class SetupWizard:
         self,
         options: dict,
         prompt: str = ""
-    ) -> Optional[any]:
+    ) -> Optional[Any]:
         mc = disputils.MultipleChoice(
             self.bot, [option for option in options],
             message=self.message, title="Setup Wizard",

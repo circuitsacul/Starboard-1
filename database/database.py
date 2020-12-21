@@ -5,6 +5,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from asyncio import Lock
 from discord import utils
+from typing import Any
 
 load_dotenv()
 db_pwd = os.getenv('DB_PWD')
@@ -12,10 +13,10 @@ db_pwd = os.getenv('DB_PWD')
 
 class aobject(object):
     async def __new__(
-        cls: any,
+        cls: Any,
         *args,
         **kwargs
-    ) -> any:
+    ) -> Any:
         instance = super().__new__(cls)
         await instance.__init__(*args, **kwargs)
         return instance
@@ -133,7 +134,7 @@ class BotCache(aobject):
 
     async def push(
         self,
-        item: any,
+        item: Any,
         guild: int
     ) -> None:
         self._messages.setdefault(guild, [])
@@ -145,7 +146,7 @@ class BotCache(aobject):
         self,
         guild: int,
         **kwargs
-    ) -> any:
+    ) -> Any:
         return utils.get(self._messages.get(guild, []), **kwargs)
 
     async def remove(

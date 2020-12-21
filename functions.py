@@ -1,6 +1,6 @@
 import datetime
 from itertools import compress
-from typing import Iterable, List, Tuple, Union
+from typing import Any, Iterable, List, Optional, Sequence, Tuple, Union
 
 import asyncpg
 import discord
@@ -132,7 +132,7 @@ async def recount_reactions(
                     continue
 
                 await bot.db.q.create_reaction.fetch(
-                    message.guild.id, r['user'].id,
+                    message.guild.id, (r['user']).id,
                     message.id, r['name']
                 )
 
@@ -145,10 +145,7 @@ async def recount_reactions(
 async def is_starboard_emoji(
     db: Database,
     guild_id: int,
-    emoji: Union[
-        List[Union[int, str]],
-        Union[int, str]
-    ],
+    emoji: Union[Sequence[Union[str, int]], Union[str, int]],
     multiple=False
 ) -> Union[List[bool], bool]:
     if not multiple:
@@ -498,8 +495,8 @@ def is_emoji(
 async def check_single_exists(
     conn: asyncpg.Connection,
     sql: str,
-    params: List[any]
-):
+    params: List[Any]
+) -> bool:
     rows = await conn.fetch(sql, *params)
     if len(rows) > 0:
         return True
@@ -531,7 +528,7 @@ async def check_or_create_existence(
         async with bot.db.lock:
             async with conn.transaction():
                 gexists = await check_single_exists(
-                    conn, check_guild, (guild_id,)
+                    conn, check_guild, [guild_id]
                 )
                 if not gexists and create_new:
                     await db.q.create_guild.fetch(guild_id)
@@ -549,7 +546,7 @@ async def check_or_create_existence(
                 async with bot.db.lock:
                     async with conn.transaction():
                         uexists = await check_single_exists(
-                            conn, check_user, (user.id,)
+                            conn, check_user, [user.id]
                         )
                         if not uexists and create_new:
                             await db.q.create_user.fetch(user.id, user.bot)
@@ -557,7 +554,7 @@ async def check_or_create_existence(
             async with bot.db.lock:
                 async with conn.transaction():
                     uexists = await check_single_exists(
-                        conn, check_user, (user.id,)
+                        conn, check_user, [user.id]
                     )
                     if not uexists and create_new:
                         await db.q.create_user.fetch(user.id, user.bot)
@@ -568,7 +565,7 @@ async def check_or_create_existence(
         async with bot.db.lock:
             async with conn.transaction():
                 s_exists = await check_single_exists(
-                    conn, check_starboard, (starboard_id,)
+                    conn, check_starboard, [starboard_id]
                 )
                 if not s_exists and create_new:
                     await db.q.create_starboard.fetch(starboard_id, guild_id)
@@ -578,7 +575,7 @@ async def check_or_create_existence(
         async with bot.db.lock:
             async with conn.transaction():
                 mexists = await check_single_exists(
-                    conn, check_member, (user.id, guild_id)
+                    conn, check_member, [user.id, guild_id]
                 )
                 if not mexists and create_new:
                     await db.q.create_member.fetch(user.id, guild_id)
@@ -1017,7 +1014,7 @@ async def setcredits(
 async def get_credits(
     bot: commands.Bot,
     user_id: int
-) -> None:
+) -> int:
     get_user = \
         """SELECT * FROM users WHERE id=$1"""
     user = await bot.fetch_user(user_id)
@@ -1074,7 +1071,7 @@ async def get_limit(
 async def is_patron(
     bot: commands.Bot,
     user_id: int
-) -> bool:
+) -> Tuple[bool, int]:
     get_user = \
         """SELECT * FROM users WHERE id=$1"""
 
@@ -1133,7 +1130,7 @@ async def confirm(
     user_id: int,
     embed=None,
     delete=True
-) -> bool:
+) -> Optional[bool]:
     message = await channel.send(text, embed=embed)
     await message.add_reaction('✅')
     await message.add_reaction('❌')
@@ -1160,6 +1157,7 @@ async def confirm(
             except Exception:
                 pass
         return False
+    return None
 
 
 async def multi_choice(
@@ -1169,7 +1167,7 @@ async def multi_choice(
     title: str,
     description: str,
     _options: dict
-) -> any:
+) -> Any:
     options = [option for option in _options]
     mc = disputils.MultipleChoice(bot, options, title, description)
     await mc.run([user], channel)
@@ -1201,7 +1199,7 @@ async def orig_message_id(
     db: Database,
     conn: asyncpg.Connection,
     message_id: int
-) -> Tuple[int, int]:
+) -> Tuple[int, Optional[int]]:
     get_message = \
         """SELECT * FROM messages WHERE id=$1"""
 
@@ -1221,7 +1219,7 @@ async def is_user_blacklisted(
     bot: commands.Bot,
     member: discord.Member,
     starboard_id: int
-) -> None:
+) -> bool:
     get_blacklisted_roles = \
         """SELECT * FROM rolebl WHERE starboard_id=$1
         AND is_whitelist=False"""

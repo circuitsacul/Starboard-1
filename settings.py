@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Optional
 
 import discord
 from discord.ext import commands
@@ -18,7 +18,7 @@ async def change_starboard_settings(
     bots_on_sb: bool = None,
     required: int = None,
     rtl: int = None
-) -> None:
+) -> Optional[bool]:
     get_starboard = \
         """SELECT * FROM starboards WHERE id=$1"""
     update_starboard = \

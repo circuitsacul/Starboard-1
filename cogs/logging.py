@@ -1,5 +1,6 @@
 import sys
 import traceback
+from typing import Any
 
 import discord
 from discord.ext import commands
@@ -76,7 +77,7 @@ class Logging(commands.Cog):
     @commands.Cog.listener()
     async def on_error(
         self,
-        event: any,
+        event: Any,
         *args: list,
         **kwargs: dict
     ) -> None:
