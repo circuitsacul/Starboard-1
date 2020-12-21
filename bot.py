@@ -105,6 +105,7 @@ async def main() -> None:
         'cogs.premium',
         'cogs.settings',
         'cogs.starboard',
+        'cogs.quickactions',
         'cogs.stats',
         'cogs.utility',
         'cogs.voting',

@@ -370,7 +370,7 @@ class Database:
         guilds__addcolumn__is_qa_on = \
             """ALTER TABLE guilds
             ADD COLUMN IF NOT EXISTS is_qa_on
-            bool NOT NULL DEFAULT True"""
+            bool NOT NULL DEFAULT False"""
 
         await self.lock.acquire()
         await self._apply_migration(messages__addcolumn__points)
@@ -391,7 +391,7 @@ class Database:
             """CREATE TABLE IF NOT EXISTS guilds (
                 id numeric PRIMARY KEY,
                 prefixes VARCHAR(8) ARRAY DEFAULT "{'sb!'}",
-                is_qa_on bool NOT NULL DEFAULT True,
+                is_qa_on bool NOT NULL DEFAULT False,
 
                 premium_end timestamp DEFAULT NULL,
 
