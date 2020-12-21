@@ -5,15 +5,16 @@ import bot_config
 import emoji as emojilib
 import settings
 from paginators import disputils
+from discord.ext import commands
 from asyncio import sleep
 from discord import utils
 from settings import change_starboard_settings
 from functions import pretty_emoji_string
 from functions import get_limit
-from typing import Union
+from typing import Union, Tuple, Optional
 
 
-def mybool(string: str):
+def mybool(string: str) -> bool:
     string = string.lower()
     if string[0] in ['y', 't']:
         return True
@@ -23,7 +24,12 @@ def mybool(string: str):
 
 
 class SetupWizard:
-    def __init__(self, ctx, bot, message=None):
+    def __init__(
+        self,
+        ctx: commands.Context,
+        bot: commands.Bot,
+        message=None
+    ) -> None:
         self.ctx = ctx
         self.bot = bot
         self.message = message
@@ -31,7 +37,7 @@ class SetupWizard:
         self.color = bot_config.COLOR
         self.mistake = bot_config.MISTAKE_COLOR
 
-    async def run(self):
+    async def run(self) -> None:
         self.running = True
         if self.message is None:
             embed = await self._get_embed("Please Wait...", self.color)
@@ -220,7 +226,7 @@ class SetupWizard:
                     channel, name, index, vtype
                 )
 
-    async def new_starboard(self):
+    async def new_starboard(self) -> None:
         get_starboards = """SELECT * FROM starboards WHERE guild_id=$1"""
 
         async with self.bot.db.lock:
@@ -294,7 +300,7 @@ class SetupWizard:
             await self._error(error)
             await self.new_starboard()
 
-    async def modify_starboard(self):
+    async def modify_starboard(self) -> None:
         channel = await self._get_starboard("What starboard should I modify?")
         if channel is False:
             await self._error("You don't have any starboards yet.")
@@ -303,7 +309,7 @@ class SetupWizard:
             return
         await self._change_starboard_settings(channel)
 
-    async def delete_starboard(self):
+    async def delete_starboard(self) -> None:
         channel = await self._get_starboard("What starboard should I delete?")
         if channel is False:
             await self._error("You don't have any starboards yet.")
@@ -325,7 +331,10 @@ class SetupWizard:
         ))
         await sleep(1)
 
-    async def _change_starboard_settings(self, channel):
+    async def _change_starboard_settings(
+        self,
+        channel: discord.TextChannel
+    ) -> None:
         modifying = True
         while modifying:
             setting_indexes = {
@@ -349,7 +358,10 @@ class SetupWizard:
                 name, index, vtype = setting_indexes[choice]
                 await self._change_sb_setting(channel, name, index, vtype)
 
-    async def _manage_sb_emojis(self, channel):
+    async def _manage_sb_emojis(
+        self,
+        channel: discord.TextChannel
+    ) -> None:
         get_emojis = """SELECT * FROM sbemojis WHERE starboard_id=$1"""
         modifying = True
         while modifying:
@@ -457,7 +469,10 @@ class SetupWizard:
         except Exception as e:
             await self._error(str(e))
 
-    async def _add_sb_emoji(self, channel):
+    async def _add_sb_emoji(
+        self,
+        channel: discord.TextChannel
+    ) -> None:
         get_emojis = """SELECT * FROM sbemojis WHERE starboard_id=$1"""
 
         emoji_limit = await get_limit(
@@ -495,7 +510,10 @@ class SetupWizard:
         except Exception as e:
             await self._error(str(e))
 
-    async def _remove_sb_emoji(self, channel):
+    async def _remove_sb_emoji(
+        self,
+        channel: discord.TextChannel
+    ) -> None:
         args = await self._get_emoji(
             "What emoij do you want to delete?"
         )
@@ -514,7 +532,10 @@ class SetupWizard:
         except Exception as e:
             await self._error(str(e))
 
-    async def _get_emoji(self, prompt):
+    async def _get_emoji(
+        self,
+        prompt: str
+    ) -> Tuple[Optional[int], Optional[str]]:
         inp = await self._input(prompt)
         if inp is None:
             return None
@@ -569,7 +590,13 @@ class SetupWizard:
                 channel, name, index, vtype
             )
 
-    async def _change_sb_setting(self, channel, name, index, vtype):
+    async def _change_sb_setting(
+        self,
+        channel: discord.TextChannel,
+        name: str,
+        index: str,
+        vtype: callable
+    ) -> None:
         new_value = await self._input(f"Choose a new value for {name}")
         if new_value is None:
             return
@@ -631,7 +658,10 @@ class SetupWizard:
         }
         return settings
 
-    async def _current_sb_settings(self, channel):
+    async def _current_sb_settings(
+        self,
+        channel: discord.TextChannel
+    ) -> dict:
         get_starboard = \
             """SELECT * FROM starboards WHERE id=$1"""
         get_emojis = \
@@ -660,7 +690,10 @@ class SetupWizard:
         }
         return settings
 
-    async def _check_starboard(self, channel_id):
+    async def _check_starboard(
+        self,
+        channel_id: int
+    ) -> bool:
         check = """SELECT * FROM starboards WHERE id=$1"""
         async with self.bot.db.lock:
             conn = self.bot.db.conn
@@ -671,7 +704,10 @@ class SetupWizard:
         else:
             return True
 
-    async def _get_channel(self, prompt):
+    async def _get_channel(
+        self,
+        prompt: str
+    ) -> Optional[discord.TextChannel]:
         channel_name = await self._input(prompt)
         if channel_name is None:
             return None
@@ -690,7 +726,10 @@ class SetupWizard:
             return await self._get_channel(prompt)
         return channel
 
-    async def _get_aschannel(self, prompt: str) -> Union[dict, None]:
+    async def _get_aschannel(
+        self,
+        prompt: str
+    ) -> Union[dict, None]:
         get_aschannels = """SELECT * FROM aschannels WHERE guild_id=$1"""
         async with self.bot.db.lock:
             conn = self.bot.db.conn
@@ -718,7 +757,10 @@ class SetupWizard:
             return None
         return aschannels[choice]
 
-    async def _get_starboard(self, prompt):
+    async def _get_starboard(
+        self,
+        prompt: str
+    ) -> dict:
         get_starboards = """SELECT * FROM starboards WHERE guild_id=$1"""
         async with self.bot.db.lock:
             conn = self.bot.db.conn
@@ -746,7 +788,11 @@ class SetupWizard:
             return None
         return starboards[choice]
 
-    async def _multi_choice(self, options, prompt=""):
+    async def _multi_choice(
+        self,
+        options: dict,
+        prompt: str = ""
+    ) -> Optional[any]:
         mc = disputils.MultipleChoice(
             self.bot, [option for option in options],
             message=self.message, title="Setup Wizard",
@@ -758,7 +804,10 @@ class SetupWizard:
             return None
         return options[mc.choice]
 
-    async def _input(self, prompt):
+    async def _input(
+        self,
+        prompt: str
+    ) -> Optional[str]:
         embed = await self._get_embed(prompt, self.color)
         await self.message.edit(embed=embed)
 
@@ -805,7 +854,11 @@ class SetupWizard:
         else:
             return None
 
-    async def _get_embed(self, content, color):
+    async def _get_embed(
+        self,
+        content: str,
+        color: hex
+    ) -> discord.Embed:
         embed = discord.Embed(
             title="Setup Wizard",
             description=content,
@@ -813,7 +866,10 @@ class SetupWizard:
         )
         return embed
 
-    async def _error(self, content):
+    async def _error(
+        self,
+        content: str
+    ) -> None:
         embed = await self._get_embed(content, self.mistake)
         await self.message.edit(embed=embed)
         await self.message.add_reaction("🆗")
