@@ -1,8 +1,9 @@
-import functions
-import errors
 from discord.ext import commands
-from bot_config import OWNER_ID
 from discord.ext.commands.errors import NotOwner
+
+import errors
+import functions
+from bot_config import OWNER_ID
 
 
 def is_owner():
