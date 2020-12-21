@@ -17,6 +17,25 @@ action_mapping = {
 }
 
 
+async def is_qa_on(
+    bot: commands.Bot,
+    guild_id: int
+) -> bool:
+    get_val = \
+        """SELECT is_qa_on FROM guilds
+        WHERE id=$1"""
+
+    conn = bot.db.conn
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            is_on = await conn.fetchval(
+                get_val, guild_id
+            )
+
+    return is_on
+
+
 async def is_orig(
     bot: commands.Bot,
     mid: int
@@ -98,6 +117,10 @@ class QuickActions(commands.Cog):
         action = action_mapping.get(payload.emoji.name)
 
         if action is None:
+            return
+        elif not await is_qa_on(
+            self.bot, payload.guild_id
+        ):
             return
         elif await is_orig(
             self.bot, payload.message_id
