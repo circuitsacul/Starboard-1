@@ -9,8 +9,9 @@ from cogs import levels
 from discord import utils
 from discord.ext import commands
 from discord.ext import flags
-from typing import Union
+from typing import Union, List, Optional
 from settings import change_starboard_settings
+from database.database import Database
 
 
 edit_message_cooldown = cooldowns.CooldownMapping.from_cooldown(
@@ -18,7 +19,10 @@ edit_message_cooldown = cooldowns.CooldownMapping.from_cooldown(
 )
 
 
-async def pretty_emoji_string(emojis, guild):
+async def pretty_emoji_string(
+    emojis: List[dict],
+    guild: discord.Guild
+) -> str:
     string = ""
     for emoji in emojis:
         is_custom = emoji['d_id'] is not None
@@ -34,12 +38,19 @@ async def pretty_emoji_string(emojis, guild):
 
 class Starboard(commands.Cog):
     """Starboard related commands"""
-    def __init__(self, bot, db):
+    def __init__(
+        self,
+        bot: commands.Bot,
+        db: Database
+    ) -> None:
         self.bot = bot
         self.db = db
 
     @commands.Cog.listener()
-    async def on_raw_reaction_add(self, payload):
+    async def on_raw_reaction_add(
+        self,
+        payload: discord.RawReactionActionEvent
+    ) -> None:
         guild_id = payload.guild_id
         if guild_id is None:
             return
@@ -62,7 +73,10 @@ class Starboard(commands.Cog):
         )
 
     @commands.Cog.listener()
-    async def on_raw_reaction_remove(self, payload):
+    async def on_raw_reaction_remove(
+        self,
+        payload: discord.RawReactionActionEvent
+    ) -> None:
         guild_id = payload.guild_id
         if guild_id is None:
             return
@@ -94,8 +108,10 @@ class Starboard(commands.Cog):
     @commands.cooldown(3, 5, type=commands.BucketType.user)
     @commands.guild_only()
     async def random_message(
-        self, ctx, **flags
-    ):
+        self,
+        ctx: commands.Context,
+        **flags: dict
+    ) -> None:
         """Gets a random message from the starboard.
 
         [--by] is an optional argument specifying the author
@@ -173,8 +189,10 @@ class Starboard(commands.Cog):
     )
     @commands.guild_only()
     async def sb_settings(
-        self, ctx, starboard: discord.TextChannel = None
-    ):
+        self,
+        ctx: commands.Context,
+        starboard: discord.TextChannel = None
+    ) -> None:
         get_starboards = """SELECT * FROM starboards WHERE guild_id=$1"""
         get_emojis = """SELECT * FROM sbemojis WHERE starboard_id=$1"""
         get_starboard = """SELECT * FROM starboards WHERE id=$1"""
@@ -268,7 +286,11 @@ class Starboard(commands.Cog):
     )
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
-    async def add_starboard(self, ctx, starboard: discord.TextChannel):
+    async def add_starboard(
+        self,
+        ctx: commands.Context,
+        starboard: discord.TextChannel
+    ) -> None:
         await settings.add_starboard(self.bot, starboard)
         await ctx.send(f"Created starboard {starboard.mention}")
 
@@ -280,8 +302,10 @@ class Starboard(commands.Cog):
     @commands.has_permissions(manage_channels=True, manage_messages=True)
     @commands.guild_only()
     async def remove_starboard(
-        self, ctx, starboard: Union[discord.TextChannel, int]
-    ):
+        self,
+        ctx: commands.Context,
+        starboard: Union[discord.TextChannel, int]
+    ) -> None:
         starboard_id = starboard.id if isinstance(
             starboard, discord.TextChannel
         ) else int(starboard)
@@ -306,9 +330,11 @@ class Starboard(commands.Cog):
     @commands.has_permissions(manage_channels=True, manage_messages=True)
     @commands.guild_only()
     async def add_starboard_emoji(
-        self, ctx, starboard: discord.TextChannel,
+        self,
+        ctx: commands.Context,
+        starboard: discord.TextChannel,
         emoji: Union[discord.Emoji, str]
-    ):
+    ) -> None:
         await settings.add_starboard_emoji(
             self.bot, starboard.id, ctx.guild, emoji
         )
@@ -322,9 +348,11 @@ class Starboard(commands.Cog):
     @commands.has_permissions(manage_channels=True, manage_messages=True)
     @commands.guild_only()
     async def remove_starboard_emoji(
-        self, ctx, starboard: discord.TextChannel,
+        self,
+        ctx: commands.Context,
+        starboard: discord.TextChannel,
         emoji: Union[discord.Emoji, str]
-    ):
+    ) -> None:
         await settings.remove_starboard_emoji(
             self.bot, starboard.id, ctx.guild, emoji
         )
@@ -339,8 +367,11 @@ class Starboard(commands.Cog):
     @commands.has_permissions(manage_channels=True, manage_messages=True)
     @commands.guild_only()
     async def set_required_stars(
-        self, ctx, starboard: discord.TextChannel, value: int
-    ):
+        self,
+        ctx: commands.Context,
+        starboard: discord.TextChannel,
+        value: int
+    ) -> None:
         value = 1 if value < 1 else value
         status = await change_starboard_settings(
             self.db, starboard.id, required=value
@@ -365,8 +396,11 @@ class Starboard(commands.Cog):
     @commands.has_permissions(manage_channels=True, manage_messages=True)
     @commands.guild_only()
     async def set_required_to_lose(
-        self, ctx, starboard: discord.TextChannel, value: int
-    ):
+        self,
+        ctx: commands.Context,
+        starboard: discord.TextChannel,
+        value: int
+    ) -> None:
         value = -1 if value < -1 else value
         status = await change_starboard_settings(
             self.db, starboard.id, rtl=value
@@ -393,8 +427,11 @@ class Starboard(commands.Cog):
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
     async def starboard_self_star(
-        self, ctx, starboard: discord.TextChannel, value: bool
-    ):
+        self,
+        ctx: commands.Context,
+        starboard: discord.TextChannel,
+        value: bool
+    ) -> None:
         status = await change_starboard_settings(
             self.db, starboard.id, self_star=value
         )
@@ -414,8 +451,11 @@ class Starboard(commands.Cog):
     @commands.has_permissions(manage_channels=True, manage_messages=True)
     @commands.guild_only()
     async def set_link_edits(
-        self, ctx, starboard: discord.TextChannel, value: bool
-    ):
+        self,
+        ctx: commands.Context,
+        starboard: discord.TextChannel,
+        value: bool
+    ) -> None:
         status = await change_starboard_settings(
             self.db, starboard.id, link_edits=value
         )
@@ -435,8 +475,11 @@ class Starboard(commands.Cog):
     @commands.has_permissions(manage_channels=True, manage_messages=True)
     @commands.guild_only()
     async def set_link_deletes(
-        self, ctx, starboard: discord.TextChannel, value: bool
-    ):
+        self,
+        ctx: commands.Context,
+        starboard: discord.TextChannel,
+        value: bool
+    ) -> None:
         status = await change_starboard_settings(
             self.db, starboard.id, link_deletes=value
         )
@@ -458,8 +501,11 @@ class Starboard(commands.Cog):
     @commands.has_permissions(manage_channels=True, manage_messages=True)
     @commands.guild_only()
     async def set_bots_on_starboard(
-        self, ctx, starboard: discord.TextChannel, value: bool
-    ):
+        self,
+        ctx: commands.Context,
+        starboard: discord.TextChannel,
+        value: bool
+    ) -> None:
         status = await change_starboard_settings(
             self.db, starboard.id, bots_on_sb=value
         )
@@ -475,8 +521,15 @@ class Starboard(commands.Cog):
 
 # Functions:
 async def handle_reaction(
-    db, bot, guild_id, _channel_id, user_id, _message_id, _emoji, is_add
-):
+    db: Database,
+    bot: commands.Bot,
+    guild_id: int,
+    _channel_id: int,
+    user_id: int,
+    _message_id: int,
+    _emoji: discord.PartialEmoji,
+    is_add: bool
+) -> None:
     emoji_name = _emoji.name if _emoji.id is None else str(_emoji.id)
 
     check_reaction = \
@@ -592,7 +645,14 @@ async def handle_reaction(
     await handle_starboards(db, bot, message_id, channel, message, guild)
 
 
-async def handle_starboards(db, bot, message_id, channel, message, guild):
+async def handle_starboards(
+    db: Database,
+    bot: commands.Bot,
+    message_id: int,
+    channel: discord.TextChannel,
+    message: Optional[discord.Message],
+    guild: discord.Guild
+) -> None:
     get_message = \
         """SELECT * FROM messages WHERE id=$1"""
     get_starboards = \
@@ -626,9 +686,14 @@ async def handle_starboards(db, bot, message_id, channel, message, guild):
 
 
 async def handle_starboard(
-    db, bot, sql_message, message, sql_starboard, guild,
+    db: Database,
+    bot: commands.Bot,
+    sql_message: dict,
+    message: Optional[discord.Message],
+    sql_starboard: dict,
+    guild: discord.Guild,
     on_cooldown=False
-):
+) -> None:
     get_starboard_message = \
         """SELECT * FROM messages WHERE orig_message_id=$1 AND channel_id=$2"""
     delete_starboard_message = \
@@ -755,10 +820,21 @@ async def handle_starboard(
 
 
 async def update_message(
-    db, orig_message, orig_channel_id, sb_message, starboard, points,
-    forced, frozen, trashed, add, remove, link_edits, emojis,
-    on_cooldown=False
-):
+    db: Database,
+    orig_message: Optional[discord.Message],
+    orig_channel_id: int,
+    sb_message: Optional[discord.Message],
+    starboard: discord.TextChannel,
+    points: int,
+    forced: bool,
+    frozen: bool,
+    trashed: bool,
+    add: bool,
+    remove: bool,
+    link_edits: bool,
+    emojis: List[dict],
+    on_cooldown: bool = False
+) -> None:
     update = orig_message is not None
 
     check_message = \
@@ -846,5 +922,7 @@ async def update_message(
                 pass
 
 
-def setup(bot):
+def setup(
+    bot: commands.Bot
+) -> None:
     bot.add_cog(Starboard(bot, bot.db))
