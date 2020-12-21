@@ -1,6 +1,7 @@
 import ast
 import time
 from subprocess import PIPE, run
+from typing import List
 
 import discord
 from asyncpg.exceptions._base import InterfaceError
@@ -171,6 +172,7 @@ class Owner(commands.Cog):
                 async with self.bot.db.lock:
                     async with conn.transaction():
                         for a in args:
+                            a = ''.join(a)
                             try:
                                 times = int(a)
                             except Exception:
