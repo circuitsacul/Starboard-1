@@ -16,14 +16,20 @@ TOP_AUTH = os.getenv("TOP_HOOK_AUTH")
 
 class StatcordPost(commands.Cog):
     """Handles interactions with statcord"""
-    def __init__(self, bot):
+    def __init__(
+        self,
+        bot: commands.Bot
+    ) -> None:
         self.bot = bot
         self.key = STATCORD_TOKEN
         self.api = statcord.Client(self.bot, self.key)
         self.api.start_loop()
 
     @commands.Cog.listener()
-    async def on_command(self, ctx):
+    async def on_command(
+        self,
+        ctx: commands.Context
+    ) -> None:
         if str(ctx.message.author.id) == str(OWNER_ID):
             return
         self.api.command_run(ctx)
@@ -32,7 +38,10 @@ class StatcordPost(commands.Cog):
 class TopGG(commands.Cog):
     """Handles interactions with the top.gg API"""
 
-    def __init__(self, bot):
+    def __init__(
+        self,
+        bot: commands.Bot
+    ) -> None:
         self.bot = bot
         self.token = TOP_TOKEN
         self.dblpy = dbl.DBLClient(
@@ -44,6 +53,8 @@ class TopGG(commands.Cog):
         print("Posted to top.gg")
 
 
-def setup(bot):
+def setup(
+    bot: commands.Bot
+) -> None:
     bot.add_cog(StatcordPost(bot))
     bot.add_cog(TopGG(bot))
