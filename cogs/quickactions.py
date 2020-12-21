@@ -13,7 +13,7 @@ qa_cooldown = cooldowns.CooldownMapping.from_cooldown(5, 5)
 action_mapping = {
     "🗑️": "trash",
     "❄️": "freeze",
-    "🔒": "lock"
+    "🔒": "force"
 }
 
 
@@ -50,18 +50,27 @@ async def is_orig(
     return is_orig
 
 
-async def toggle_tashed(
+async def toggle_setting(
     bot: commands.Bot,
     message_id: int,
     channel_id: int,
-    guild_id: int
+    guild_id: int,
+    setting: str
 ) -> None:
     get_message = \
         """SELECT * FROM messages
         WHERE id=$1"""
-    update_message = \
+    update_trashed = \
         """UPDATE messages
         SET is_trashed=$1
+        WHERE id=$2"""
+    update_frozen = \
+        """UPDATE messages
+        SET is_frozen=$1
+        WHERE id=$2"""
+    update_forced = \
+        """UPDATE messages
+        SET is_forced=$1
         WHERE id=$2"""
 
     guild = bot.get_guild(guild_id)
@@ -75,13 +84,25 @@ async def toggle_tashed(
             mid, _cid = await functions.orig_message_id(
                 bot.db, conn, message_id
             )
+            print(mid)
             sql_message = await conn.fetchrow(
                 get_message, mid
             )
-            trash: bool = not sql_message['is_trashed']
-            await conn.execute(
-                update_message, trash, mid
-            )
+            if setting == 'trash':
+                trash: bool = not sql_message['is_trashed']
+                await conn.execute(
+                    update_trashed, trash, mid
+                )
+            elif setting == 'freeze':
+                freeze: bool = not sql_message['is_frozen']
+                await conn.execute(
+                    update_frozen, freeze, mid
+                )
+            elif setting == 'force':
+                force: bool = not sql_message['is_forced']
+                await conn.execute(
+                    update_forced, force, mid
+                )
 
     cid = _cid or channel_id
     channel = guild.get_channel(cid)
@@ -152,11 +173,11 @@ class QuickActions(commands.Cog):
             payload.emoji.name, payload.member
         )
 
-        if action == 'trash':
-            await toggle_tashed(
-                self.bot, payload.message_id,
-                payload.channel_id, payload.guild_id
-            )
+        await toggle_setting(
+            self.bot, payload.message_id,
+            payload.channel_id, payload.guild_id,
+            action
+        )
 
     @commands.command(
         name='quickActions', aliases=['qa'],
