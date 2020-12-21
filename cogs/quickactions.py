@@ -134,6 +134,9 @@ class QuickActions(commands.Cog):
         self,
         payload: discord.RawReactionActionEvent
     ) -> None:
+        if not payload.member.guild_permissions.manage_guild:
+            return
+
         action = action_mapping.get(payload.emoji.name)
 
         if action is None:
