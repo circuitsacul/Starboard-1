@@ -110,7 +110,8 @@ class Logging(commands.Cog):
             errors.NoPrivateMessage, errors.MissingPermissions,
             errors.NotOwner, errors.CommandOnCooldown,
             errors.ChannelNotFound, errors.BadUnionArgument,
-            errors.BotMissingPermissions, errors.UserNotFound
+            errors.BotMissingPermissions, errors.UserNotFound,
+            errors.MemberNotFound
         ]:
             pass
         elif type(error) is discord.ext.commands.errors.MaxConcurrencyReached:
