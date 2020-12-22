@@ -39,7 +39,6 @@ async def update_user_xproles(
             bot, guild
         )
     ]
-    has_roles: List[discord.Role] = user.roles
     has_roles_ids: List[int] = [r.id for r in user.roles]
 
     remove_roles = []
