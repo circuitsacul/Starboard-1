@@ -17,6 +17,19 @@ from database.database import Database  # for typehinting
 from paginators import disputils
 
 
+async def can_manage_role(
+    bot: commands.Bot,
+    role: discord.Role
+) -> bool:
+    if role.is_default:
+        return False
+    if role.managed:
+        return False
+    if role.position >= bot.user.top_role.position:
+        return False
+    return True
+
+
 async def needs_recount(
     bot: commands.Bot,
     message: discord.Message

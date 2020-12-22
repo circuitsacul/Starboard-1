@@ -115,6 +115,14 @@ async def add_xp_role(
     role: discord.Role,
     req_xp: int
 ) -> None:
+    if not await functions.can_manage_role(
+        bot, role
+    ):
+        raise discord.InvalidArgument(
+            "I can't manage that role, "
+            "probably because that role "
+            "is higher than my top role."
+        )
     limit = await functions.get_limit(
         bot, 'xproles', role.guild.id
     )
