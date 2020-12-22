@@ -40,6 +40,7 @@ async def handle_reaction(
     _emoji: discord.PartialEmoji,
     is_add: bool
 ) -> None:
+    bot.dispatch('xpr_needs_update', guild.id, receiver.id)
     guild_id = guild.id
     receiver_id = receiver.id
     if reacter_id == receiver_id:
