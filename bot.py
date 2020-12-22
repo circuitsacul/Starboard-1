@@ -110,6 +110,7 @@ async def main() -> None:
         'cogs.base',
         'cogs.logging',
         'cogs.xproles',
+        'cogs.posroles',
         'jishaku'
     ]
 

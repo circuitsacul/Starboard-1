@@ -9,6 +9,20 @@ import functions
 import errors
 
 
+async def is_pr(
+    bot: commands.Bot,
+    role_id: int
+) -> bool:
+    conn = bot.db.conn
+    async with bot.db.lock:
+        async with conn.transaction():
+            exists = await conn.fetchrow(
+                """SELECT * FROM posroles
+                WHERE id=$1""", role_id
+            ) is not None
+    return exists
+
+
 async def update_user_xproles(
     bot: commands.Bot,
     guild: discord.Guild,
@@ -145,6 +159,12 @@ async def add_xp_role(
     if current_num + 1 > limit:
         raise errors.NoPremiumError(
             "You have reached your limit for XP Roles."
+        )
+
+    if await is_pr(bot, role.id):
+        raise discord.InvalidArgument(
+            "A role cannot be both a Position Role "
+            "and an XP Role."
         )
 
     if not 0 <= req_xp < 100000:

@@ -21,11 +21,14 @@ async def can_manage_role(
     bot: commands.Bot,
     role: discord.Role
 ) -> bool:
-    if role.is_default:
+    if role.is_default():
+        print(1)
         return False
     if role.managed:
+        print(2)
         return False
-    if role.position >= bot.user.top_role.position:
+    if role.position >= role.guild.me.top_role.position:
+        print(3)
         return False
     return True
 
