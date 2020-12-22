@@ -109,6 +109,7 @@ async def main() -> None:
         'cogs.rand_messages',
         'cogs.base',
         'cogs.logging',
+        'cogs.xproles',
         'jishaku'
     ]
 
