@@ -295,7 +295,7 @@ class XPRoles(commands.Cog):
     async def remove_xp_role(
         self,
         ctx: commands.Context,
-        role: Union[discord.Role, int],
+        role: discord.Role,
     ) -> None:
         await del_xp_role(
             self.bot, role if type(role) is int else role.id
