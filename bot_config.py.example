@@ -35,14 +35,16 @@ DEFAULT_LEVEL = {
     'starboards': 1,
     'emojis': 1,
     'aschannels': 1,
-    'asemojis': 1
+    'asemojis': 1,
+    'xproles': False
 }
 
 PREMIUM_PERKS = {
     'starboards': 5,
     'emojis': 5,
     'aschannels': 5,
-    'asemojis': 5
+    'asemojis': 5,
+    'xproles': 10
 }
 
 PREMIUM_DISPLAY = (

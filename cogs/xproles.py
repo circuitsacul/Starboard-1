@@ -6,6 +6,7 @@ from discord.ext import commands, tasks
 
 import bot_config
 import functions
+import errors
 
 
 async def update_user_xproles(
@@ -17,6 +18,12 @@ async def update_user_xproles(
         """SELECT * FROM members
         WHERE user_id=$1
         AND guild_id=$2"""
+
+    limit = await functions.get_limit(
+        bot, 'xproles', guild.id
+    )
+    if limit is False:
+        return
 
     conn = bot.db.conn
 
@@ -108,6 +115,30 @@ async def add_xp_role(
     role: discord.Role,
     req_xp: int
 ) -> None:
+    limit = await functions.get_limit(
+        bot, 'xproles', role.guild.id
+    )
+    if limit is False:
+        raise errors.NoPremiumError(
+            "Non-premium guilds do not have "
+            "access to XP Roles. See the last "
+            "page of `sb!tutorial` for more info."
+        )
+
+    conn = bot.db.conn
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            current_num = await conn.fetchval(
+                """SELECT COUNT(*) FROM xproles
+                WHERE guild_id=$1""", role.guild.id
+            )
+
+    if current_num + 1 > limit:
+        raise errors.NoPremiumError(
+            "You have reached your limit for XP Roles."
+        )
+
     if not 0 <= req_xp < 100000:
         raise discord.errors.InvalidArgument(
             "Required XP must be greater than or "
@@ -116,8 +147,6 @@ async def add_xp_role(
     create_xp_role = \
         """INSERT INTO xproles (id, guild_id, req_xp)
         VALUES ($1, $2, $3)"""
-
-    conn = bot.db.conn
 
     async with bot.db.lock:
         async with conn.transaction():
