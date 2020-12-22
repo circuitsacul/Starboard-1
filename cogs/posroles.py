@@ -115,6 +115,25 @@ async def remove_pos_role(
             )
 
 
+async def set_role_users(
+    bot: commands.Bot,
+    role_id: int,
+    max_users: int
+) -> None:
+    update_role = \
+        """UPDATE posroles
+        SET max_users=$1
+        WHERE id=$2"""
+
+    conn = bot.db.conn
+
+    async with bot.db.lock:
+        async with conn.transaction():
+            await conn.execute(
+                update_role, max_users, role_id
+            )
+
+
 class PositionRoles(commands.Cog):
     """Handles Position-based Roles"""
 
@@ -188,6 +207,26 @@ class PositionRoles(commands.Cog):
         )
         await ctx.send(
             f"**{role.name}** is no longer a Position Role."
+        )
+
+    @pos_roles.command(
+        name='setusers', aliases=['maxusers', 'users', 'max'],
+        brief="Sets the max users of a Position Role"
+    )
+    @commands.has_guild_permissions(manage_roles=True)
+    @commands.guild_only()
+    async def set_pos_role_users(
+        self,
+        ctx: commands.Context,
+        role: discord.Role,
+        max_users: int
+    ) -> None:
+        await set_role_users(
+            self.bot, role.id, max_users
+        )
+        await ctx.send(
+            f"Set the max users for **{role.name}** to "
+            f"**{max_users}**."
         )
 
 
