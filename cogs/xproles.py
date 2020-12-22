@@ -1,9 +1,11 @@
 from typing import List, Union
+from copy import deepcopy
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 import bot_config
+import functions
 
 
 async def update_user_xproles(
@@ -44,16 +46,15 @@ async def update_user_xproles(
     give_roles = []
 
     for role in guild.roles:
+        if role.position >= guild.me.top_role.position:
+            # the bot can't edit this role
+            continue
         if role.id in all_xp_roles\
                 and role.id in has_roles_ids\
                 and role.id not in gets_xp_roles:
-            print("Remove role")
             remove_roles.append(role)
         elif role.id in all_xp_roles and role.id in gets_xp_roles:
-            print("Give role")
             give_roles.append(role)
-
-    print(xp, gets_xp_roles, all_xp_roles, has_roles, remove_roles, give_roles)
 
     await user.remove_roles(*remove_roles)
     await user.add_roles(*give_roles)
@@ -172,6 +173,35 @@ class XPRoles(commands.Cog):
         bot: commands.Bot
     ) -> None:
         self.bot = bot
+        self.queue = {}
+        self.update_some_roles.start()
+
+    @commands.Cog.listener()
+    async def on_xpr_needs_update(
+        self,
+        guild_id: int,
+        user_id: int
+    ) -> None:
+        self.queue.setdefault(guild_id, [])
+        self.queue[guild_id].append(user_id)
+
+    @tasks.loop(seconds=1)
+    async def update_some_roles(self) -> None:
+        queue = deepcopy(self.queue)
+        for gid in queue:
+            if len(queue[gid]) == 0:
+                return
+            guild = self.bot.get_guild(gid)
+            uid = self.queue[gid].pop(0)
+            members = await functions.get_members(
+                [uid], guild
+            )
+            if len(members) == 0:
+                return
+            member = members[0]
+            await update_user_xproles(
+                self.bot, guild, member
+            )
 
     @commands.group(
         name='xproles', aliases=['xpr'],
