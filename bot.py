@@ -12,7 +12,6 @@ dotenv.load_dotenv()
 
 import bot_config
 from database.database import Database
-from api import post_guild_count
 
 from cogs.webhook import HttpWebHook
 
@@ -95,8 +94,6 @@ async def main() -> None:
     await load_aschannels(bot)
 
     await web_server.start()
-    if not BETA:
-        bot.loop.create_task(post_guild_count.loop_post(bot))
 
     extensions = [
         'cogs.aschannels',

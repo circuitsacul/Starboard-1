@@ -9,7 +9,7 @@ from discord.ext import commands, tasks
 import bot_config
 import checks
 import functions
-from api.post_guild_count import post_all
+from cogs.stats import post_all
 from database.database import Database
 from paginators import disputils
 
