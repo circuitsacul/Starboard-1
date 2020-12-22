@@ -437,7 +437,7 @@ class SetupWizard:
             return
         emoji_id, emoji_name = args
         if emoji_id is not None:
-            emoji = utils.get(channel.guild.emojis, id=emoji_id)
+            emoji = str(utils.get(channel.guild.emojis, id=emoji_id).id)
         else:
             emoji = emoji_name
 
@@ -459,7 +459,7 @@ class SetupWizard:
             return
         emoji_id, emoji_name = args
         if emoji_id is not None:
-            emoji = utils.get(channel.guild.emojis, id=emoji_id)
+            emoji = str(utils.get(channel.guild.emojis, id=emoji_id).id)
         else:
             emoji = emoji_name
 
