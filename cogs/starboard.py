@@ -639,7 +639,7 @@ async def handle_reaction(
 
         if handle_level:
             await levels.handle_reaction(
-                db, user_id, message.author, guild, _emoji, is_add
+                bot, user_id, message.author, guild, _emoji, is_add
             )
 
     await handle_starboards(db, bot, message_id, channel, message, guild)

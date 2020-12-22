@@ -33,7 +33,7 @@ async def current_level(
 
 
 async def handle_reaction(
-    db: Database,
+    bot: commands.Bot,
     reacter_id: int,
     receiver: Union[discord.Member, discord.User],
     guild: discord.Guild,
@@ -45,7 +45,7 @@ async def handle_reaction(
     if reacter_id == receiver_id:
         return
     emoji = _emoji.id if _emoji.id is not None else _emoji.name
-    is_sbemoji = await functions.is_starboard_emoji(db, guild_id, emoji)
+    is_sbemoji = await functions.is_starboard_emoji(bot.db, guild_id, emoji)
     if not is_sbemoji:
         print(emoji)
         return
@@ -77,8 +77,8 @@ async def handle_reaction(
 
     # leveled_up = False
 
-    async with db.lock:
-        conn = await db.connect()
+    async with bot.db.lock:
+        conn = await bot.db.connect()
         async with conn.transaction():
             sql_reacter = await conn.fetchrow(get_member, reacter_id, guild_id)
             given = sql_reacter['given']+points
