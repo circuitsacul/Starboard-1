@@ -192,7 +192,6 @@ class Utility(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-
     @flags.add_flag('--message', type=str, default="0")
     @flags.command(
         name='scan', aliases=['recountChannel'],
