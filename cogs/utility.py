@@ -8,6 +8,7 @@ import checks
 import functions
 from cogs.starboard import handle_starboards
 from database.database import Database
+import cleaning
 
 
 async def scan_recount(
@@ -143,6 +144,21 @@ class Utility(commands.Cog):
     ) -> None:
         self.bot = bot
         self.db = db
+
+    @commands.command(
+        name='clean',
+        brief="Cleans things such as @deleted-role and #delete-channel"
+    )
+    @commands.cooldown(3, 60, commands.BucketType.guild)
+    @commands.has_guild_permissions(manage_guild=True)
+    @commands.guild_only()
+    async def clean(
+        self,
+        ctx: commands.Context
+    ) -> None:
+        async with ctx.typing():
+            result = await cleaning.clean_all(self.bot, ctx.guild)
+        await ctx.send(result)
 
     @flags.add_flag('--message', type=str, default="0")
     @flags.command(
