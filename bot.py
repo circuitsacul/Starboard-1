@@ -36,7 +36,7 @@ navigation = pretty_help.Navigation(
 
 intents = discord.Intents(
     messages=True, guilds=True, reactions=True,
-    emojis=True
+    emojis=True, members=True
 )
 
 
