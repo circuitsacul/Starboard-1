@@ -40,7 +40,6 @@ async def handle_reaction(
     _emoji: discord.PartialEmoji,
     is_add: bool
 ) -> None:
-    bot.dispatch('xpr_needs_update', guild.id, receiver.id)
     guild_id = guild.id
     receiver_id = receiver.id
     if reacter_id == receiver_id:
@@ -114,6 +113,9 @@ async def handle_reaction(
                     set_xp_level, new_xp, new_lvl,
                     sql_receiver['user_id'], guild_id
                 )
+
+    bot.dispatch('xpr_needs_update', guild.id, receiver.id)
+    bot.dispatch('posrole_update', guild.id, receiver.id)
 
     # if leveled_up and send_lvl_msgs:
     #    embed = discord.Embed(
