@@ -25,8 +25,13 @@ async def is_xpr(
 async def get_role_by_xp(
     bot: commands.Bot,
     guild: discord.Guild,
-    xp: int
-) -> Tuple[Optional[dict], Optional[discord.Role], Optional[dict]]:
+    xp: int,
+    _current_roles: List[discord.Role]
+) -> Tuple[
+    Optional[dict], Optional[discord.Role],
+    Optional[dict], List[discord.Role]
+]:
+    current_roles = [r.id for r in _current_roles]
     get_lowest_xp = \
         """SELECT * FROM members
         WHERE guild_id=$1
@@ -47,9 +52,15 @@ async def get_role_by_xp(
     role: discord.Role
     for x, role in enumerate(role_objects):
         if roles_sql[x]['max_users'] is None:
-            return roles_sql[x], role, None
-        if len(role.members) < roles_sql[x]['max_users']:
-            return roles_sql[x], role, None
+            role_objects.remove(role)
+            return roles_sql[x], role, None, role_objects
+
+        user_count = len(role.members) if role.id not in current_roles\
+            else len(role.members) - 1
+
+        if user_count < roles_sql[x]['max_users']:
+            role_objects.remove(role)
+            return roles_sql[x], role, None, role_objects
 
         mids = [m.id for m in role.members]
         async with bot.db.lock:
@@ -67,9 +78,10 @@ async def get_role_by_xp(
             replace_member = _members[0]
 
         if sql_lowest_member['xp'] < xp:
-            return roles_sql[x], role, replace_member
+            role_objects.remove(role)
+            return roles_sql[x], role, replace_member, role_objects
 
-    return None, None, None
+    return None, None, None, []
 
 
 async def update_user_roles(
@@ -90,16 +102,21 @@ async def update_user_roles(
                 get_member, guild.id, member.id
             )
 
-    sql_role, role_obj, replace_member = await get_role_by_xp(
-        bot, guild, sql_member['xp']
+    sql_role, role_obj, replace_member, _remove_roles = await get_role_by_xp(
+        bot, guild, sql_member['xp'], member.roles
     )
+
+    remove_roles = []
+    for r in _remove_roles:
+        if await functions.can_manage_role(bot, r):
+            remove_roles.append(r)
 
     if not sql_role:
         return
 
     await member.add_roles(role_obj)
+    await member.remove_roles(*remove_roles)
     if replace_member:
-        await replace_member.remove_roles(role_obj)
         bot.dispatch('posrole_update', guild.id, replace_member.id)
 
 
@@ -225,6 +242,10 @@ class PositionRoles(commands.Cog):
         self.bot = bot
         self.queue = {}
         self.update_some_roles.start()
+
+    @commands.command()
+    async def test(self, ctx, uid: int):
+        self.bot.dispatch('posrole_update', ctx.guild.id, uid)
 
     @commands.Cog.listener()
     async def on_posrole_update(
