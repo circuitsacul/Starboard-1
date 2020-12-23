@@ -142,16 +142,16 @@ async def clean_asemojis(
 
     async with bot.db.lock:
         async with conn.transaction():
-            starboard_ids = [
+            aschannels_ids = [
                 int(s['id']) for s in await conn.fetch(
-                    """SELECT * FROM starboards
+                    """SELECT * FROM aschannels
                     WHERE guild_id=$1""", guild.id
                 )
             ]
             asemojis = await conn.fetch(
                 """SELECT * FROM asemojis
                 WHERE aschannel_id=ANY($1::numeric[])""",
-                starboard_ids
+                aschannels_ids
             )
 
     to_delete = []
@@ -161,7 +161,7 @@ async def clean_asemojis(
             eid = int(ase['name'])
         except ValueError:
             continue
-        emoji_obj = discord.utils.get(guild.emoji, id=eid)
+        emoji_obj = discord.utils.get(guild.emojis, id=eid)
         if emoji_obj is None:
             to_delete.append(str(eid))
 
