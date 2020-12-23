@@ -145,7 +145,7 @@ class Utility(commands.Cog):
         self.bot = bot
         self.db = db
 
-    @commands.command(,
+    @commands.command(
         name='clean', aliases=['cleanlist'],
         brief="Cleans things such as @deleted-role and #delete-channel"
     )
