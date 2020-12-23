@@ -1130,8 +1130,10 @@ async def pretty_emoji_string(
 
         is_custom = emoji_id is not None
         if is_custom:
-            emoji_string = str(discord.utils.get(
-                guild.emojis, id=int(emoji_id))
+            emoji_string = str(
+                discord.utils.get(
+                    guild.emojis, id=int(emoji_id)
+                ) or "Deleted Emoji"
             )
         else:
             emoji_string = emoji_name
