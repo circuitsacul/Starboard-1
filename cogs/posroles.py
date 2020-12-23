@@ -249,10 +249,6 @@ class PositionRoles(commands.Cog):
             member = members[0]
             await update_user_roles(self.bot, guild, member)
 
-    @commands.command()
-    async def test(self, ctx, uid: int):
-        self.bot.dispatch('posrole_update', ctx.guild.id, uid)
-
     @commands.group(
         name='posroles', aliases=['pr', 'proles'],
         brief="Lists the servers Position-based Roles",
