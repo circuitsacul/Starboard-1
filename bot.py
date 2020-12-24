@@ -45,6 +45,7 @@ class Bot(commands.AutoShardedBot):
         super().__init__(*args, **kwargs)
         self.db = db
         self.wizzard_lock = Lock
+        self.allowed_mentions = discord.AllowedMentions.none()
 
     async def on_message(self, *args, **kwargs):
         pass
