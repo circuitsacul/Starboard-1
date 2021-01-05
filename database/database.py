@@ -268,8 +268,9 @@ class CommonSql(aobject):
                 link_deletes=$3,
                 bots_on_sb=$4,
                 required=$5,
-                rtl=$6
-                WHERE id=$7"""
+                rtl=$6,
+                require_image=$7
+                WHERE id=$8"""
             )
 
 
@@ -371,6 +372,10 @@ class Database:
             """ALTER TABLE guilds
             ADD COLUMN IF NOT EXISTS is_qa_on
             bool NOT NULL DEFAULT False"""
+        starboards__addcolumn__require_image = \
+            """ALTER TABLE starboards
+            ADD COLUMN IF NOT EXISTS require_image
+            BOOL NOT NULL DEFAULT False"""
 
         await self.lock.acquire()
         await self._apply_migration(messages__addcolumn__points)
@@ -384,6 +389,7 @@ class Database:
         await self._apply_migration(aschannels__addcolumn__locked)
         await self._apply_migration(members__addcolumn__autoredeem)
         await self._apply_migration(guilds__addcolumn__is_qa_on)
+        await self._apply_migration(starboards__addcolumn__require_image)
         self.lock.release()
 
     async def _create_tables(self) -> None:
@@ -468,6 +474,7 @@ class Database:
                 link_edits bool NOT NULL DEFAULT true,
                 link_deletes bool NOT NULL DEFAULT false,
                 bots_on_sb bool NOT NULL DEFAULT true,
+                require_image bool NOT NULL DEFAULT false,
 
                 locked bool NOT NULL DEFAULT false,
 

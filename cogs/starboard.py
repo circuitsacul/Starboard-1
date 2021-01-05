@@ -271,6 +271,8 @@ class Starboard(commands.Cog):
                             f"{bool(sql_starboard['link_deletes'])}**"\
                             "\n**botsOnStarboard: "\
                             f"{bool(sql_starboard['bots_on_sb'])}**"\
+                            "\n**requireImage: "\
+                            f"{bool(sql_starboard['require_image'])}**"\
                             f"\n**locked: {bool(sql_starboard['locked'])}**"
 
                         embed = discord.Embed(
@@ -357,6 +359,33 @@ class Starboard(commands.Cog):
             self.bot, starboard.id, ctx.guild, emoji
         )
         await ctx.send(f"Remove {emoji} from {starboard.mention}")
+
+    @sb_settings.command(
+        name='requireImage', aliases=['ri', 'imagesOnly'],
+        brief="Sets the requireImage setting for a starboard"
+    )
+    @commands.has_guild_permissions(
+        manage_channels=True,
+        manage_messages=True
+    )
+    @commands.guild_only()
+    async def set_require_image(
+        self,
+        ctx: commands.Context,
+        starboard: discord.TextChannel,
+        value: bool
+    ) -> None:
+        status = await change_starboard_settings(
+            self.db, starboard.id, require_image=value
+        )
+        if status is None:
+            await ctx.send("That is not a starboard!")
+        elif status is False:
+            await ctx.send("Something went wrong.")
+        else:
+            await ctx.send(
+                f"Set requireImage to {value} for {starboard.mention}"
+            )
 
     @sb_settings.command(
         name='requiredStars', aliases=['rs', 'required'],
@@ -780,6 +809,7 @@ async def handle_starboard(
     link_deletes = sql_starboard['link_deletes']
     link_edits = sql_starboard['link_edits']
     bots_on_sb = sql_starboard['bots_on_sb']
+    require_image = sql_starboard['require_image']
     is_bot = sql_author['is_bot']
     forced = sql_message['is_forced']
     frozen = sql_message['is_frozen']
@@ -798,6 +828,11 @@ async def handle_starboard(
         add = False
     elif on_starboard is False:
         remove = False
+
+    if message is not None:
+        if require_image and len(message.attachments) == 0:
+            add = False
+            remove = True
 
     if is_bot and not bots_on_sb:
         add = False

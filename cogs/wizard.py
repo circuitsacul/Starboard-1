@@ -344,7 +344,8 @@ class SetupWizard:
                 3: ('linkDeletes', 'link_deletes', mybool),
                 4: ('linkEdits', 'link_edits', mybool),
                 5: ('selfStar', 'self_star', mybool),
-                6: ('botsOnStarboard', 'bots_on_sb', mybool)
+                6: ('botsOnStarboard', 'bots_on_sb', mybool),
+                7: ('requireImage', 'require_image', mybool)
             }
 
             settings = await self._current_sb_settings(channel)
@@ -613,6 +614,7 @@ class SetupWizard:
                 link_edits=new_value if index == 'link_edits' else None,
                 link_deletes=new_value if index == 'link_deletes' else None,
                 bots_on_sb=new_value if index == 'bots_on_sb' else None,
+                require_image=new_value if index == 'require_image' else None,
                 required=new_value if index == 'required' else None,
                 rtl=new_value if index == 'rtl' else None
             )
@@ -687,7 +689,8 @@ class SetupWizard:
             f"linkDeletes: {sql_starboard['link_deletes']}": 3,
             f"linkEdits: {sql_starboard['link_edits']}": 4,
             f"selfStar: {sql_starboard['self_star']}": 5,
-            f"botsOnStarboard: {sql_starboard['bots_on_sb']}": 6
+            f"botsOnStarboard: {sql_starboard['bots_on_sb']}": 6,
+            f"requireImage: {sql_starboard['require_image']}": 7
         }
         return settings
 
