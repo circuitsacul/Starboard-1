@@ -65,7 +65,8 @@ bot = Bot(
     case_insensitive=True,
     intents=intents,
     help_command=help_command,
-    description=BOT_DESCRIPTION
+    description=BOT_DESCRIPTION,
+    shard_count=bot_config.SHARD_COUNT
 )
 web_server = HttpWebHook(bot, db)
 

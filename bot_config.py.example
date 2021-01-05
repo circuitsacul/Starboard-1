@@ -1,6 +1,8 @@
 OWNER_ID = your_id_here
 RUN_SQL = [id1, id2]
 
+SHARD_COUNT = 1
+
 INVITE = "bot invite link" # str
 SUPPORT_SERVER = "permanent invite to your support server" # str
 SOURCE_CODE = "(optional) link to the bots source code" # str or None
