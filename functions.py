@@ -173,7 +173,7 @@ async def is_starboard_emoji(
 
 async def get_embed_from_message(
     message: discord.Message
-) -> Tuple[discord.Embed, discord.File]:
+) -> Tuple[discord.Embed, List[discord.File]]:
     nsfw = message.channel.is_nsfw()
     embed = discord.Embed(
         title="NSFW" if nsfw else discord.Embed.Empty, colour=bot_config.COLOR

@@ -937,8 +937,7 @@ async def update_message(
         elif update and sb_message and link_edits:
             if not on_cooldown:
                 await sb_message.edit(
-                    content=plain_text, embed=embed,
-                    files=attachments
+                    content=plain_text, embed=embed
                 )
         elif sb_message:
             await sb_message.edit(
