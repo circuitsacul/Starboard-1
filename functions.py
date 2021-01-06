@@ -220,19 +220,21 @@ async def get_embed_from_message(
                 urls.append({
                     'name': 'Embed Image',
                     'url': msg_embed.image.url,
-                    'display_url': msg_embed.image.url
+                    'display_url': msg_embed.image.url,
+                    'spoiler': False,
                 })
             if msg_embed.thumbnail.url is not embed.Empty:
                 urls.append({
                     'name': 'Embed Thumbnail',
                     'url': msg_embed.thumbnail.url,
-                    'display_url': msg_embed.thumbnail.url
+                    'display_url': msg_embed.thumbnail.url,
+                    'spoiler': False
                 })
         elif msg_embed.type == 'image':
             if msg_embed.url != discord.Embed.Empty:
                 urls.append({
                     'name': 'Image', 'display_url': msg_embed.thumbnail.url,
-                    'url': msg_embed.url, 'type': 'image'
+                    'url': msg_embed.url, 'type': 'image', 'spoiler': False
                 })
         elif msg_embed.type == 'gifv':
             gifid = tenor.get_gif_id(msg_embed.url)
@@ -243,13 +245,13 @@ async def get_embed_from_message(
             if msg_embed.url != discord.Embed.Empty:
                 urls.append({
                     'name': 'GIF', 'display_url': display_url,
-                    'url': msg_embed.url, 'type': 'gif'
+                    'url': msg_embed.url, 'type': 'gif', 'spoiler': False
                 })
         elif msg_embed.type == 'video':
             if msg_embed.url != discord.Embed.Empty:
                 urls.append({
                     'name': 'Video', 'display_url': msg_embed.thumbnail.url,
-                    'url': msg_embed.url, 'type': 'video'
+                    'url': msg_embed.url, 'type': 'video', 'spoiler': False
                 })
 
     value_string = f"{message.system_content}\n{embed_text}"
