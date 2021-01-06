@@ -173,7 +173,7 @@ async def is_starboard_emoji(
 
 async def get_embed_from_message(
     message: discord.Message
-) -> discord.Embed:
+) -> Tuple[discord.Embed, discord.File]:
     nsfw = message.channel.is_nsfw()
     embed = discord.Embed(
         title="NSFW" if nsfw else discord.Embed.Empty, colour=bot_config.COLOR
@@ -185,10 +185,15 @@ async def get_embed_from_message(
     msg_attachments = message.attachments
     urls = []
 
+    extra_attachments = []
+
     for attachment in msg_attachments:
+        if attachment.is_spoiler():
+            extra_attachments.append(await attachment.to_file())
         urls.append({
             'name': attachment.filename, 'display_url': attachment.url,
-            'url': attachment.url, 'type': 'upload'
+            'url': attachment.url, 'type': 'upload',
+            'spoiler': attachment.is_spoiler()
         })
 
     e = discord.embeds._EmptyEmbed
@@ -264,6 +269,8 @@ async def get_embed_from_message(
         current = 0
         for item in urls:
             url_string += f"[**{item['name']}**]({item['url']})\n"
+            if item['spoiler']:
+                continue
             if current == 0:
                 embed.set_image(url=item['display_url'])
                 current += 1
@@ -275,7 +282,7 @@ async def get_embed_from_message(
     embed.set_footer(text=f"ID: {message.id}")
     embed.timestamp = message.created_at
 
-    return embed
+    return embed, extra_attachments
 
 
 async def calculate_points(

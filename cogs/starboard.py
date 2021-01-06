@@ -175,11 +175,11 @@ class Starboard(commands.Cog):
         channel = self.bot.get_channel(orig_cid)
         m = await channel.fetch_message(orig_mid)
 
-        e = await functions.get_embed_from_message(m)
+        e, attachments = await functions.get_embed_from_message(m)
 
         await ctx.send(
             f"**{sql_rand_message['points']} | {channel.mention}**",
-            embed=e
+            embed=e, files=attachments
         )
 
     @commands.group(
@@ -895,7 +895,7 @@ async def update_message(
             f"{' | ❄️' if frozen else ''}**"
         )
 
-        embed = await functions.get_embed_from_message(
+        embed, attachments = await functions.get_embed_from_message(
             orig_message
         ) if orig_message is not None else None
 
@@ -910,7 +910,9 @@ async def update_message(
             if _message is not None:
                 return
             try:
-                sb_message = await starboard.send(plain_text, embed=embed)
+                sb_message = await starboard.send(
+                    plain_text, embed=embed, files=attachments
+                )
             except discord.errors.Forbidden:
                 pass
             else:
@@ -935,7 +937,8 @@ async def update_message(
         elif update and sb_message and link_edits:
             if not on_cooldown:
                 await sb_message.edit(
-                    content=plain_text, embed=embed
+                    content=plain_text, embed=embed,
+                    files=attachments
                 )
         elif sb_message:
             await sb_message.edit(
