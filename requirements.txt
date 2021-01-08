@@ -6,6 +6,9 @@ disputils
 aiohttp-requests
 statcord.py
 dblpy
+patreon
+humanize
+jishaku
 quart
 discord-ext-ipc
 Quart-Discord

@@ -1,16 +1,33 @@
 import discord
-import functions
+from discord.ext import commands, flags
+from discord.ext.commands import BucketType
+from disputils import BotEmbedPaginator
+
 import bot_config
 import checks
-from events import leveling
-from discord.ext import commands
-from events import starboard_events
-from disputils import BotEmbedPaginator
-from events import retotal
-from events.starboard_events import handle_starboards
+import functions
+from cogs.starboard import handle_starboards
+from database.database import Database
 
 
-async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
+async def scan_recount(
+    bot: commands.Bot,
+    channel: discord.TextChannel,
+    messages: int,
+    start_date=None
+) -> None:
+    async for m in channel.history(limit=messages, before=start_date):
+        if await functions.needs_recount(bot, m):
+            await functions.recount_reactions(bot, m)
+
+
+async def handle_trashing(
+    db: Database,
+    bot: commands.Bot,
+    ctx: commands.Context,
+    _message_id: int,
+    trash: bool
+) -> None:
     check_message = \
         """SELECT * FROM messages WHERE id=$1"""
     trash_message = \
@@ -43,7 +60,7 @@ async def handle_trashing(db, bot, ctx, _message_id, trash: bool):
         message = None
 
     if status is True:
-        await starboard_events.handle_starboards(
+        await handle_starboards(
             db, bot, message_id, channel, message,
             ctx.guild
         )
@@ -111,16 +128,67 @@ async def handle_forcing(
         "Message unforced."
     )
 
-    await starboard_events.handle_starboards(
+    await handle_starboards(
         bot.db, bot, message.id, message.channel, message,
         ctx.guild
     )
 
 
 class Utility(commands.Cog):
-    def __init__(self, bot, db):
+    """Useful utility commands for your server"""
+    def __init__(
+        self,
+        bot: commands.Bot,
+        db: Database
+    ) -> None:
         self.bot = bot
         self.db = db
+
+    @flags.add_flag('--message', type=str, default="0")
+    @flags.command(
+        name='scan', aliases=['recountChannel'],
+        description='Recount X messages in a channel before '
+        'a certain timestamp, or before I joined this server',
+        brief='Retotal reactions on X messages in channel'
+    )
+    @commands.has_permissions(manage_guild=True)
+    @commands.max_concurrency(1, BucketType.channel)
+    @commands.guild_only()
+    @checks.premium_guild()
+    async def recount_channel(
+        self,
+        ctx: commands.Context,
+        messages: int,
+        **flags: dict
+    ) -> None:
+        if messages > 1000:
+            await ctx.send("Can only recount up to 1000 messages")
+            return
+
+        message = flags['message']
+        try:
+            message = int(message)
+        except ValueError:
+            # it better be a link or we'll be mad
+            try:
+                message = int(message[-18:])
+            except ValueError:
+                await ctx.send("--message must be a message ID or a link!")
+                return
+
+        msg = None
+        if message is not None:
+            try:
+                msg = await ctx.channel.fetch_message(message)
+            except (discord.errors.NotFound, discord.errors.Forbidden):
+                msg = None
+
+        async with ctx.typing():
+            await scan_recount(
+                self.bot, ctx.channel, messages, msg
+            )
+
+        await ctx.send("Finished")
 
     @commands.command(
         name='frozen', aliases=['f'],
@@ -129,7 +197,10 @@ class Utility(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def list_frozen_messages(self, ctx):
+    async def list_frozen_messages(
+        self,
+        ctx: commands.Context
+    ) -> None:
         get_frozen = \
             """SELECT * FROM messages
             WHERE is_frozen = True AND guild_id=$1"""
@@ -176,7 +247,11 @@ class Utility(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def freeze_message(self, ctx, message: int):
+    async def freeze_message(
+        self,
+        ctx: commands.Context,
+        message: int
+    ) -> None:
         get_message = \
             """SELECT * FROM messages WHERE id=$1 AND guild_id=$2"""
         freeze_message = \
@@ -209,7 +284,7 @@ class Utility(commands.Cog):
         except Exception:
             message_obj = None
 
-        await starboard_events.handle_starboards(
+        await handle_starboards(
             self.bot.db, self.bot, message_id, channel,
             message_obj, ctx.guild
         )
@@ -223,7 +298,11 @@ class Utility(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def unfreeze_message(self, ctx, message: int):
+    async def unfreeze_message(
+        self,
+        ctx: commands.Context,
+        message: int
+    ) -> None:
         get_message = \
             """SELECT * FROM messages WHERE id=$1 AND guild_id=$2"""
         freeze_message = \
@@ -255,7 +334,7 @@ class Utility(commands.Cog):
         except Exception:
             message_obj = None
 
-        await starboard_events.handle_starboards(
+        await handle_starboards(
             self.bot.db, self.bot, mid, channel,
             message_obj, ctx.guild
         )
@@ -270,8 +349,11 @@ class Utility(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
     async def force_message(
-        self, ctx, _message_id, _channel: discord.TextChannel = None
-    ):
+        self,
+        ctx: commands.Context,
+        _message_id: int,
+        _channel: discord.TextChannel = None
+    ) -> None:
         await handle_forcing(
             self.bot, ctx, _channel,
             _message_id, True
@@ -285,7 +367,8 @@ class Utility(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def unforce_message(
-        self, ctx,
+        self,
+        ctx: commands.Context,
         _message_id: int,
         _channel: discord.TextChannel = None
     ) -> None:
@@ -302,7 +385,11 @@ class Utility(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def trash_message(self, ctx, _messsage_id: int):
+    async def trash_message(
+        self,
+        ctx: commands.Context,
+        _messsage_id: int
+    ) -> None:
         status = await handle_trashing(
             self.db, self.bot, ctx, _messsage_id, True
         )
@@ -316,7 +403,11 @@ class Utility(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def untrash_message(self, ctx, _message_id):
+    async def untrash_message(
+        self,
+        ctx: commands.Context,
+        _message_id: int
+    ) -> None:
         status = await handle_trashing(
             self.db, self.bot, ctx, _message_id, False
         )
@@ -332,7 +423,10 @@ class Utility(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def clear_guild_cache(self, ctx):
+    async def clear_guild_cache(
+        self,
+        ctx: commands.Context
+    ) -> None:
         cache = self.bot.db.cache
         cache._messages[ctx.guild.id] = []
         await ctx.send("Message cache cleared")
@@ -343,12 +437,18 @@ class Utility(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def get_message_statistics(self, ctx, message_id: int):
+    async def get_message_statistics(
+        self,
+        ctx: commands.Context,
+        message_id: int
+    ) -> None:
         get_message = \
             """SELECT * FROM messages WHERE id=$1 AND guild_id=$2"""
         get_starboard_message = \
             """SELECT * FROM messages WHERE is_orig=False
             AND orig_message_id=$1"""
+
+        sql_sb_messages = []
 
         async with self.db.lock:
             conn = await self.bot.db.connect()
@@ -374,7 +474,6 @@ class Utility(commands.Cog):
         frozen = sql_message['is_frozen']
         forced = sql_message['is_forced']
         trashed = sql_message['is_trashed']
-        #author = self.bot.get_user(sql_message['user_id'])
         author = (await functions.get_members(
             [int(sql_message['user_id'])], ctx.guild))[0]
 
@@ -440,10 +539,11 @@ class Utility(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def recount_msg_reactions(
-        self, ctx,
+        self,
+        ctx: commands.Context,
         message_id: int,
         channel: discord.TextChannel = None
-    ):
+    ) -> None:
         if channel is None:
             channel = ctx.channel
         try:
@@ -493,7 +593,7 @@ class Utility(commands.Cog):
         )
 
         async with ctx.typing():
-            await retotal.recount_reactions(self.bot, message)
+            await functions.recount_reactions(self.bot, message)
             await handle_starboards(
                 self.bot.db, self.bot, message.id,
                 message.channel, message, ctx.guild
@@ -501,6 +601,64 @@ class Utility(commands.Cog):
 
         await ctx.send("Finished!")
 
+    @commands.command(
+        name='movelock',
+        brief="Moves a premium lock from one channel to another"
+    )
+    @commands.has_permissions(manage_channels=True)
+    @commands.cooldown(30, 120, type=commands.BucketType.guild)
+    @commands.guild_only()
+    async def move_prem_lock(
+        self,
+        ctx: commands.Context,
+        current_channel: discord.TextChannel,
+        new_channel: discord.TextChannel
+    ) -> None:
+        """Moves a premium lock from one channel to a different
+        channel, for either starboards or AutoStar channels.
 
-def setup(bot):
+        [current_channel]: The channel that is currently locked
+        (can be a starboard or autostar channel)
+
+        [new_channel]: The channel that you want to move the
+        lock to. Cannot already be locked (starboard or autostar
+        channel)"""
+        get_starboard = \
+            """SELECT * FROM starboards
+            WHERE id=$1"""
+        get_aschannel = \
+            """SELECT * FROM aschannels
+            WHERE id=$1"""
+
+        conn = self.bot.db.conn
+
+        async with self.bot.db.lock:
+            async with conn.transaction():
+                is_sb = await conn.fetchrow(
+                    get_starboard, current_channel.id
+                ) is not None
+                is_asc = await conn.fetchrow(
+                    get_aschannel, current_channel.id
+                ) is not None
+
+        if is_sb:
+            await functions.move_starboard_lock(
+                self.bot, current_channel, new_channel
+            )
+        elif is_asc:
+            await functions.move_aschannel_lock(
+                self.bot, current_channel, new_channel
+            )
+        else:
+            await ctx.send(
+                f"{current_channel.mention} isn't a starboard "
+                "or autostar channel."
+            )
+            return
+        await ctx.send("Done")
+
+
+def setup(
+    bot: commands.Bot
+) -> None:
     bot.add_cog(Utility(bot, bot.db))

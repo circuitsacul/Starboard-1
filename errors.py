@@ -1,4 +1,7 @@
-class NoPremiumError(Exception):
+from discord.ext.commands.errors import CheckFailure
+
+
+class NoPremiumError(CheckFailure):
     pass
 
 
@@ -15,4 +18,8 @@ class BotNeedsPerms(Exception):
 
 
 class InvalidArgument(Exception):
+    pass
+
+
+class NotEnoughCredits(Exception):
     pass

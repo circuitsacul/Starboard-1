@@ -1,11 +1,15 @@
-import discord
-import functions
-import bot_config
-import settings
-from discord.ext import commands
-from .wizard import SetupWizard
 from typing import List, Union
+
+import discord
+from discord.ext import commands
+
+import bot_config
+import functions
+import settings
+from database.database import Database
 from paginators import disputils
+
+from .wizard import SetupWizard
 
 
 async def get_blacklist_config_embeds(
@@ -108,8 +112,10 @@ async def get_blacklist_config_embeds(
 
 
 async def change_user_setting(
-    db, user_id: int, lvl_up_msgs: bool = None
-):
+    db: Database,
+    user_id: int,
+    lvl_up_msgs: bool = None
+) -> bool:
     get_user = \
         """SELECT * FROM users WHERE id=$1"""
     update_user = \
@@ -134,18 +140,26 @@ async def change_user_setting(
 
 
 class Settings(commands.Cog):
-    def __init__(self, bot, db):
+    """Manage server settings"""
+    def __init__(
+        self,
+        bot: commands.Bot,
+        db: Database
+    ) -> None:
         self.bot = bot
         self.db = db
 
-    #@commands.group(
+    # @commands.group(
     #    name='profile', aliases=['userConfig', 'uc', 'p'],
     #    brief='View/change personal settings',
     #    description='Change or view settings for yourself. '
     #    'Changes affect all servers, not just the current one.',
     #    invoke_without_command=True
-    #)
-    async def user_settings(self, ctx):
+    # )
+    async def user_settings(
+        self,
+        ctx: commands.Context
+    ) -> None:
         return
         get_user = \
             """SELECT * FROM users WHERE id=$1"""
@@ -180,12 +194,16 @@ class Settings(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    #@user_settings.command(
+    # @user_settings.command(
     #    name='LevelUpMessages', aliases=['LvlUpMsgs', 'lum'],
     #    brief='Wether or not to send you level up messages',
     #    description='Wether or not to send you level up messages'
-    #)
-    async def set_user_lvl_up_msgs(self, ctx, value: bool):
+    # )
+    async def set_user_lvl_up_msgs(
+        self,
+        ctx: commands.Context,
+        value: bool
+    ) -> None:
         status = await change_user_setting(
             self.db, ctx.message.author.id, lvl_up_msgs=value
         )
@@ -200,7 +218,10 @@ class Settings(commands.Cog):
         brief='Manage prefixes',
         invoke_without_command=True
     )
-    async def guild_prefixes(self, ctx):
+    async def guild_prefixes(
+        self,
+        ctx: commands.Context
+    ) -> None:
         if ctx.guild is None:
             prefixes = ['sb!']
         else:
@@ -226,7 +247,11 @@ class Settings(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def add_prefix(self, ctx, prefix: str):
+    async def add_prefix(
+        self,
+        ctx: commands.Context,
+        prefix: str
+    ) -> None:
         if len(prefix) > 8:
             await ctx.send(
                 "That prefix is too long! It must be under 9 characters."
@@ -246,7 +271,11 @@ class Settings(commands.Cog):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def remove_prefix(self, ctx, prefix: str):
+    async def remove_prefix(
+        self,
+        ctx: commands.Context,
+        prefix: str
+    ) -> None:
         status, status_msg = await functions.remove_prefix(
             self.bot, ctx.guild.id, prefix
         )
@@ -270,7 +299,10 @@ class Settings(commands.Cog):
         manage_channels=True, manage_roles=True
     )
     @commands.guild_only()
-    async def run_setup_wizard(self, ctx):
+    async def run_setup_wizard(
+        self,
+        ctx: commands.Context
+    ) -> None:
         await functions.check_or_create_existence(
             self.bot, guild_id=ctx.guild.id,
             user=ctx.message.author, do_member=True
@@ -289,7 +321,10 @@ class Settings(commands.Cog):
         brief="Manage channel/role whitelist"
     )
     @commands.guild_only()
-    async def whitelist(self, ctx) -> None:
+    async def whitelist(
+        self,
+        ctx: commands.Context
+    ) -> None:
         embeds = await get_blacklist_config_embeds(
             self.bot, ctx.guild.id
         )
@@ -306,7 +341,8 @@ class Settings(commands.Cog):
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
     async def whitelist_add_channel(
-        self, ctx,
+        self,
+        ctx: commands.Context,
         channel: discord.TextChannel,
         starboard: discord.TextChannel
     ) -> None:
@@ -327,7 +363,8 @@ class Settings(commands.Cog):
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
     async def whitelist_remove_channel(
-        self, ctx,
+        self,
+        ctx: commands.Context,
         channel: Union[discord.TextChannel, int],
         starboard: discord.TextChannel
     ) -> None:
@@ -348,7 +385,8 @@ class Settings(commands.Cog):
     @commands.has_permissions(manage_roles=True)
     @commands.guild_only()
     async def whitelist_add_role(
-        self, ctx,
+        self,
+        ctx: commands.Context,
         role: discord.Role,
         starboard: discord.TextChannel
     ) -> None:
@@ -369,7 +407,8 @@ class Settings(commands.Cog):
     @commands.has_permissions(manage_roles=True)
     @commands.guild_only()
     async def whitelist_remove_role(
-        self, ctx,
+        self,
+        ctx: commands.Context,
         role: Union[discord.Role, int],
         starboard: discord.TextChannel
     ) -> None:
@@ -389,7 +428,10 @@ class Settings(commands.Cog):
         brief="Manage channel/role blacklist"
     )
     @commands.guild_only()
-    async def blacklist(self, ctx) -> None:
+    async def blacklist(
+        self,
+        ctx: commands.Context
+    ) -> None:
         embeds = await get_blacklist_config_embeds(
             self.bot, ctx.guild.id
         )
@@ -406,7 +448,8 @@ class Settings(commands.Cog):
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
     async def blacklist_add_channel(
-        self, ctx,
+        self,
+        ctx: commands.Context,
         channel: discord.TextChannel,
         starboard: discord.TextChannel
     ) -> None:
@@ -426,7 +469,8 @@ class Settings(commands.Cog):
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
     async def blacklist_remove_channel(
-        self, ctx,
+        self,
+        ctx: commands.Context,
         channel: Union[discord.TextChannel, int],
         starboard: discord.TextChannel
     ) -> None:
@@ -447,7 +491,8 @@ class Settings(commands.Cog):
     @commands.has_permissions(manage_roles=True)
     @commands.guild_only()
     async def blacklist_add_role(
-        self, ctx,
+        self,
+        ctx: commands.Context,
         role: discord.Role,
         starboard: discord.TextChannel
     ) -> None:
@@ -467,7 +512,8 @@ class Settings(commands.Cog):
     @commands.has_permissions(manage_roles=True)
     @commands.guild_only()
     async def blacklist_remove_role(
-        self, ctx,
+        self,
+        ctx: commands.Context,
         role: Union[discord.Role, int],
         starboard: discord.TextChannel
     ) -> None:
@@ -488,7 +534,10 @@ class Settings(commands.Cog):
     @commands.cooldown(1, 30, type=commands.BucketType.guild)
     @commands.has_permissions(manage_guild=True)
     @commands.guild_only()
-    async def clean_deleted(self, ctx) -> None:
+    async def clean_deleted(
+        self,
+        ctx: commands.Context
+    ) -> None:
         get_channelbl = \
             """SELECT * FROM channelbl WHERE guild_id=$1"""
         delete_channelbl = \
@@ -537,5 +586,7 @@ class Settings(commands.Cog):
         )
 
 
-def setup(bot):
+def setup(
+    bot: commands.Bot
+) -> None:
     bot.add_cog(Settings(bot, bot.db))

@@ -1,12 +1,26 @@
-from aiohttp import web
+import hashlib
+import hmac
 import os
-import bot_config
+
+from aiohttp import web
+from discord.ext import commands
+from dotenv import load_dotenv
+
+from database.database import Database
+
+load_dotenv()
 
 HOOK_AUTH = os.getenv("TOP_HOOK_AUTH")
+PATREON_AUTH = os.getenv("PATREON_AUTH")
 
 
 class HttpWebHook():
-    def __init__(self, bot, db):
+    """Listens for different web stuff"""
+    def __init__(
+        self,
+        bot: commands.Bot,
+        db: Database
+    ) -> None:
         self.bot = bot
         self.db = db
         self.routes = web.RouteTableDef()
@@ -15,17 +29,29 @@ class HttpWebHook():
 
         self.runner = web.AppRunner(self.app)
 
-    async def start(self):
+    async def start(self) -> None:
         await self.runner.setup()
         self.site = web.TCPSite(self.runner, '0.0.0.0', 8080)
         await self.site.start()
 
-    async def close(self):
+    async def close(self) -> None:
         await self.runner.cleanup()
 
-    def _set_routes(self):
-        #@self.routes.post('/webhook')
-        #async def donation_event(request):
+    def verify_patreon(
+        self,
+        sig: str,
+        data: str
+    ) -> bool:
+        digester = hmac.new(
+            bytes(PATREON_AUTH, 'utf-8'),
+            bytes(data, 'utf-8'),
+            hashlib.md5
+        )
+        return sig == digester.hexdigest()
+
+    def _set_routes(self) -> None:
+        # @self.routes.post('/webhook')
+        # async def donation_event(request):
         #    try:
         #        data = await request.json()
         #        if request.headers['authorization'] != DONATEBOT_TOKEN:
@@ -52,13 +78,26 @@ class HttpWebHook():
 
             return web.Response(body='Vote caught', status=200)
 
+        @self.routes.post('/patreon')
+        async def handle_patreon_event(request):
+            text = await request.text()
+            print(request.get('triggers'))
+            if not self.verify_patreon(
+                request.headers['X-Patreon-Signature'],
+                text
+            ):
+                return "Denied", 403
+            else:
+                self.bot.dispatch('patreon_event', text)
+                return "Caught", 200
+
         @self.routes.get('')
         async def ping(request):
             return web.Response(body="I'm Here!", status=200)
 
         self.app.add_routes(self.routes)
 
-    #async def handle_donation_event(self, data):
+    # async def handle_donation_event(self, data):
     #    product_id = None if 'product_id' not in data else data['product_id']
     #    role_id = None if 'role_id' not in data else data['role_id']
     #    async with self.db.lock:

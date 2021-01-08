@@ -1,15 +1,20 @@
 # aschannels stand for auto-star channels
-import discord
-import bot_config
-import settings
-import functions
 import datetime
+from typing import List, Union
+
+import discord
 from discord import utils
 from discord.ext import commands
-from typing import Union
+
+import bot_config
+import functions
+import settings
 
 
-async def converted_emojis(emojis, guild):
+async def converted_emojis(
+    emojis: List[dict],
+    guild: discord.Guild
+) -> List[discord.Emoji]:
     all_emojis = []
 
     for emoji in emojis:
@@ -30,14 +35,21 @@ async def converted_emojis(emojis, guild):
 
 
 class AutoStarChannels(commands.Cog):
-    def __init__(self, bot):
+    """Manage AutoStarChannel"""
+    def __init__(
+        self,
+        bot: commands.Bot
+    ) -> None:
         self.bot = bot
         self.cooldown = commands.CooldownMapping.from_cooldown(
             3, 10, commands.BucketType.channel
         )
 
     @commands.Cog.listener()
-    async def on_message(self, message):
+    async def on_message(
+        self,
+        message: discord.Message
+    ) -> None:
         if message.author.bot:
             return
         if message.channel.id not in self.bot.db.as_cache:
@@ -70,7 +82,7 @@ class AutoStarChannels(commands.Cog):
                     check_aschannel, channel.id
                 )
 
-        if sasc is None:
+        if sasc is None or sasc['locked']:
             return False
 
         if len(message.content) < sasc['min_chars']:
@@ -120,7 +132,11 @@ class AutoStarChannels(commands.Cog):
         invoke_without_command=True
     )
     @commands.guild_only()
-    async def aschannels(self, ctx, aschannel: discord.TextChannel = None):
+    async def aschannels(
+        self,
+        ctx: commands.Context,
+        aschannel: discord.TextChannel = None
+    ) -> None:
         """List and manage AutoStar Channels
 
         [aschannel]: An optional argument. If specified,
@@ -196,7 +212,8 @@ class AutoStarChannels(commands.Cog):
                 f"**emojis:** {emoji_str}\n"
                 f"**minChars:** {sasc['min_chars']}\n"
                 f"**requireImage:** {sasc['require_image']}\n"
-                f"**deleteInvalid:** {sasc['delete_invalid']}"
+                f"**deleteInvalid:** {sasc['delete_invalid']}\n"
+                f"**locked:** {sasc['locked']}"
             )
 
             embed = discord.Embed(
@@ -213,7 +230,11 @@ class AutoStarChannels(commands.Cog):
     )
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
-    async def add_aschannel(self, ctx, channel: discord.TextChannel):
+    async def add_aschannel(
+        self,
+        ctx: commands.Context,
+        channel: discord.TextChannel
+    ) -> None:
         """Sets a channel as an AutoStar Channel
 
         <channel>: A required argument for which channel
@@ -231,8 +252,10 @@ class AutoStarChannels(commands.Cog):
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
     async def remove_aschannel(
-        self, ctx, channel: Union[discord.TextChannel, int]
-    ):
+        self,
+        ctx: commands.Context,
+        channel: Union[discord.TextChannel, int]
+    ) -> None:
         """Removes an AutoStar Channel
 
         <channel>: A required argument for which channel to remove
@@ -251,9 +274,11 @@ class AutoStarChannels(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def add_asemoji(
-        self, ctx, aschannel: discord.TextChannel,
+        self,
+        ctx: commands.Context,
+        aschannel: discord.TextChannel,
         emoji: Union[discord.Emoji, str]
-    ):
+    ) -> None:
         """Adds an emoji to the list of AutoStar emojis for
         a specific AutoStar channel. These are the emojis
         that the bot will automatically react to messages
@@ -285,9 +310,11 @@ class AutoStarChannels(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def remove_asemoji(
-        self, ctx, aschannel: discord.TextChannel,
+        self,
+        ctx: commands.Context,
+        aschannel: discord.TextChannel,
         emoji: Union[discord.Emoji, str]
-    ):
+    ) -> None:
         """Removes an emoji from an AutoStar Channel,
         so that the bot no longer reacts to messages
         with it.
@@ -311,8 +338,11 @@ class AutoStarChannels(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def set_require_image(
-        self, ctx, aschannel: discord.TextChannel, value: bool
-    ):
+        self,
+        ctx: commands.Context,
+        aschannel: discord.TextChannel,
+        value: bool
+    ) -> None:
         """Sets whether or not messages sent in that
         AutoStar Channel are required to have an image.
 
@@ -334,8 +364,11 @@ class AutoStarChannels(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def set_min_chars(
-        self, ctx, aschannel: discord.TextChannel, value: int
-    ):
+        self,
+        ctx: commands.Context,
+        aschannel: discord.TextChannel,
+        value: int
+    ) -> None:
         """Sets the minimum character limit for
         messages sent in this AutoStar Channel.
 
@@ -357,8 +390,11 @@ class AutoStarChannels(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     async def set_delete_invalid(
-        self, ctx, aschannel: discord.TextChannel, value: bool
-    ):
+        self,
+        ctx: commands.Context,
+        aschannel: discord.TextChannel,
+        value: bool
+    ) -> None:
         """Sets whether or not messages that don't meet
         the requirements you have set should be deleted,
         or just ignored.
@@ -380,5 +416,7 @@ class AutoStarChannels(commands.Cog):
         await ctx.send(f"Set deleteInvalid to {value} for {aschannel.mention}")
 
 
-def setup(bot):
+def setup(
+    bot: commands.Bot
+) -> None:
     bot.add_cog(AutoStarChannels(bot))

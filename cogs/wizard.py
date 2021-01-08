@@ -1,19 +1,21 @@
-import discord
-import functions
 import asyncio
-import bot_config
-import emoji as emojilib
-import settings
-from paginators import disputils
 from asyncio import sleep
+from typing import Optional, Tuple, Union, Any
+
+import discord
+import emoji as emojilib
 from discord import utils
+from discord.ext import commands
+
+import bot_config
+import functions
+import settings
+from functions import get_limit, pretty_emoji_string
+from paginators import disputils
 from settings import change_starboard_settings
-from functions import pretty_emoji_string
-from functions import get_limit
-from typing import Union
 
 
-def mybool(string: str):
+def mybool(string: str) -> bool:
     string = string.lower()
     if string[0] in ['y', 't']:
         return True
@@ -23,7 +25,12 @@ def mybool(string: str):
 
 
 class SetupWizard:
-    def __init__(self, ctx, bot, message=None):
+    def __init__(
+        self,
+        ctx: commands.Context,
+        bot: commands.Bot,
+        message=None
+    ) -> None:
         self.ctx = ctx
         self.bot = bot
         self.message = message
@@ -31,7 +38,7 @@ class SetupWizard:
         self.color = bot_config.COLOR
         self.mistake = bot_config.MISTAKE_COLOR
 
-    async def run(self):
+    async def run(self) -> None:
         self.running = True
         if self.message is None:
             embed = await self._get_embed("Please Wait...", self.color)
@@ -101,12 +108,11 @@ class SetupWizard:
                     get_aschannels, self.ctx.guild.id
                 )
         current_num = len(sql_aschannels)
-        limit = await get_limit(self.bot.db, 'aschannels', self.ctx.guild)
+        limit = await get_limit(self.bot, 'aschannels', self.ctx.guild.id)
         if current_num >= limit:
             await self._error(
-                "You have reached your limit for AutoStar Channels. "
-                "In order to add more, the owner of this server must "
-                "become a patron."
+                "You have reached your limit for AutoStar Channels.\n"
+                "See the last page of `sb!tutorial` for more info."
             )
             return
 
@@ -221,7 +227,7 @@ class SetupWizard:
                     channel, name, index, vtype
                 )
 
-    async def new_starboard(self):
+    async def new_starboard(self) -> None:
         get_starboards = """SELECT * FROM starboards WHERE guild_id=$1"""
 
         async with self.bot.db.lock:
@@ -231,11 +237,11 @@ class SetupWizard:
                     get_starboards, self.ctx.guild.id
                 )
         current_num = len(sql_starboards)
-        limit = await get_limit(self.bot.db, 'starboards', self.ctx.guild)
+        limit = await get_limit(self.bot, 'starboards', self.ctx.guild.id)
         if current_num >= limit:
             await self._error(
-                "You have reached your limit for starboards. Please upgrade "
-                "by becoming a patron."
+                "You have reached your limit for starboards.\n"
+                "See the last page of `sb!tutorial` for more info."
             )
             return
 
@@ -295,7 +301,7 @@ class SetupWizard:
             await self._error(error)
             await self.new_starboard()
 
-    async def modify_starboard(self):
+    async def modify_starboard(self) -> None:
         channel = await self._get_starboard("What starboard should I modify?")
         if channel is False:
             await self._error("You don't have any starboards yet.")
@@ -304,7 +310,7 @@ class SetupWizard:
             return
         await self._change_starboard_settings(channel)
 
-    async def delete_starboard(self):
+    async def delete_starboard(self) -> None:
         channel = await self._get_starboard("What starboard should I delete?")
         if channel is False:
             await self._error("You don't have any starboards yet.")
@@ -326,7 +332,10 @@ class SetupWizard:
         ))
         await sleep(1)
 
-    async def _change_starboard_settings(self, channel):
+    async def _change_starboard_settings(
+        self,
+        channel: discord.TextChannel
+    ) -> None:
         modifying = True
         while modifying:
             setting_indexes = {
@@ -335,7 +344,8 @@ class SetupWizard:
                 3: ('linkDeletes', 'link_deletes', mybool),
                 4: ('linkEdits', 'link_edits', mybool),
                 5: ('selfStar', 'self_star', mybool),
-                6: ('botsOnStarboard', 'bots_on_sb', mybool)
+                6: ('botsOnStarboard', 'bots_on_sb', mybool),
+                7: ('requireImage', 'require_image', mybool)
             }
 
             settings = await self._current_sb_settings(channel)
@@ -350,7 +360,10 @@ class SetupWizard:
                 name, index, vtype = setting_indexes[choice]
                 await self._change_sb_setting(channel, name, index, vtype)
 
-    async def _manage_sb_emojis(self, channel):
+    async def _manage_sb_emojis(
+        self,
+        channel: discord.TextChannel
+    ) -> None:
         get_emojis = """SELECT * FROM sbemojis WHERE starboard_id=$1"""
         modifying = True
         while modifying:
@@ -402,7 +415,7 @@ class SetupWizard:
         get_emojis = """SELECT * FROM asemojis WHERE aschannel_id=$1"""
 
         emoji_limit = await get_limit(
-            self.bot.db, 'asemojis', self.ctx.guild
+            self.bot, 'asemojis', self.ctx.guild.id
         )
 
         async with self.bot.db.lock:
@@ -414,8 +427,7 @@ class SetupWizard:
         if current_num >= emoji_limit:
             await self._error(
                 "You have reached yoru limit for emojis on this autostar "
-                "channel. To add more, the owner of this server must "
-                "become a patron."
+                "channel.\nSee the last page of `sb!tutorial` for more info."
             )
             return
 
@@ -426,7 +438,7 @@ class SetupWizard:
             return
         emoji_id, emoji_name = args
         if emoji_id is not None:
-            emoji = utils.get(channel.guild.emojis, id=emoji_id)
+            emoji = str(utils.get(channel.guild.emojis, id=emoji_id).id)
         else:
             emoji = emoji_name
 
@@ -448,7 +460,7 @@ class SetupWizard:
             return
         emoji_id, emoji_name = args
         if emoji_id is not None:
-            emoji = utils.get(channel.guild.emojis, id=emoji_id)
+            emoji = str(utils.get(channel.guild.emojis, id=emoji_id).id)
         else:
             emoji = emoji_name
 
@@ -459,11 +471,14 @@ class SetupWizard:
         except Exception as e:
             await self._error(str(e))
 
-    async def _add_sb_emoji(self, channel):
+    async def _add_sb_emoji(
+        self,
+        channel: discord.TextChannel
+    ) -> None:
         get_emojis = """SELECT * FROM sbemojis WHERE starboard_id=$1"""
 
         emoji_limit = await get_limit(
-            self.bot.db, 'emojis', self.ctx.guild
+            self.bot, 'emojis', self.ctx.guild.id
         )
 
         async with self.bot.db.lock:
@@ -497,7 +512,10 @@ class SetupWizard:
         except Exception as e:
             await self._error(str(e))
 
-    async def _remove_sb_emoji(self, channel):
+    async def _remove_sb_emoji(
+        self,
+        channel: discord.TextChannel
+    ) -> None:
         args = await self._get_emoji(
             "What emoij do you want to delete?"
         )
@@ -516,7 +534,10 @@ class SetupWizard:
         except Exception as e:
             await self._error(str(e))
 
-    async def _get_emoji(self, prompt):
+    async def _get_emoji(
+        self,
+        prompt: str
+    ) -> Tuple[Optional[int], Optional[str]]:
         inp = await self._input(prompt)
         if inp is None:
             return None
@@ -571,7 +592,13 @@ class SetupWizard:
                 channel, name, index, vtype
             )
 
-    async def _change_sb_setting(self, channel, name, index, vtype):
+    async def _change_sb_setting(
+        self,
+        channel: discord.TextChannel,
+        name: str,
+        index: str,
+        vtype: callable
+    ) -> None:
         new_value = await self._input(f"Choose a new value for {name}")
         if new_value is None:
             return
@@ -587,6 +614,7 @@ class SetupWizard:
                 link_edits=new_value if index == 'link_edits' else None,
                 link_deletes=new_value if index == 'link_deletes' else None,
                 bots_on_sb=new_value if index == 'bots_on_sb' else None,
+                require_image=new_value if index == 'require_image' else None,
                 required=new_value if index == 'required' else None,
                 rtl=new_value if index == 'rtl' else None
             )
@@ -633,7 +661,10 @@ class SetupWizard:
         }
         return settings
 
-    async def _current_sb_settings(self, channel):
+    async def _current_sb_settings(
+        self,
+        channel: discord.TextChannel
+    ) -> dict:
         get_starboard = \
             """SELECT * FROM starboards WHERE id=$1"""
         get_emojis = \
@@ -658,11 +689,15 @@ class SetupWizard:
             f"linkDeletes: {sql_starboard['link_deletes']}": 3,
             f"linkEdits: {sql_starboard['link_edits']}": 4,
             f"selfStar: {sql_starboard['self_star']}": 5,
-            f"botsOnStarboard: {sql_starboard['bots_on_sb']}": 6
+            f"botsOnStarboard: {sql_starboard['bots_on_sb']}": 6,
+            f"requireImage: {sql_starboard['require_image']}": 7
         }
         return settings
 
-    async def _check_starboard(self, channel_id):
+    async def _check_starboard(
+        self,
+        channel_id: int
+    ) -> bool:
         check = """SELECT * FROM starboards WHERE id=$1"""
         async with self.bot.db.lock:
             conn = self.bot.db.conn
@@ -673,7 +708,10 @@ class SetupWizard:
         else:
             return True
 
-    async def _get_channel(self, prompt):
+    async def _get_channel(
+        self,
+        prompt: str
+    ) -> Optional[discord.TextChannel]:
         channel_name = await self._input(prompt)
         if channel_name is None:
             return None
@@ -692,7 +730,10 @@ class SetupWizard:
             return await self._get_channel(prompt)
         return channel
 
-    async def _get_aschannel(self, prompt: str) -> Union[dict, None]:
+    async def _get_aschannel(
+        self,
+        prompt: str
+    ) -> Union[dict, None]:
         get_aschannels = """SELECT * FROM aschannels WHERE guild_id=$1"""
         async with self.bot.db.lock:
             conn = self.bot.db.conn
@@ -720,7 +761,10 @@ class SetupWizard:
             return None
         return aschannels[choice]
 
-    async def _get_starboard(self, prompt):
+    async def _get_starboard(
+        self,
+        prompt: str
+    ) -> dict:
         get_starboards = """SELECT * FROM starboards WHERE guild_id=$1"""
         async with self.bot.db.lock:
             conn = self.bot.db.conn
@@ -748,7 +792,11 @@ class SetupWizard:
             return None
         return starboards[choice]
 
-    async def _multi_choice(self, options, prompt=""):
+    async def _multi_choice(
+        self,
+        options: dict,
+        prompt: str = ""
+    ) -> Optional[Any]:
         mc = disputils.MultipleChoice(
             self.bot, [option for option in options],
             message=self.message, title="Setup Wizard",
@@ -760,7 +808,10 @@ class SetupWizard:
             return None
         return options[mc.choice]
 
-    async def _input(self, prompt):
+    async def _input(
+        self,
+        prompt: str
+    ) -> Optional[str]:
         embed = await self._get_embed(prompt, self.color)
         await self.message.edit(embed=embed)
 
@@ -807,7 +858,11 @@ class SetupWizard:
         else:
             return None
 
-    async def _get_embed(self, content, color):
+    async def _get_embed(
+        self,
+        content: str,
+        color: hex
+    ) -> discord.Embed:
         embed = discord.Embed(
             title="Setup Wizard",
             description=content,
@@ -815,7 +870,10 @@ class SetupWizard:
         )
         return embed
 
-    async def _error(self, content):
+    async def _error(
+        self,
+        content: str
+    ) -> None:
         embed = await self._get_embed(content, self.mistake)
         await self.message.edit(embed=embed)
         await self.message.add_reaction("🆗")

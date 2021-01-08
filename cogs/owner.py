@@ -1,22 +1,24 @@
 import ast
-import discord
-import checks
 import time
-import bot_config
 from subprocess import PIPE, run
-from paginators import disputils
+
+import discord
 from asyncpg.exceptions._base import InterfaceError
-from discord.ext import tasks
+from discord.ext import commands, tasks
 
-from api.post_guild_count import post_all
-from discord.ext import commands
+import bot_config
+import checks
+import functions
+from cogs.stats import post_all
+from database.database import Database
+from paginators import disputils
 
 
-def ms(t):
+def ms(t: float) -> float:
     return round(t*1000, 5)
 
 
-def out(command):
+def out(command: str) -> str:
     result = run(
         command, stdout=PIPE, stderr=PIPE,
         universal_newlines=True, shell=True
@@ -25,17 +27,25 @@ def out(command):
 
 
 class Owner(commands.Cog):
-    def __init__(self, bot, db):
+    """Owner only commands"""
+    def __init__(
+        self,
+        bot: commands.Bot,
+        db: Database
+    ) -> None:
         self.db = db
         self.bot = bot
         self.dump_sqlruntimes.start()
 
     @tasks.loop(minutes=5)
-    async def dump_sqlruntimes(self):
+    async def dump_sqlruntimes(self) -> None:
         async with self.bot.db.lock:
             await self.bot.db.conn.dump()
 
-    def insert_returns(self, body):
+    def insert_returns(
+        self,
+        body
+    ) -> None:
         # insert return stmt if the last expression is a expression statement
         if isinstance(body[-1], ast.Expr):
             body[-1] = ast.Return(body[-1].value)
@@ -54,7 +64,11 @@ class Owner(commands.Cog):
         name='eval', aliases=['e']
     )
     @checks.is_owner()
-    async def eval_fn(self, ctx, *, body):
+    async def eval_fn(
+        self,
+        ctx: commands.Context,
+        *, body: str
+    ) -> None:
         """Evaluates input.
         Input is interpreted as newline seperated statements.
         If the last statement is an expression, that is the return value.
@@ -107,7 +121,10 @@ class Owner(commands.Cog):
         description='Clear cache from all servers'
     )
     @checks.is_owner()
-    async def clear_global_cache(self, ctx):
+    async def clear_global_cache(
+        self,
+        ctx: commands.Context
+    ) -> None:
         cache = self.bot.db.cache
         cache._messages = {}
         await ctx.send("Cleared message cache for all servers.")
@@ -119,9 +136,12 @@ class Owner(commands.Cog):
     )
     @checks.is_owner()
     async def manual_post_guild_count(
-        self, ctx, guilds: int, users: int,
-        bot_id
-    ):
+        self,
+        ctx: commands.Context,
+        guilds: int,
+        users: int,
+        bot_id: int
+    ) -> None:
         async with ctx.typing():
             errors = await post_all(guilds, users, bot_id)
         string = ''
@@ -136,7 +156,11 @@ class Owner(commands.Cog):
         description='Time postgres queries',
         hidden=True
     )
-    async def time_postgres(self, ctx, *args):
+    async def time_postgres(
+        self,
+        ctx: commands.Context,
+        *args: list
+    ) -> None:
         if ctx.author.id in bot_config.RUN_SQL:
             result = "None"
             times = 1
@@ -147,6 +171,7 @@ class Owner(commands.Cog):
                 async with self.bot.db.lock:
                     async with conn.transaction():
                         for a in args:
+                            a = ''.join(a)
                             try:
                                 times = int(a)
                             except Exception:
@@ -168,7 +193,11 @@ class Owner(commands.Cog):
             await ctx.send(result[0:500])
 
     @commands.command(name='sql', hidden=True)
-    async def get_sql_stats(self, ctx, sort: str = 'total'):
+    async def get_sql_stats(
+        self,
+        ctx: commands.Context,
+        sort: str = 'total'
+    ) -> None:
         if sort not in ['avg', 'total', 'count']:
             await ctx.send(
                 "Valid option are: 'avg', 'total', 'count'."
@@ -180,12 +209,12 @@ class Owner(commands.Cog):
         get_results = \
             """SELECT * FROM sqlruntimes"""
 
-        def sorter(l):
+        def sorter(li):
             if sort == 'avg':
-                return float(l[2])/l[1]
+                return float(li[2])/li[1]
             elif sort == 'total':
-                return float(l[2])
-            return l[1]
+                return float(li[2])
+            return li[1]
 
         conn = self.bot.db.conn
         async with self.bot.db.lock:
@@ -215,7 +244,10 @@ class Owner(commands.Cog):
         await ep.run([ctx.message.author], ctx.channel)
 
     @commands.command(name='clearsql')
-    async def clear_sql_stats(self, ctx):
+    async def clear_sql_stats(
+        self,
+        ctx: commands.Context
+    ) -> None:
         if ctx.message.author.id not in bot_config.RUN_SQL:
             return
         delete = \
@@ -228,7 +260,10 @@ class Owner(commands.Cog):
         await ctx.send("Done")
 
     @commands.command(name='dumpnow')
-    async def early_dump_sqlruntimes(self, ctx):
+    async def early_dump_sqlruntimes(
+        self,
+        ctx: commands.Context
+    ) -> None:
         if ctx.message.author.id not in bot_config.RUN_SQL:
             return
         async with self.bot.db.lock:
@@ -238,7 +273,10 @@ class Owner(commands.Cog):
 
     @commands.command(name='clean')
     @commands.is_owner()
-    async def clean_database(self, ctx):
+    async def clean_database(
+        self,
+        ctx: commands.Context
+    ) -> None:
         """Cleans several different things from the database"""
 
         conn = self.bot.db.conn
@@ -264,7 +302,11 @@ class Owner(commands.Cog):
 
     @commands.command(name='run')
     @commands.is_owner()
-    async def run_command(self, ctx, *, command: str):
+    async def run_command(
+        self,
+        ctx: commands.Context,
+        *, command: str
+    ) -> None:
         async with ctx.typing():
             output = out(command)
         if len(output) > 2000:
@@ -273,7 +315,11 @@ class Owner(commands.Cog):
 
     @commands.command(name='reload')
     @commands.is_owner()
-    async def reoloadext(self, ctx, ext: str = None):
+    async def reoloadext(
+        self,
+        ctx: commands.Context,
+        ext: str = None
+    ) -> None:
         message = (
             f"Reloaded {ext}" if ext else
             "Reloaded all extensions"
@@ -290,6 +336,47 @@ class Owner(commands.Cog):
         else:
             await ctx.send(message)
 
+    @commands.command(name='givemonths')
+    @commands.is_owner()
+    async def set_endsat(
+        self,
+        ctx: commands.Context,
+        guild_id: int,
+        months: int
+    ) -> None:
+        await functions.give_months(
+            self.bot, guild_id, months
+        )
+        await ctx.send("Done")
 
-def setup(bot):
+    @commands.command(name='givecredits')
+    @commands.is_owner()
+    async def give_credits(
+        self,
+        ctx: commands.Context,
+        user_id: int,
+        credits: int
+    ) -> None:
+        await functions.givecredits(
+            self.bot, user_id, credits
+        )
+        await ctx.send("Done")
+
+    @commands.command(name='sudo')
+    @checks.is_owner()
+    async def sudo_user(
+        self,
+        ctx: commands.Context,
+        user: discord.Member,
+        command: str
+    ) -> None:
+        await ctx.send(f"Sudoing {user.name}...")
+        ctx.message.content = command
+        ctx.message.author = user
+        self.bot.dispatch('message', ctx.message)
+
+
+def setup(
+    bot: commands.Bot
+) -> None:
     bot.add_cog(Owner(bot, bot.db))

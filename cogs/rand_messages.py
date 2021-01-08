@@ -1,6 +1,8 @@
 import random
-import bot_config
+
 from discord.ext import commands
+
+import bot_config
 
 
 def do_now() -> bool:
@@ -10,14 +12,23 @@ def do_now() -> bool:
 
 
 class RandomMessages(commands.Cog):
-    def __init__(self, bot):
+    """Occasionaly sends a random messages after a command is run"""
+    def __init__(
+        self,
+        bot: commands.Bot
+    ) -> None:
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_command(self, ctx):
+    async def on_command(
+        self,
+        ctx: commands.Context
+    ) -> None:
         if do_now():
             await ctx.send(random.choice(bot_config.RANDOM_MESSAGES))
 
 
-def setup(bot):
+def setup(
+    bot: commands.Bot
+) -> None:
     bot.add_cog(RandomMessages(bot))

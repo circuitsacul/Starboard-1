@@ -1,28 +1,39 @@
 import asyncpg as apg
 import os
 import time
+from discord.ext import commands
+from dotenv import load_dotenv
 from asyncio import Lock
 from discord import utils
+from typing import Any
 
+load_dotenv()
 db_pwd = os.getenv('DB_PWD')
 
 
 class aobject(object):
-    async def __new__(cls, *args, **kwargs):
+    async def __new__(
+        cls: Any,
+        *args,
+        **kwargs
+    ) -> Any:
         instance = super().__new__(cls)
         await instance.__init__(*args, **kwargs)
         return instance
 
-    async def __init__(self):
+    async def __init__(self) -> None:
         pass
 
 
 class CustomConn:
-    def __init__(self, realcon):
+    def __init__(
+        self,
+        realcon: apg.Connection
+    ) -> None:
         self.realcon = realcon
         self.sql_dict = {}
 
-    async def dump(self):  # requires external lock
+    async def dump(self) -> None:  # requires external lock
         add_row = \
             """INSERT INTO sqlruntimes (sql, count, time)
             values ($1, $2, $3)"""
@@ -53,53 +64,96 @@ class CustomConn:
 
         self.sql_dict = {}
 
-    def transaction(self, *args, **kwargs):
+    def transaction(
+        self, *args, **kwargs
+    ):
         return self.realcon.transaction(*args, **kwargs)
 
-    def log(self, sql, time):
+    def log(
+        self,
+        sql: str,
+        time: float
+    ) -> None:
         sql = sql.lower()
         self.sql_dict.setdefault(sql, {'c': 0, 'e': 0})
         self.sql_dict[sql]['c'] += 1
         self.sql_dict[sql]['e'] += time
 
-    async def prepare(self, *args, **kwargs):
+    async def prepare(
+        self,
+        *args, **kwargs
+    ) -> None:
         return await self.realcon.prepare(*args, **kwargs)
 
-    async def execute(self, sql, *args, **kwargs):
+    async def execute(
+        self,
+        sql: str,
+        *args, **kwargs
+    ):
         s = time.time()
         result = await self.realcon.execute(sql, *args, **kwargs)
         self.log(sql, time.time() - s)
         return result
 
-    async def fetch(self, sql, *args, **kwargs):
+    async def fetch(
+        self,
+        sql: str,
+        *args, **kwargs
+    ):
         s = time.time()
         result = await self.realcon.fetch(sql, *args, **kwargs)
         self.log(sql, time.time() - s)
         return result
 
-    async def fetchrow(self, sql, *args, **kwargs):
+    async def fetchrow(
+        self,
+        sql: str,
+        *args, **kwargs
+    ):
         s = time.time()
         result = await self.realcon.fetchrow(sql, *args, **kwargs)
         self.log(sql, time.time() - s)
         return result
 
+    async def fetchval(self, sql, *args, **kwargs):
+        s = time.time()
+        result = await self.realcon.fetchval(sql, *args, **kwargs)
+        self.log(sql, time.time() - s)
+        return result
+
 
 class BotCache(aobject):
-    async def __init__(self, event, limit=20):
+    async def __init__(
+        self,
+        event,
+        limit: int = 20
+    ) -> None:
         self._messages = {}
         self.limit = limit
         await self.set_listeners(event)
 
-    async def push(self, item, guild: int):
+    async def push(
+        self,
+        item: Any,
+        guild: int
+    ) -> None:
         self._messages.setdefault(guild, [])
         self._messages[guild].append(item)
         if len(self._messages[guild]) > self.limit:
             self._messages[guild].pop(0)
 
-    async def get(self, guild: int, **kwargs):
+    async def get(
+        self,
+        guild: int,
+        **kwargs
+    ) -> Any:
         return utils.get(self._messages.get(guild, []), **kwargs)
 
-    async def remove(self, msg_id: int, guild: int):
+    async def remove(
+        self,
+        msg_id: int,
+        guild: int
+    ) -> bool:
         status = False
         remove_index = None
         for x, msg in enumerate(self._messages.get(guild, [])):
@@ -110,7 +164,10 @@ class BotCache(aobject):
             status = True
         return status
 
-    async def set_listeners(self, event):
+    async def set_listeners(
+        self,
+        event
+    ) -> None:
         @event
         async def on_raw_message_delete(payload):
             if payload.guild_id is None:
@@ -135,7 +192,10 @@ class BotCache(aobject):
 
 
 class CommonSql(aobject):
-    async def __init__(self, conn):
+    async def __init__(
+        self,
+        conn: apg.Connection
+    ) -> None:
         self.create_guild = \
             await conn.prepare(
                 """INSERT INTO guilds (id) VALUES($1)"""
@@ -145,22 +205,10 @@ class CommonSql(aobject):
                 """INSERT INTO users (id, is_bot)
                 VALUES($1, $2)"""
             )
-        self.create_patron = \
-            await conn.prepare(
-                """INSERT INTO patrons (user_id, product_id)
-                VALUES($1, $2)"""
-            )
         self.create_vote = \
             await conn.prepare(
                 """INSERT INTO votes (user_id, expires)
                 VALUES($1, $2)"""
-            )
-        self.create_donation = \
-            await conn.prepare(
-                """INSERT INTO donations
-                (txn_id, user_id, product_id, role_id, guild_id,
-                email, price, currency, recurring, status)
-                VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)"""
             )
         self.create_member = \
             await conn.prepare(
@@ -220,13 +268,14 @@ class CommonSql(aobject):
                 link_deletes=$3,
                 bots_on_sb=$4,
                 required=$5,
-                rtl=$6
-                WHERE id=$7"""
+                rtl=$6,
+                require_image=$7
+                WHERE id=$8"""
             )
 
 
 class Database:
-    def __init__(self):
+    def __init__(self) -> None:
         self.lock = Lock()
         self.cooldowns = {
             'giving_stars': {}  # {user_id: cooldown_end_datetime}
@@ -235,19 +284,22 @@ class Database:
         self.cache = None
         self.as_cache = None
 
-    async def open(self, bot):
+    async def open(
+        self,
+        bot: commands.Bot
+    ) -> None:
         # self.q = await CommonSql()
         await self._create_tables()
         await self._apply_migrations()
         self.q = await CommonSql(await self.connect())
         self.cache = await BotCache(bot.event)
 
-    async def connect(self):
+    async def connect(self) -> CustomConn:
         if self.conn is None:
             self.conn = await self.make_connection()
         return self.conn
 
-    async def make_connection(self):
+    async def make_connection(self) -> CustomConn:
         conn = None
         try:
             conn = await apg.connect(
@@ -265,25 +317,25 @@ class Database:
         customconn = CustomConn(conn)
         return customconn
 
-    def _dict_factory(self, cursor, row):
+    def _dict_factory(self, cursor, row) -> dict:
         d = {}
         for idx, col in enumerate(cursor.description):
             d[col[0]] = row[idx]
         return d
 
-    async def _create_table(self, sql):
+    async def _create_table(self, sql: str) -> None:
         conn = await self.connect()
         await conn.realcon.execute(sql)
 
-    async def _create_index(self, sql):
+    async def _create_index(self, sql: str) -> None:
         conn = await self.connect()
         await conn.realcon.execute(sql)
 
-    async def _apply_migration(self, sql):
+    async def _apply_migration(self, sql: str) -> None:
         conn = await self.connect()
         await conn.realcon.execute(sql)
 
-    async def _apply_migrations(self):
+    async def _apply_migrations(self) -> None:
         messages__addcolumn__points = \
             """ALTER TABLE messages
             ADD COLUMN IF NOT EXISTS points int DEFAULT NULL
@@ -294,18 +346,60 @@ class Database:
             DEFAULT '{"sb!"}'"""
         deltable__prefixes = \
             """DROP TABLE IF EXISTS prefixes"""
+        deltable__patrons = \
+            """DROP TABLE IF EXISTS patrons"""
+        deltable__donations = \
+            """DROP TABLE IF EXISTS donations"""
+        users__addcolumn__credits = \
+            """ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS credits int DEFAULT 0"""
+        users__addcolumn__payment = \
+            """ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS payment smallint DEFAULT 0"""
+        guilds__addcolumn__premium_end = \
+            """ALTER TABLE guilds
+            ADD COLUMN IF NOT EXISTS premium_end
+            timestamp DEFAULT NULL"""
+        aschannels__addcolumn__locked = \
+            """ALTER TABLE aschannels
+            ADD COLUMN IF NOT EXISTS locked
+            bool NOT NULL DEFAULT False"""
+        members__addcolumn__autoredeem = \
+            """ALTER TABLE members
+            ADD COLUMN IF NOT EXISTS autoredeem
+            bool NOT NULL DEFAULT False"""
+        guilds__addcolumn__is_qa_on = \
+            """ALTER TABLE guilds
+            ADD COLUMN IF NOT EXISTS is_qa_on
+            bool NOT NULL DEFAULT False"""
+        starboards__addcolumn__require_image = \
+            """ALTER TABLE starboards
+            ADD COLUMN IF NOT EXISTS require_image
+            BOOL NOT NULL DEFAULT False"""
 
         await self.lock.acquire()
         await self._apply_migration(messages__addcolumn__points)
         await self._apply_migration(guilds__addcolumn__prefixes)
         await self._apply_migration(deltable__prefixes)
+        await self._apply_migration(deltable__patrons)
+        await self._apply_migration(deltable__donations)
+        await self._apply_migration(users__addcolumn__credits)
+        await self._apply_migration(users__addcolumn__payment)
+        await self._apply_migration(guilds__addcolumn__premium_end)
+        await self._apply_migration(aschannels__addcolumn__locked)
+        await self._apply_migration(members__addcolumn__autoredeem)
+        await self._apply_migration(guilds__addcolumn__is_qa_on)
+        await self._apply_migration(starboards__addcolumn__require_image)
         self.lock.release()
 
-    async def _create_tables(self):
+    async def _create_tables(self) -> None:
         guilds_table = \
             """CREATE TABLE IF NOT EXISTS guilds (
                 id numeric PRIMARY KEY,
                 prefixes VARCHAR(8) ARRAY DEFAULT "{'sb!'}",
+                is_qa_on bool NOT NULL DEFAULT False,
+
+                premium_end timestamp DEFAULT NULL,
 
                 stars_given integer NOT NULL DEFAULT 0,
                 stars_recv integer NOT NULL DEFAULT 0
@@ -326,14 +420,10 @@ class Database:
                 id numeric PRIMARY KEY,
                 is_bot bool NOT NULL,
 
-                lvl_up_msgs bool DEFAULT True
-            )"""
+                payment smallint DEFAULT 0,
+                credits int DEFAULT 0,
 
-        patrons_table = \
-            """CREATE TABLE IF NOT EXISTS patrons (
-                id SERIAL PRIMARY KEY,
-                user_id numeric NOT NULL,
-                product_id text NOT NULL
+                lvl_up_msgs bool DEFAULT True
             )"""
 
         votes_table = \
@@ -347,21 +437,9 @@ class Database:
                     ON DELETE CASCADE
             )"""
 
-        donations_table = \
-            """CREATE TABLE IF NOT EXISTS donations (
-                id SERIAL PRIMARY KEY,
-                txn_id integer NOT NULL,
-                user_id integer NOT NULL,
-                product_id text DEFAULT NULL,
-                role_id numeric DEFAULT NULL,
-                guild_id integer NOT NULL,
-
-                email text NOT NULL,
-                price integer NOT NULL,
-                currency text NOT NULL,
-
-                recurring bool NOT NULL,
-                status text NOT NULL
+        payrolls_table = \
+            """CREATE TABLE IF NOT EXISTS payrolls (
+                paydate timestamp NOT NULL
             )"""
 
         members_table = \
@@ -375,6 +453,8 @@ class Database:
 
                 xp int NOT NULL DEFAULT 0,
                 lvl int NOT NULL DEFAULT 0,
+
+                autoredeem bool NOT NULL DEFAULT False,
 
                 FOREIGN KEY (user_id) REFERENCES users (id)
                     ON DELETE CASCADE,
@@ -394,6 +474,7 @@ class Database:
                 link_edits bool NOT NULL DEFAULT true,
                 link_deletes bool NOT NULL DEFAULT false,
                 bots_on_sb bool NOT NULL DEFAULT true,
+                require_image bool NOT NULL DEFAULT false,
 
                 locked bool NOT NULL DEFAULT false,
 
@@ -421,7 +502,9 @@ class Database:
 
                 min_chars int NOT NULL DEFAULT 0,
                 require_image bool NOT NULL DEFAULT False,
-                delete_invalid bool NOT NULL DEFAULT False
+                delete_invalid bool NOT NULL DEFAULT False,
+
+                locked bool NOT NULL DEFAULT False
             )"""
 
         asemojis_table = \
@@ -532,9 +615,8 @@ class Database:
         await self._create_table(guilds_table)
         await self._create_table(prefixes_table)
         await self._create_table(users_table)
-        await self._create_table(patrons_table)
         await self._create_table(votes_table)
-        await self._create_table(donations_table)
+        await self._create_table(payrolls_table)
         await self._create_table(members_table)
         await self._create_table(starboards_table)
         await self._create_table(sbemoijs_table)

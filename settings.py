@@ -1,16 +1,25 @@
-from errors import DoesNotExist
-import functions
-import errors
+from typing import Union, Optional
+
 import discord
 from discord.ext import commands
-from typing import Union
+
+import errors
+import functions
+from database.database import Database  # for type hinting
+from errors import DoesNotExist
 
 
 async def change_starboard_settings(
-    db, starboard_id, self_star=None, link_edits=None,
-    link_deletes=None, bots_on_sb=None,
-    required=None, rtl=None
-):
+    db: Database,
+    starboard_id: int,
+    self_star: bool = None,
+    link_edits: bool = None,
+    link_deletes: bool = None,
+    bots_on_sb: bool = None,
+    required: int = None,
+    rtl: int = None,
+    require_image: bool = None
+) -> Optional[bool]:
     get_starboard = \
         """SELECT * FROM starboards WHERE id=$1"""
     update_starboard = \
@@ -20,8 +29,9 @@ async def change_starboard_settings(
         link_deletes=$3,
         bots_on_sb=$4,
         required=$5,
-        rtl=$6
-        WHERE id=$7"""
+        rtl=$6,
+        require_image=$7
+        WHERE id=$8"""
 
     if required is not None:
         if required > 100:
@@ -57,6 +67,8 @@ async def change_starboard_settings(
                     else ssb['required']
                 s['rtl'] = rtl if rtl is not None \
                     else ssb['rtl']
+                s['ri'] = require_image if require_image is not None \
+                    else ssb['require_image']
 
                 if s['r'] <= s['rtl']:
                     status = False
@@ -65,7 +77,7 @@ async def change_starboard_settings(
                         await conn.execute(
                             update_starboard,
                             s['ss'], s['le'], s['ld'], s['bos'], s['r'],
-                            s['rtl'], starboard_id
+                            s['rtl'], s['ri'], starboard_id
                         )
                     except Exception as e:
                         print(e)
@@ -74,9 +86,12 @@ async def change_starboard_settings(
 
 
 async def change_aschannel_settings(
-    db, aschannel_id, min_chars=None, require_image=None,
-    delete_invalid=None
-):
+    db: Database,
+    aschannel_id: int,
+    min_chars: int = None,
+    require_image: bool = None,
+    delete_invalid: bool = None
+) -> None:
     get_aschannel = \
         """SELECT * FROM aschannels WHERE id=$1"""
     update_aschannel = \
@@ -113,7 +128,10 @@ async def change_aschannel_settings(
             )
 
 
-async def add_aschannel(bot: commands.Bot, channel: discord.TextChannel):
+async def add_aschannel(
+    bot: commands.Bot,
+    channel: discord.TextChannel
+) -> None:
     check_aschannel = \
         """SELECT * FROM aschannels WHERE id=$1"""
     check_starboard = \
@@ -128,7 +146,7 @@ async def add_aschannel(bot: commands.Bot, channel: discord.TextChannel):
     guild = channel.guild
     perms = channel.permissions_for(guild.me)
     limit = await functions.get_limit(
-        bot.db, 'aschannels', guild
+        bot, 'aschannels', guild.id
     )
     conn = bot.db.conn
 
@@ -158,8 +176,8 @@ async def add_aschannel(bot: commands.Bot, channel: discord.TextChannel):
             if len(all_aschannels) >= limit:
                 raise errors.NoPremiumError(
                     "You have reached your limit for AutoStar Channels"
-                    " in this server.\nTo add more AutoStar channels, "
-                    "the server owner must become a patron."
+                    " in this server.\nSee the last page of `sb!tutorial` "
+                    "for more info."
                 )
 
             sql_aschannel = await conn.fetchrow(
@@ -187,7 +205,11 @@ async def add_aschannel(bot: commands.Bot, channel: discord.TextChannel):
             )
 
 
-async def remove_aschannel(bot: commands.Bot, channel_id: int, guild_id: int):
+async def remove_aschannel(
+    bot: commands.Bot,
+    channel_id: int,
+    guild_id: int
+) -> None:
     check_aschannel = \
         """SELECT * FROM aschannels WHERE id=$1 AND guild_id=$2"""
     del_aschannel = \
@@ -209,10 +231,14 @@ async def remove_aschannel(bot: commands.Bot, channel_id: int, guild_id: int):
 
             await conn.execute(del_aschannel, channel_id)
 
+    await functions.refresh_guild_premium(bot, guild_id, send_alert=False)
+
 
 async def add_asemoji(
-    bot: commands.Bot, aschannel: discord.TextChannel, name: str
-):
+    bot: commands.Bot,
+    aschannel: discord.TextChannel,
+    name: str
+) -> None:
     check_aschannel = \
         """SELECT * FROM aschannels WHERE id=$1"""
     check_asemoji = \
@@ -242,8 +268,10 @@ async def add_asemoji(
 
 
 async def remove_asemoji(
-    bot: commands.Bot, aschannel: discord.TextChannel, name: str
-):
+    bot: commands.Bot,
+    aschannel: discord.TextChannel,
+    name: str
+) -> None:
     check_aschannel = \
         """SELECT * FROM aschannels WHERE id=$1"""
     check_asemoji = \
@@ -274,7 +302,10 @@ async def remove_asemoji(
             )
 
 
-async def add_starboard(bot: commands.Bot, channel: discord.TextChannel):
+async def add_starboard(
+    bot: commands.Bot,
+    channel: discord.TextChannel
+) -> None:
     check_starboard = \
         """SELECT * FROM starboards WHERE id=$1"""
     check_aschannel = \
@@ -307,7 +338,7 @@ async def add_starboard(bot: commands.Bot, channel: discord.TextChannel):
         )
 
     limit = await functions.get_limit(
-        bot.db, 'starboards', guild
+        bot, 'starboards', guild.id
     )
     conn = bot.db.conn
 
@@ -323,8 +354,7 @@ async def add_starboard(bot: commands.Bot, channel: discord.TextChannel):
             if len(all_starboards) + 1 > limit:
                 raise errors.NoPremiumError(
                     "You have reached your limit for starboards on this server"
-                    "\nTo add more starboards, the owner of this server must "
-                    "become a patron."
+                    "\nSee the last page of `sb!tutorial` for more info."
                 )
 
             sql_starboard = await conn.fetchrow(
@@ -352,7 +382,11 @@ async def add_starboard(bot: commands.Bot, channel: discord.TextChannel):
     await add_starboard_emoji(bot, channel.id, channel.guild, '⭐')
 
 
-async def remove_starboard(bot: commands.Bot, channel_id: int, guild_id: int):
+async def remove_starboard(
+    bot: commands.Bot,
+    channel_id: int,
+    guild_id: int
+) -> None:
     check_starboard = \
         """SELECT * FROM starboards WHERE id=$1 AND guild_id=$2"""
     del_starboard = \
@@ -375,11 +409,15 @@ async def remove_starboard(bot: commands.Bot, channel_id: int, guild_id: int):
                 del_starboard, channel_id
             )
 
+    await functions.refresh_guild_premium(bot, guild_id, send_alert=False)
+
 
 async def add_starboard_emoji(
-    bot: commands.Bot, starboard_id: int, guild: discord.Guild,
+    bot: commands.Bot,
+    starboard_id: int,
+    guild: discord.Guild,
     emoji: Union[discord.Emoji, str]
-):
+) -> None:
     check_sbemoji = \
         """SELECT * FROM sbemojis WHERE name=$1 AND starboard_id=$2"""
     get_all_sbemojis = \
@@ -399,7 +437,7 @@ async def add_starboard_emoji(
     emoji_id = emoji.id if isinstance(
         emoji, discord.Emoji) else None
 
-    limit = await functions.get_limit(bot.db, 'emojis', guild)
+    limit = await functions.get_limit(bot, 'emojis', guild.id)
     conn = bot.db.conn
 
     async with bot.db.lock:
@@ -418,8 +456,8 @@ async def add_starboard_emoji(
             if len(all_sbemojis) + 1 > limit:
                 raise errors.NoPremiumError(
                     "You have reached your limit for emojis "
-                    "on this starboard.\nTo add more emojis, "
-                    "the server owner must become a patron."
+                    "on this starboard.\nSee the last page of "
+                    "`sb!tutorial` for more info."
                 )
 
             sbemoji = await conn.fetchrow(
@@ -437,9 +475,11 @@ async def add_starboard_emoji(
 
 
 async def remove_starboard_emoji(
-    bot: commands.Bot, starboard_id: int, guild: discord.Guild,
+    bot: commands.Bot,
+    starboard_id: int,
+    guild: discord.Guild,
     emoji: Union[discord.Emoji, str]
-):
+) -> None:
     check_sbemoji = \
         """SELECT * FROM sbemojis WHERE name=$1 AND starboard_id=$2"""
     check_starboard = \

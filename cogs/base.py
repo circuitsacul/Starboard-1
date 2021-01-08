@@ -1,8 +1,8 @@
 import discord
-import bot_config
 from discord.ext import commands
-from discord import utils
 
+import bot_config
+import functions
 
 pages = {
     'About Starboard': (
@@ -155,9 +155,9 @@ pages = {
         "With this bot, you can manage messages easily.\n\n"
         "**sb!force <message id> [channel]**\n"
         "Sends a message to all starboards, regardless "
-        "of the number of stars it actually has."
+        "of the number of stars it actually has.\n\n"
         "**sb!unforce <message id> [channel]**\n"
-        "Unforces a message\n"
+        "Unforces a message\n\n"
         "**sb!trash <message id> [channel]**\n"
         "Trashes a message to hide it's content and prevent "
         "it from appearing on starboards\n\n"
@@ -169,6 +169,41 @@ pages = {
         "**sb!unfreeze <message id> [channel]**\n"
         "Unfreezes a message\n\n"
         "**sb!frozen**\nView a list of frozen messages"
+    ),
+    'Starboard Premium': (
+        "If you want premium perks, you must [become "
+        f"a patron]({bot_config.DONATE})\n\n"
+        "To make things as simple as possible, we use a "
+        "credit system for premium. It works much like "
+        "discord boosts -- every $ you send to us gives "
+        "you 1 premium credit, and once you have "
+        f"{bot_config.PREMIUM_COST} "
+        "credits you can convert that to 1 month "
+        "of premium for 1 server. You can gain credits "
+        "by donating, or by becoming a patron (which will "
+        "give you X credits/month, depending on your tier).\n\n"
+        "If you ever have any questions feel free to join "
+        f"the [support server]({bot_config.SUPPORT_SERVER})\n\n"
+        "**sb!redeem <months>**\n"
+        "Redeems X months of premium in "
+        f"the server you use the command in. {bot_config.PREMIUM_COST}"
+        " credits equals 1 month of premium for a server.\n\n"
+        "**sb!premium**\nView premium info, including your "
+        "current pledge and credits.\n\n"
+        "**sb!guildpremium**\nView the current servers "
+        "premium status.\n\n"
+        "**sb!autoredeem**\nIf run in DMs, it will show you "
+        "all the servers you have enabled autoredeem for. "
+        "Running it in a server will just show the setting for "
+        "that server.\n\n"
+        "**sb!autoredeem on**\nEnables autoredeem in the server "
+        "you send this command. When this is enabled, if the "
+        "server is about to run out of premium it will "
+        "automtically take credits from your account instead "
+        "of disabling premium on the server.\n\n"
+        "**sb!autoredeem off [guild id]**\nDisables autoredeem "
+        "in the guild you send the command, or for the guild "
+        "you sepcify."
     )
 }
 
@@ -186,61 +221,218 @@ numer_emojis = [
 stop_emoji = "⏹️"
 
 
-def get_usage(
-    ctx, command: commands.Command
-):
-    clean_prefix = utils.escape_markdown(ctx.prefix)
-    usage = (
-        f"{clean_prefix}{command.qualified_name} {command.signature}"
-    )
-    return usage
-
-
-def get_command_embed(
-    ctx, command: commands.Command
-):
-    usage = get_usage(ctx, command)
-    embed = discord.Embed(
-        title='Command Help',
-        description=command.description + '\n\n' + (command.help or ''),
-        color=bot_config.COLOR
-    )
-    embed.add_field(
-        name='Usage',
-        value=f"```\n{usage}\n```"
-    )
-    return embed
-
-
-async def showpage(message, embed):
+async def showpage(
+    message: discord.Message,
+    embed: discord.Embed
+) -> None:
     await message.edit(embed=embed)
 
 
-class HelpCommand(commands.Cog):
-    def __init__(self, bot):
+class Base(commands.Cog):
+    """Basic info about Starboard"""
+    def __init__(
+        self,
+        bot: commands.Bot
+    ) -> None:
         self.bot = bot
+
+    @commands.Cog.listener()
+    async def on_message(
+        self,
+        message: discord.Message
+    ) -> None:
+        if message.author.bot:
+            return
+
+        elif message.content.replace('!', '') == self.bot.user.mention:
+            if message.guild is not None:
+                await functions.check_or_create_existence(
+                    self.bot, message.guild.id, message.author,
+                    do_member=True
+                )
+
+            if message.guild is not None:
+                p = await functions.get_one_prefix(self.bot, message.guild.id)
+            else:
+                p = bot_config.DEFAULT_PREFIX
+            try:
+                await message.channel.send(
+                    f"To get started, run `{p}setup`.\n"
+                    f"To see all my commands, run `{p}help`\n"
+                    "If you need help, you can join the support "
+                    f"server {bot_config.SUPPORT_SERVER}"
+                )
+            except Exception:
+                pass
+        else:
+            await self.bot.process_commands(message)
+
+    @commands.Cog.listener()
+    async def on_ready(
+        self
+    ) -> None:
+        await self.bot.change_presence(
+            activity=discord.Game("Mention me for help")
+        )
+        print(
+            f"Logged in as {self.bot.user.name} "
+            f"in {len(self.bot.guilds)} guilds!"
+        )
+
+    @commands.command(
+        name='links', aliases=['invite', 'support'],
+        brief='View helpful links'
+    )
+    async def show_links(
+        self,
+        ctx: commands.Context
+    ) -> None:
+        """Lists helpful links"""
+        embed = discord.Embed(title="Helpful Links", color=bot_config.COLOR)
+        description = \
+            f"**[Support Server]({bot_config.SUPPORT_SERVER})**"\
+            f"\n**[Invite Me]({bot_config.INVITE})**"\
+            f"\n**[Submit Bug Report or Suggestion]({bot_config.ISSUES_PAGE})"\
+            "**"\
+            f"\n**[Source Code]({bot_config.SOURCE_CODE})**"\
+            f"\n**[Donate/Become a Patron]({bot_config.DONATE})**"\
+            f"\n**[Vote for Starboard]({bot_config.VOTE})**"
+        embed.description = description
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        name='vote',
+        brief='Vote for Starboard'
+    )
+    async def show_vote_info(
+        self,
+        ctx: commands.Context
+    ) -> None:
+        """Gives you a link that you can use to vote for starboard.
+        If you are in the Support Server when you vote, you will
+        receive the @Voter role for 1 day."""
+        embed = discord.Embed(
+            title="Vote for Starboard!",
+            color=bot_config.COLOR
+        )
+        description = \
+            "If you vote for this bot, you will receive the "\
+            "**@Voter** role in the **[Official Starboard Support Server]"\
+            f"({bot_config.SUPPORT_SERVER}).**"\
+            f"\n\n**[Click Here to Vote For Starboard!]({bot_config.VOTE})**"
+        embed.description = description
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        name='privacy', aliases=['policy'],
+        brief="View privacy policy"
+    )
+    async def show_privacy_policy(
+        self,
+        ctx: commands.Context
+    ) -> None:
+        """Sends the bots privacy policy"""
+        embed = discord.Embed(title='Privacy Policy', color=bot_config.COLOR)
+        embed.description = bot_config.PRIVACY_POLICY
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        name='about', brief='About Starboards',
+    )
+    async def about_starboard(
+        self,
+        ctx: commands.Context
+    ) -> None:
+        """Explains what a starboard is"""
+        msg = "Starboard is a Discord starboard bot. "\
+            "Starboards are kind of like democratic pins. "\
+            "A user can \"vote\" to have a message displayed on "\
+            "a channel by reacting with an emoji, usually a star. "\
+            "A Starboard is a great way to archive funny messages."
+        embed = discord.Embed(
+            title='About Starboard and Starboards',
+            description=msg, color=bot_config.COLOR
+        )
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        name='ping', aliases=['latency'],
+        description='Get various bot ping statistics.',
+        brief='Get bot ping'
+    )
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def get_bot_ping(
+        self,
+        ctx: commands.Context
+    ) -> None:
+        """Shows you the average latency as well as the latency
+        for each shard"""
+        def ms(seconds: int) -> int:
+            return int((seconds*1000))
+
+        latency = ms(self.bot.latency)
+
+        embed = discord.Embed(
+            title='Pong!',
+            description=f"Average Latency: {latency} ms\n",
+            color=bot_config.COLOR
+        )
+
+        other_shards = ''
+        for sid, l in self.bot.latencies:
+            if ctx.guild and sid == ctx.guild.shard_id:
+                other_shards += f"**Shard {sid}**: {ms(l)} ms\n"
+            else:
+                other_shards += f"Shard {sid}: {ms(l)} ms\n"
+
+        embed.add_field(
+            name='Shards', value=other_shards
+        )
+
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        name='stats', aliases=['botstats'],
+        description='Bot stats', brief='Bot stats'
+    )
+    async def stats_for_bot(
+        self,
+        ctx: commands.Context
+    ) -> None:
+        """Shows you some of Starboard's stats"""
+        total = 0
+        for g in self.bot.guilds:
+            try:
+                total += g.member_count
+            except AttributeError:
+                pass
+        embed = discord.Embed(
+            title='Bot Stats', colour=bot_config.COLOR,
+            description=f"**Guilds:** {len(self.bot.guilds)}"
+            f"\n**Users:** {total}"
+            f"\n**Ping:** {int(self.bot.latency*1000)} ms"
+        )
+        await ctx.send(embed=embed)
 
     @commands.command(
         name='help', aliases=['h', '?'],
         brief="Get help with the bot",
-        description="Get help with the bot"
+        description="Get help with the bot",
     )
     @commands.bot_has_permissions(send_messages=True)
-    async def help(self, ctx, *, command: str = None):
+    async def help(
+        self,
+        ctx: commands.Context
+    ) -> None:
+        """Entry-point for Starboard"""
         p = ctx.prefix
-        if not command:
-            await ctx.send(
-                "For a tutorial on using the bot, run "
-                f"`{p}tutorial`. To get help on a specific "
-                f"command, run `{p}help <command>`"
-            )
-        else:
-            cmd = self.bot.get_command(command)
-            if not cmd:
-                await ctx.send("I couldn't find that command")
-                return
-            e = get_command_embed(ctx, cmd)
-            await ctx.send(embed=e)
+        await ctx.send(
+            "For a tutorial on using the bot, run "
+            f"`{p}tutorial`. You can view a complete "
+            f"command list with `{p}commands`, and "
+            "you can get help with a specific "
+            f"command by running `{p}commands <command>`"
+        )
 
     @commands.command(
         name='tutorial',
@@ -248,7 +440,12 @@ class HelpCommand(commands.Cog):
         brief='Get help with the bot'
     )
     @commands.bot_has_permissions(embed_links=True, send_messages=True)
-    async def run_tutorial(self, ctx):
+    async def run_tutorial(
+        self,
+        ctx: commands.Context
+    ) -> None:
+        """Shows you a highly detailed tutorial on using nearly
+        every feature/command of the bot"""
         embeds = [
             discord.Embed(
                 title=t,
@@ -284,7 +481,8 @@ class HelpCommand(commands.Cog):
                 'raw_reaction_add', check=check
             )
             try:
-                await message.remove_reaction(payload.emoji.name, payload.member)
+                await message.remove_reaction(
+                    payload.emoji.name, payload.member)
             except Exception:
                 pass
             try:
@@ -301,5 +499,7 @@ class HelpCommand(commands.Cog):
             pass
 
 
-def setup(bot):
-    bot.add_cog(HelpCommand(bot))
+def setup(
+    bot: commands.Bot
+) -> None:
+    bot.add_cog(Base(bot))
