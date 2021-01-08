@@ -897,7 +897,7 @@ async def update_message(
 
         embed, attachments = await functions.get_embed_from_message(
             orig_message
-        ) if orig_message is not None else None
+        ) if orig_message is not None else (None, None)
 
         if add and embed is not None:
             async with db.lock:
