@@ -177,11 +177,11 @@ class Starboard(commands.Cog):
         channel = self.bot.get_channel(orig_cid)
         m = await channel.fetch_message(orig_mid)
 
-        e = await functions.get_embed_from_message(m)
+        e, attachments = await functions.get_embed_from_message(m)
 
         await ctx.send(
             f"**{sql_rand_message['points']} | {channel.mention}**",
-            embed=e
+            embed=e, files=attachments
         )
 
     @commands.group(
@@ -273,6 +273,8 @@ class Starboard(commands.Cog):
                             f"{bool(sql_starboard['link_deletes'])}**"\
                             "\n**botsOnStarboard: "\
                             f"{bool(sql_starboard['bots_on_sb'])}**"\
+                            "\n**requireImage: "\
+                            f"{bool(sql_starboard['require_image'])}**"\
                             f"\n**locked: {bool(sql_starboard['locked'])}**"
 
                         embed = discord.Embed(
@@ -359,6 +361,33 @@ class Starboard(commands.Cog):
             self.bot, starboard.id, ctx.guild, emoji
         )
         await ctx.send(f"Remove {emoji} from {starboard.mention}")
+
+    @sb_settings.command(
+        name='requireImage', aliases=['ri', 'imagesOnly'],
+        brief="Sets the requireImage setting for a starboard"
+    )
+    @commands.has_guild_permissions(
+        manage_channels=True,
+        manage_messages=True
+    )
+    @commands.guild_only()
+    async def set_require_image(
+        self,
+        ctx: commands.Context,
+        starboard: discord.TextChannel,
+        value: bool
+    ) -> None:
+        status = await change_starboard_settings(
+            self.db, starboard.id, require_image=value
+        )
+        if status is None:
+            await ctx.send("That is not a starboard!")
+        elif status is False:
+            await ctx.send("Something went wrong.")
+        else:
+            await ctx.send(
+                f"Set requireImage to {value} for {starboard.mention}"
+            )
 
     @sb_settings.command(
         name='requiredStars', aliases=['rs', 'required'],
@@ -782,6 +811,7 @@ async def handle_starboard(
     link_deletes = sql_starboard['link_deletes']
     link_edits = sql_starboard['link_edits']
     bots_on_sb = sql_starboard['bots_on_sb']
+    require_image = sql_starboard['require_image']
     is_bot = sql_author['is_bot']
     forced = sql_message['is_forced']
     frozen = sql_message['is_frozen']
@@ -800,6 +830,11 @@ async def handle_starboard(
         add = False
     elif on_starboard is False:
         remove = False
+
+    if message is not None:
+        if require_image and len(message.attachments) == 0:
+            add = False
+            remove = True
 
     if is_bot and not bots_on_sb:
         add = False
@@ -862,9 +897,9 @@ async def update_message(
             f"{' | ❄️' if frozen else ''}**"
         )
 
-        embed = await functions.get_embed_from_message(
+        embed, attachments = await functions.get_embed_from_message(
             orig_message
-        ) if orig_message is not None else None
+        ) if orig_message is not None else (None, None)
 
         if add and embed is not None:
             async with db.lock:
@@ -877,7 +912,9 @@ async def update_message(
             if _message is not None:
                 return
             try:
-                sb_message = await starboard.send(plain_text, embed=embed)
+                sb_message = await starboard.send(
+                    plain_text, embed=embed, files=attachments
+                )
             except discord.errors.Forbidden:
                 pass
             else:

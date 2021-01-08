@@ -189,7 +189,7 @@ async def is_starboard_emoji(
 
 async def get_embed_from_message(
     message: discord.Message
-) -> discord.Embed:
+) -> Tuple[discord.Embed, List[discord.File]]:
     nsfw = message.channel.is_nsfw()
     embed = discord.Embed(
         title="NSFW" if nsfw else discord.Embed.Empty, colour=bot_config.COLOR
@@ -201,10 +201,15 @@ async def get_embed_from_message(
     msg_attachments = message.attachments
     urls = []
 
+    extra_attachments = []
+
     for attachment in msg_attachments:
+        if attachment.is_spoiler():
+            extra_attachments.append(await attachment.to_file())
         urls.append({
             'name': attachment.filename, 'display_url': attachment.url,
-            'url': attachment.url, 'type': 'upload'
+            'url': attachment.url, 'type': 'upload',
+            'spoiler': attachment.is_spoiler()
         })
 
     e = discord.embeds._EmptyEmbed
@@ -231,19 +236,21 @@ async def get_embed_from_message(
                 urls.append({
                     'name': 'Embed Image',
                     'url': msg_embed.image.url,
-                    'display_url': msg_embed.image.url
+                    'display_url': msg_embed.image.url,
+                    'spoiler': False,
                 })
             if msg_embed.thumbnail.url is not embed.Empty:
                 urls.append({
                     'name': 'Embed Thumbnail',
                     'url': msg_embed.thumbnail.url,
-                    'display_url': msg_embed.thumbnail.url
+                    'display_url': msg_embed.thumbnail.url,
+                    'spoiler': False
                 })
         elif msg_embed.type == 'image':
             if msg_embed.url != discord.Embed.Empty:
                 urls.append({
                     'name': 'Image', 'display_url': msg_embed.thumbnail.url,
-                    'url': msg_embed.url, 'type': 'image'
+                    'url': msg_embed.url, 'type': 'image', 'spoiler': False
                 })
         elif msg_embed.type == 'gifv':
             gifid = tenor.get_gif_id(msg_embed.url)
@@ -254,13 +261,13 @@ async def get_embed_from_message(
             if msg_embed.url != discord.Embed.Empty:
                 urls.append({
                     'name': 'GIF', 'display_url': display_url,
-                    'url': msg_embed.url, 'type': 'gif'
+                    'url': msg_embed.url, 'type': 'gif', 'spoiler': False
                 })
         elif msg_embed.type == 'video':
             if msg_embed.url != discord.Embed.Empty:
                 urls.append({
                     'name': 'Video', 'display_url': msg_embed.thumbnail.url,
-                    'url': msg_embed.url, 'type': 'video'
+                    'url': msg_embed.url, 'type': 'video', 'spoiler': False
                 })
 
     value_string = f"{message.system_content}\n{embed_text}"
@@ -280,6 +287,8 @@ async def get_embed_from_message(
         current = 0
         for item in urls:
             url_string += f"[**{item['name']}**]({item['url']})\n"
+            if item['spoiler']:
+                continue
             if current == 0:
                 embed.set_image(url=item['display_url'])
                 current += 1
@@ -291,7 +300,7 @@ async def get_embed_from_message(
     embed.set_footer(text=f"ID: {message.id}")
     embed.timestamp = message.created_at
 
-    return embed
+    return embed, extra_attachments
 
 
 async def calculate_points(

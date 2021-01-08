@@ -484,7 +484,7 @@ class Base(commands.Cog):
             f"`{p}tutorial`. You can view a complete "
             f"command list with `{p}commands`, and "
             "you can get help with a specific "
-            f"command by running `{p}commands <commane>`"
+            f"command by running `{p}commands <command>`"
         )
 
     @commands.command(

@@ -17,7 +17,8 @@ async def change_starboard_settings(
     link_deletes: bool = None,
     bots_on_sb: bool = None,
     required: int = None,
-    rtl: int = None
+    rtl: int = None,
+    require_image: bool = None
 ) -> Optional[bool]:
     get_starboard = \
         """SELECT * FROM starboards WHERE id=$1"""
@@ -28,8 +29,9 @@ async def change_starboard_settings(
         link_deletes=$3,
         bots_on_sb=$4,
         required=$5,
-        rtl=$6
-        WHERE id=$7"""
+        rtl=$6,
+        require_image=$7
+        WHERE id=$8"""
 
     if required is not None:
         if required > 100:
@@ -65,6 +67,8 @@ async def change_starboard_settings(
                     else ssb['required']
                 s['rtl'] = rtl if rtl is not None \
                     else ssb['rtl']
+                s['ri'] = require_image if require_image is not None \
+                    else ssb['require_image']
 
                 if s['r'] <= s['rtl']:
                     status = False
@@ -73,7 +77,7 @@ async def change_starboard_settings(
                         await conn.execute(
                             update_starboard,
                             s['ss'], s['le'], s['ld'], s['bos'], s['r'],
-                            s['rtl'], starboard_id
+                            s['rtl'], s['ri'], starboard_id
                         )
                     except Exception as e:
                         print(e)
