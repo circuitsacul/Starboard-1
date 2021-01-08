@@ -1,0 +1,32 @@
+{% extends 'base.jinja' %}
+
+{% block topstatic %}
+<link rel='stylesheet' href="{{ url_for('static', filename='css/partners.css') }}">
+{% endblock %}
+
+{% block content %}
+<br>
+<h1 class='text-center'>Our Partners</h1>
+<br>
+<div class='container'>
+    <div class="row d-flex justify-content-center align-items-middle partner-box-container bg-dark">
+
+        {% for p in partners %}
+            <div class='col-md-4 partner-box' style="border: 4px solid {{ p['color'] }}">
+                <a href="{{ p['url'] }}" target='_blank'>
+                    <div class='inner-partner-box'>
+                        <div class='partner-splash-area'>
+                            <img src="{{ p['image'] }}">
+                            {{ p['title'] }}
+                        </div>
+                        <div class='partner-desc text-center'>
+                            {{ p['description'] }}
+                        </div>
+                    </div>
+                </a>
+            </div>
+        {% endfor %}
+
+    </div>
+</div>
+{% endblock %}
