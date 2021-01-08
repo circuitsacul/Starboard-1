@@ -38,6 +38,8 @@ This documentation gives you a quick start to using the bot. If you see a proble
 
 - Leveling, rank, and leaderboard
 
+- Award Roles (XP Roles and Position-base Roles)
+
 - Starboard moderation, such as:
 
   - Freezing a message, preventing the points from updating on it
