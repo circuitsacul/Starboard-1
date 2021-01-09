@@ -182,6 +182,16 @@ class Starboard(commands.Cog):
             embed=e, files=attachments
         )
 
+    @random_message.error
+    async def handle_random_error(
+        self,
+        ctx: commands.Context,
+        error: Exception
+    ) -> None:
+        await ctx.send(
+            "Example command usage: `sb!random --stars 5 --in #starboard2`"
+        )
+
     @commands.group(
         name='starboards', aliases=['boards', 's', 'sb'],
         description='List and manage starboards',
