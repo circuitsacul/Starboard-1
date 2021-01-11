@@ -95,6 +95,9 @@ class Logging(commands.Cog):
         ctx: commands.Context,
         error: Exception
     ) -> None:
+        if hasattr(ctx.command, 'on_error'):
+            return
+
         try:
             error = error.original
         except Exception:
