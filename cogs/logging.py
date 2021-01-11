@@ -93,9 +93,10 @@ class Logging(commands.Cog):
     async def on_command_error(
         self,
         ctx: commands.Context,
-        error: Exception
+        error: Exception,
+        force: bool = False
     ) -> None:
-        if hasattr(ctx.command, 'on_error'):
+        if hasattr(ctx.command, 'on_error') and not force:
             return
 
         try:
