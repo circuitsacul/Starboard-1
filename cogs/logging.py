@@ -137,7 +137,7 @@ class Logging(commands.Cog):
                 ),
                 color=bot_config.ERROR_COLOR
             )
-            tb = traceback.format_tb(error.__traceback__)
+            tb = ''.join(traceback.format_tb(error.__traceback__))
             embed.add_field(
                 name=f"{error.__class__.__name__}: {error}",
                 value=f"```\n{tb}\n```"
