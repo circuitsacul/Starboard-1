@@ -47,7 +47,7 @@ async def is_orig(
                 """SELECT is_orig FROM messages
                 WHERE id=$1""", mid
             )
-    return is_orig
+    return is_orig if is_orig is not None else True
 
 
 async def toggle_setting(
