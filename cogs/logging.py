@@ -138,16 +138,25 @@ class Logging(commands.Cog):
                 color=bot_config.ERROR_COLOR
             )
             tb = ''.join(traceback.format_tb(error.__traceback__))
+            context = (
+                f"Command: {ctx.command}\nArgs: {ctx.args} "
+                f"\nKwargs: {ctx.kwargs}"
+            )
             embed.add_field(
-                name=f"{error.__class__.__name__}: {error}",
-                value=f"```\n{tb}\n```"
+                name=f"{error.__class__.__name__}",
+                value=str(error)
             )
             await ctx.send(embed=embed)
-            await functions.alert_owner(
-                ctx.bot,
-                f"{type(error)}: {error}"
-                f"\n```\n{tb}\n```"
-            )
+            full_strings = (
+                f"{type(error)}: {error}\n\n"
+                f"{context}\n\n"
+                f"```\n{tb}\n```"
+            ).split('\n')
+            p = commands.Paginator(prefix='', suffix='')
+            for s in full_strings:
+                p.add_line(line=s)
+            for page in p.pages:
+                await functions.alert_owner(ctx.bot, page)
             return
         try:
             await ctx.send(f"{error}")
