@@ -899,7 +899,13 @@ async def update_message(
                     pass
     elif remove:
         try:
-            await sb_message.delete()
+            if sb_message is not None:
+                await sb_message.delete()
+            else:
+                print("!!!!!!")
+                print(sb_message)
+                print(starboard)
+                print(orig_message)
         except discord.errors.NotFound:
             pass
     else:
