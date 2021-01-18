@@ -98,7 +98,7 @@ class Starboard(commands.Cog):
             user_id, message_id, emoji, False
         )
 
-    @flags.add_flag('--by', type=discord.User, default=None)
+    @flags.add_flag('--by', type=discord.Member, default=None)
     @flags.add_flag('--stars', type=int, default=None)
     @flags.add_flag('--in', type=discord.TextChannel, default=None)
     @flags.command(
