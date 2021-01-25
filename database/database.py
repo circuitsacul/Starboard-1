@@ -396,7 +396,7 @@ class Database:
         guilds_table = \
             """CREATE TABLE IF NOT EXISTS guilds (
                 id numeric PRIMARY KEY,
-                prefixes VARCHAR(8) ARRAY DEFAULT "{'sb!'}",
+                prefixes VARCHAR(8) ARRAY DEFAULT '{sb!}',
                 is_qa_on bool NOT NULL DEFAULT False,
 
                 premium_end timestamp DEFAULT NULL,
