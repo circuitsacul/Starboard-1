@@ -36,7 +36,7 @@ navigation = pretty_help.Navigation(
 
 intents = discord.Intents(
     messages=True, guilds=True, reactions=True,
-    emojis=True
+    emojis=True, members=True
 )
 
 
@@ -66,7 +66,9 @@ bot = Bot(
     intents=intents,
     help_command=help_command,
     description=BOT_DESCRIPTION,
-    shard_count=bot_config.SHARD_COUNT
+    shard_count=bot_config.SHARD_COUNT,
+    chunk_guilds_on_startup=False,
+    bla=True
 )
 web_server = HttpWebHook(bot, db)
 
