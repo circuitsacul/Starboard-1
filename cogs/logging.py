@@ -93,9 +93,10 @@ class Logging(commands.Cog):
     async def on_command_error(
         self,
         ctx: commands.Context,
-        error: Exception
+        error: Exception,
+        force: bool = False
     ) -> None:
-        if hasattr(ctx.command, 'on_error'):
+        if hasattr(ctx.command, 'on_error') and not force:
             return
 
         try:
@@ -129,54 +130,36 @@ class Logging(commands.Cog):
         elif type(error) is discord.http.Forbidden:
             error = "I don't have the permissions to do that!"
         else:
-            print(f"Error {type(error)}: {error}")
-            traceback.print_exception(
-                type(error), error, error.__traceback__, file=sys.stderr
-            )
-
             embed = discord.Embed(
-                title='Error!',
-                description='An unexpected error ocurred.\
-                    Please report this to the dev.',
+                title="Hmmm...",
+                description=(
+                    "Something went wrong while running that command. "
+                    "The error has been reported, and we will fix it "
+                    "as soon as we can."
+                ),
                 color=bot_config.ERROR_COLOR
             )
-            embed.add_field(
-                name='Error Message:',
-                value=f"{type(error)}:\n{error}",
-                inline=False
+            tb = ''.join(traceback.format_tb(error.__traceback__))
+            context = (
+                f"Command: {ctx.command}\nArgs: {ctx.args} "
+                f"\nKwargs: {ctx.kwargs}"
             )
             embed.add_field(
-                name='Report?',
-                value="Are you ok if I report this to the bot dev? React below \
-                    with :white_check_mark: for yes.",
-                inline=False
+                name=f"{error.__class__.__name__}",
+                value=str(error)
             )
-
-            report = await functions.confirm(
-                self.bot, ctx.channel,
-                None,
-                ctx.message.author.id,
-                embed=embed,
-                delete=False
-            )
-            if report:
-                await ctx.send(
-                    "I've reported the problem! Please still"
-                    "consider joining the support server and explaining"
-                    "what happened."
-                )
-                owner_embed = discord.Embed(
-                    title=f'Error in {ctx.guild.name} ({ctx.guild.id})',
-                    description=f"{type(error)}:\n{error}",
-                    color=bot_config.ERROR_COLOR
-                )
-                owner = self.bot.get_user(bot_config.OWNER_ID)
-                await owner.send(embed=owner_embed)
-            else:
-                await ctx.send(
-                    "This problem was not reported. Please consider "
-                    "joining the support server and explaining what happened."
-                )
+            await ctx.send(embed=embed)
+            full_strings = (
+                f"{type(error)}: {error}\n\n"
+                f"{context}\n\n"
+                f"```\n{tb}\n```"
+            ).split('\n')
+            p = commands.Paginator(prefix='', suffix='')
+            for s in full_strings:
+                p.add_line(line=s)
+            for page in p.pages:
+                await functions.alert_owner(ctx.bot, page)
+            return
         try:
             await ctx.send(f"{error}")
         except discord.errors.Forbidden:

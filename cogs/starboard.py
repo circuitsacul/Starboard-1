@@ -190,9 +190,12 @@ class Starboard(commands.Cog):
         ctx: commands.Context,
         error: Exception
     ) -> None:
-        await ctx.send(
-            "Example command usage: `sb!random --stars 5 --in #starboard2`"
-        )
+        if type(error) is flags.ArgumentParsingError:
+            await ctx.send(
+                "Example command usage: `sb!random --stars 5 --in #starboard2`"
+            )
+        else:
+            self.bot.dispatch('command_error', ctx, error, force=True)
 
     @commands.group(
         name='starboards', aliases=['boards', 's', 'sb'],
@@ -898,7 +901,8 @@ async def update_message(
                     pass
     elif remove:
         try:
-            await sb_message.delete()
+            if sb_message is not None:
+                await sb_message.delete()
         except discord.errors.NotFound:
             pass
     else:
