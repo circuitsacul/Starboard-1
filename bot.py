@@ -67,8 +67,7 @@ bot = Bot(
     help_command=help_command,
     description=BOT_DESCRIPTION,
     shard_count=bot_config.SHARD_COUNT,
-    chunk_guilds_at_startup=False,
-    bla=True
+    chunk_guilds_at_startup=False
 )
 web_server = HttpWebHook(bot, db)
 
