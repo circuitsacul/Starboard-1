@@ -258,8 +258,9 @@ class PositionRoles(commands.Cog):
 
     @tasks.loop(seconds=1)
     async def update_some_roles(self):
-        for guild_id in self.queue:
-            mids = self.queue[guild_id]
+        queue = self.queue.copy()
+        for guild_id in queue:
+            mids = queue[guild_id]
             if len(mids) == 0:
                 continue
             member_id = mids.pop(0)
