@@ -36,7 +36,7 @@ navigation = pretty_help.Navigation(
 
 intents = discord.Intents(
     messages=True, guilds=True, reactions=True,
-    emojis=True
+    emojis=True, members=True
 )
 
 
@@ -111,6 +111,8 @@ async def main() -> None:
         'cogs.rand_messages',
         'cogs.base',
         'cogs.logging',
+        'cogs.xproles',
+        'cogs.posroles',
         'jishaku'
     ]
 
