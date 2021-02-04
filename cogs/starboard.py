@@ -27,8 +27,10 @@ async def pretty_emoji_string(
     for emoji in emojis:
         is_custom = emoji['d_id'] is not None
         if is_custom:
-            emoji_string = str(discord.utils.get(
-                guild.emojis, id=int(emoji['d_id']))
+            emoji_string = str(
+                discord.utils.get(
+                    guild.emojis, id=int(emoji['d_id'])
+                ) or "Deleted Emoji"
             )
         else:
             emoji_string = emoji['name']
@@ -681,7 +683,7 @@ async def handle_reaction(
 
         if handle_level:
             await levels.handle_reaction(
-                db, user_id, message.author, guild, _emoji, is_add
+                bot, user_id, message.author, guild, _emoji, is_add
             )
 
     await handle_starboards(db, bot, message_id, channel, message, guild)

@@ -405,6 +405,26 @@ class Database:
                 stars_recv integer NOT NULL DEFAULT 0
             )"""
 
+        xproles_table = \
+            """CREATE TABLE IF NOT EXISTS xproles (
+                id numeric PRIMARY KEY,
+                guild_id numeric NOT NULL,
+                req_xp smallint NOT NULL,
+
+                FOREIGN KEY (guild_id) REFERENCES guilds (id)
+                    ON DELETE CASCADE
+            )"""
+
+        posroles_table = \
+            """CREATE TABLE IF NOT EXISTS posroles (
+                id numeric PRIMARY KEY,
+                guild_id numeric NOT NULL,
+                max_users smallint NOT NULL,
+
+                FOREIGN KEY (guild_id) REFERENCES guilds (id)
+                    ON DELETE CASCADE
+            )"""
+
         prefixes_table = \
             """CREATE TABLE IF NOT EXISTS prefixes (
                 id SERIAL PRIMARY KEY,
@@ -613,6 +633,8 @@ class Database:
         await self.lock.acquire()
 
         await self._create_table(guilds_table)
+        await self._create_table(xproles_table)
+        await self._create_table(posroles_table)
         await self._create_table(prefixes_table)
         await self._create_table(users_table)
         await self._create_table(votes_table)

@@ -17,6 +17,22 @@ from database.database import Database  # for typehinting
 from paginators import disputils
 
 
+async def can_manage_role(
+    bot: commands.Bot,
+    role: discord.Role
+) -> bool:
+    if role.is_default():
+        print(1)
+        return False
+    if role.managed:
+        print(2)
+        return False
+    if role.position >= role.guild.me.top_role.position:
+        print(3)
+        return False
+    return True
+
+
 async def needs_recount(
     bot: commands.Bot,
     message: discord.Message
@@ -1123,8 +1139,10 @@ async def pretty_emoji_string(
 
         is_custom = emoji_id is not None
         if is_custom:
-            emoji_string = str(discord.utils.get(
-                guild.emojis, id=int(emoji_id))
+            emoji_string = str(
+                discord.utils.get(
+                    guild.emojis, id=int(emoji_id)
+                ) or "Deleted Emoji"
             )
         else:
             emoji_string = emoji_name

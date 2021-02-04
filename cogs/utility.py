@@ -8,6 +8,7 @@ import checks
 import functions
 from cogs.starboard import handle_starboards
 from database.database import Database
+import cleaning
 
 
 async def scan_recount(
@@ -143,6 +144,53 @@ class Utility(commands.Cog):
     ) -> None:
         self.bot = bot
         self.db = db
+
+    @commands.command(
+        name='clean', aliases=['cleanlist'],
+        brief="Cleans things such as @deleted-role and #delete-channel"
+    )
+    @commands.cooldown(3, 60, commands.BucketType.guild)
+    @commands.has_guild_permissions(manage_guild=True)
+    @commands.guild_only()
+    async def clean(
+        self,
+        ctx: commands.Context
+    ) -> None:
+        name_mapping = {
+            'starboards': 'Starboards',
+            'aschannels': 'AutoStar Channels',
+            'sbemojis': 'Starboard Emojis',
+            'asemojis': 'AutoStar Emojis',
+            'xproles': 'XP Roles',
+            'posroles': 'Position Roles',
+            'channelbl': 'Blacklisted/Whitelisted Channels',
+            'rolebl': 'Blacklisted/Whitelisted Roles'
+        }
+        async with ctx.typing():
+            result = await cleaning.clean_all(self.bot, ctx.guild)
+
+        description = (
+            "Removed the following things from the database "
+            "that were deleted:"
+        )
+
+        things_removed = 0
+
+        for key, num in result.items():
+            if num > 0:
+                name = name_mapping[key]
+                description += f"\n**{num}** {name}"
+                things_removed += 1
+
+        if things_removed == 0:
+            description = "There was nothing to remove."
+
+        embed = discord.Embed(
+            title="Database Cleaning",
+            description=description,
+            color=bot_config.COLOR
+        )
+        await ctx.send(embed=embed)
 
     @flags.add_flag('--message', type=str, default="0")
     @flags.command(

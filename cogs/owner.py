@@ -271,7 +271,7 @@ class Owner(commands.Cog):
 
         await ctx.send("Done")
 
-    @commands.command(name='clean')
+    @commands.command(name='ownerclean')
     @commands.is_owner()
     async def clean_database(
         self,

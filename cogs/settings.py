@@ -526,65 +526,6 @@ class Settings(commands.Cog):
             f"{starboard.mention}"
         )
 
-    @commands.command(
-        name='cleanlist', aliases=['cleanbl', 'cleanwl'],
-        description="Remove deleted roles and channels from the blacklist",
-        brief="Remove deleted roles/channels from blacklist"
-    )
-    @commands.cooldown(1, 30, type=commands.BucketType.guild)
-    @commands.has_permissions(manage_guild=True)
-    @commands.guild_only()
-    async def clean_deleted(
-        self,
-        ctx: commands.Context
-    ) -> None:
-        get_channelbl = \
-            """SELECT * FROM channelbl WHERE guild_id=$1"""
-        delete_channelbl = \
-            """DELETE FROM channelbl WHERE channel_id=$1"""
-        get_rolebl = \
-            """SELECT * FROM rolebl WHERE guild_id=$1"""
-        delete_rolebl = \
-            """DELETE FROM rolebl WHERE role_id=$1"""
-
-        conn = self.bot.db.conn
-
-        async with self.bot.db.lock:
-            async with conn.transaction():
-                channelbl = await conn.fetch(get_channelbl, ctx.guild.id)
-                rolebl = await conn.fetch(get_rolebl, ctx.guild.id)
-
-        channel_ids = [c.id for c in ctx.guild.channels]
-        role_ids = [r.id for r in ctx.guild.roles]
-
-        deleted_channels = 0
-        deleted_roles = 0
-
-        for c in channelbl:
-            cid = int(c['channel_id'])
-            if cid not in channel_ids:
-                deleted_channels += 1
-                async with self.bot.db.lock:
-                    async with conn.transaction():
-                        await conn.execute(
-                            delete_channelbl, cid
-                        )
-
-        for r in rolebl:
-            rid = int(r['role_id'])
-            if rid not in role_ids:
-                deleted_roles += 1
-                async with self.bot.db.lock:
-                    async with conn.transaction():
-                        await conn.execute(
-                            delete_rolebl, rid
-                        )
-
-        await ctx.send(
-            f"Removed {deleted_channels} channels and {deleted_roles} roles "
-            "that were deleted from the database."
-        )
-
 
 def setup(
     bot: commands.Bot
