@@ -243,10 +243,6 @@ class PositionRoles(commands.Cog):
         self.queue = {}
         self.update_some_roles.start()
 
-    @commands.command()
-    async def test(self, ctx, uid: int):
-        self.bot.dispatch('posrole_update', ctx.guild.id, uid)
-
     @commands.Cog.listener()
     async def on_posrole_update(
         self,
