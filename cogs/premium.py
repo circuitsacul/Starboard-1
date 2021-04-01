@@ -549,7 +549,7 @@ class Premium(commands.Cog):
             )
             return
 
-        guild = self.bot.get_guild(778289112381784115)
+        guild = ctx.guild or self.bot.get_guild(guild_id)
 
         conn = self.bot.db.conn
 
