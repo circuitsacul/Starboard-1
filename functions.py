@@ -514,7 +514,7 @@ async def remove_prefix(
 def is_emoji(
     string: str
 ) -> bool:
-    return string in emoji.UNICODE_EMOJI
+    return string in emoji.UNICODE_EMOJI["en"]
 
 
 async def check_single_exists(
