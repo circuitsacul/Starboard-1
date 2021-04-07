@@ -551,7 +551,7 @@ class SetupWizard:
             if _demoji is None:
                 emoji_id = None
         except (ValueError, IndexError):
-            if inp not in emojilib.UNICODE_EMOJI:
+            if inp not in emojilib.UNICODE_EMOJI["en"]:
                 emoji_name = None
             else:
                 emoji_name = inp
