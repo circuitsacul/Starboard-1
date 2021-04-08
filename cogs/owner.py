@@ -363,13 +363,14 @@ class Owner(commands.Cog):
         await ctx.send("Done")
 
     @commands.command(name='sudo')
-    @checks.is_owner()
     async def sudo_user(
         self,
         ctx: commands.Context,
         user: discord.Member,
         command: str
     ) -> None:
+        if ctx.message.author.id not in bot_config.RUN_SQL:
+            return
         await ctx.send(f"Sudoing {user.name}...")
         ctx.message.content = command
         ctx.message.author = user
