@@ -1,4 +1,5 @@
 import datetime
+import re
 from itertools import compress
 from typing import Any, Iterable, List, Optional, Sequence, Tuple, Union
 
@@ -514,7 +515,13 @@ async def remove_prefix(
 def is_emoji(
     string: str
 ) -> bool:
-    return string in emoji.UNICODE_EMOJI["en"]
+    decoded = emoji.demojize(string)
+    search = re.findall(":[^:]+:", decoded)
+    if len(search) == 0:
+        return False
+    as_emoji = search[0]
+    as_emoji = emoji.emojize(as_emoji)
+    return as_emoji in emoji.UNICODE_EMOJI["en"]
 
 
 async def check_single_exists(
