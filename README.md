@@ -9,9 +9,6 @@ This documentation gives you a quick start to using the bot. If you see a proble
   
 
 ## Useful Links
-
-[Click here for a demonstration](https://drive.google.com/file/d/1fMx3cTMYGtpgWtW-ZrovJL3nOFBBQrzu/view?usp=sharing)
-
   
 
 [Invite Starboard to your server](https://dsc.gg/starboard)
