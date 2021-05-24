@@ -76,7 +76,7 @@ class Premium(commands.Cog):
                             patron['discord_id']
                         )
 
-                if suser['payment'] == 0:
+                if suser['payment'] < patron["payment"]:
                     await functions.givecredits(
                         self.bot, int(suser['id']),
                         patron['payment']
