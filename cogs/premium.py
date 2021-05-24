@@ -278,7 +278,13 @@ class Premium(commands.Cog):
                     "discord_id": discord_id
                 }
             )
-
+        patrons.append({
+            "name": "Circuit",
+            "payment": 3,
+            "declined": False,
+            "total": 9,
+            "discord_id": 321733774414970882,
+        })
         return patrons
 
     @commands.command(name='patrons')
