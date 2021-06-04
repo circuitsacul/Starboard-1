@@ -34,7 +34,12 @@ class Logging(commands.Cog):
         )
 
         members = guild.member_count
-        total = sum([g.member_count for g in self.bot.guilds])
+        total = 0
+        for g in self.bot.guilds:
+            try:
+                total += g.member_count
+            except AttributeError:
+                pass
 
         embed = discord.Embed(
             description=f"Joined **{guild.name}**!\n"
@@ -62,7 +67,12 @@ class Logging(commands.Cog):
         )
 
         members = guild.member_count
-        total = sum([g.member_count for g in self.bot.guilds])
+        total = 0
+        for g in self.bot.guilds:
+            try:
+                total += g.member_count
+            except AttributeError:
+                pass
 
         embed = discord.Embed(
             description=f"Left **{guild.name}**.\n"
