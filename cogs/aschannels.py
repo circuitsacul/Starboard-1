@@ -122,8 +122,8 @@ class AutoStarChannels(commands.Cog):
         for e in asemojis:
             try:
                 await message.add_reaction(e)
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"ASEmoji Error: {type(e)} {e}")
 
         return True
 
