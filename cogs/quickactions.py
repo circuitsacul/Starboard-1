@@ -171,9 +171,12 @@ class QuickActions(commands.Cog):
         except (discord.Forbidden, discord.NotFound):
             return
 
-        await message.remove_reaction(
-            payload.emoji.name, payload.member
-        )
+        try:
+            await message.remove_reaction(
+                payload.emoji.name, payload.member
+            )
+        except discord.Forbidden:
+            pass
 
         await toggle_setting(
             self.bot, payload.message_id,
