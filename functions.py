@@ -272,7 +272,7 @@ async def get_embed_from_message(
                 })
 
     value_string = f"{message.system_content}\n{embed_text}"
-    context_string = f"\n[**Jump to Message**]({message.jump_url})"
+    context_string = f"\n**[Jump to Message]({message.jump_url})**"
     if len(value_string) > 2048:
         clip_msg = "... *message clipped*"
         to_clip = len(value_string+clip_msg)-2048
