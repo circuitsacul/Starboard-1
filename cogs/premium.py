@@ -382,6 +382,11 @@ class Premium(commands.Cog):
         <months>: A required argument for the
         number of months to give the current
         server."""
+
+        if months < 1:
+            await ctx.send("You must redeem at least one month.")
+            return
+
         prem_cost = bot_config.PREMIUM_COST
         p = disputils.Confirmation(
             self.bot, bot_config.COLOR
